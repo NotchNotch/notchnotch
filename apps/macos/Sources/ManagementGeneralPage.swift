@@ -28,7 +28,7 @@ struct ManagementGeneralPage: View {
                 }
             }
             Section("About") {
-                LabeledContent("NotchNotch", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0")
+                LabeledContent("NotchNotch", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Development")
                 LabeledContent("Release", value: "Developer Preview")
             }
         }.formStyle(.grouped)

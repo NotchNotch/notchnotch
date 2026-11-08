@@ -1,9 +1,14 @@
-import { mkdir, cp, writeFile, chmod, readdir, rm } from "node:fs/promises";
+import { mkdir, cp, writeFile, chmod, readdir, rm, readFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { root } from "./build-extensions.mjs";
 
 export async function packageApp() {
+  // package.json is the single source of truth for the app version.
+  const { version } = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
+  if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) throw new Error(`Invalid app version: ${version}`);
+  const build = process.env.NOTCHNOTCH_BUILD_NUMBER ?? "1";
+  if (!/^\d{1,9}$/.test(build)) throw new Error(`Invalid build number: ${build}`);
   const app = path.join(root, "dist/NotchNotch.app");
   const contents = path.join(app, "Contents");
   await mkdir(path.join(contents, "MacOS"), { recursive: true });
@@ -29,8 +34,8 @@ export async function packageApp() {
 <key>CFBundleDisplayName</key><string>NotchNotch</string>
 <key>CFBundleExecutable</key><string>NotchNotch</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.1.0</string>
-<key>CFBundleVersion</key><string>1</string>
+<key>CFBundleShortVersionString</key><string>${version.split("-")[0]}</string>
+<key>CFBundleVersion</key><string>${build}</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>LSUIElement</key><true/>
 <key>NSHighResolutionCapable</key><true/>
