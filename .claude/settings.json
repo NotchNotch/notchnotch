@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./node_modules/**)",
+      "Read(./.pnpm-store/**)",
+      "Read(./.build/**)",
+      "Read(./.swiftpm/**)",
+      "Read(./dist/**)",
+      "Read(./DerivedData/**)",
+      "Read(./coverage/**)",
+      "Read(./pnpm-lock.yaml)",
+      "Read(./**/*.js.map)",
+      "Read(./**/*.log)",
+      "Read(./**/*.ips)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/*.p12)",
+      "Read(./**/*.p8)",
+      "Read(./**/*.mobileprovision)",
+      "Read(./**/*.provisionprofile)"
+    ]
+  }
+}

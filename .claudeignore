@@ -1,0 +1,44 @@
+# Dependencies and package stores
+node_modules/
+.pnpm-store/
+pnpm-lock.yaml
+
+# Swift / Xcode build output and caches
+.build/
+.swiftpm/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcresult/
+
+# Generated app, bundles and release artifacts
+dist/
+*.app/
+*.dSYM/
+*.dmg
+*.pkg
+*.tsbuildinfo
+*.js.map
+
+# Logs, crash reports, coverage
+coverage/
+*.log
+*.ips
+
+# macOS metadata
+.DS_Store
+._*
+
+# Secrets and signing material (never read)
+.env
+.env.*
+*.p12
+*.p8
+*.keychain
+*.keychain-db
+*.mobileprovision
+*.provisionprofile
+
+# Large license text; graph output
+LICENSE
+graphify-out/
