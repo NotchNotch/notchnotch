@@ -52,7 +52,13 @@ final class CalendarSource {
     func connect() async {
         do {
             if EKEventStore.authorizationStatus(for: .event) == .notDetermined {
-                _ = try await store.requestFullAccessToEvents()
+                // The completion-handler API keeps the non-Sendable store on the
+                // main actor; the @Sendable callback may arrive on any queue.
+                _ = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Bool, any Error>) in
+                    store.requestFullAccessToEvents { @Sendable granted, error in
+                        if let error { continuation.resume(throwing: error) } else { continuation.resume(returning: granted) }
+                    }
+                }
             }
             refresh()
         } catch {
