@@ -44,6 +44,26 @@ function Music() {
     return () => { stopNotifications(); stopStream(); void rpc.dispose().catch(() => {}); };
   }, [rpc]);
 
+  // Reconnect at launch when the user chose "Always Allow" before. Without a
+  // stored grant this fails silently and setup stays in Settings.
+  useEffect(() => {
+    let cancelled = false;
+    connecting.current = true;
+    void (async () => {
+      try {
+        await rpc.connect({ interactive: false });
+        const snapshot = await rpc.request<MusicStatus>("music/getState");
+        if (cancelled) return;
+        active.current = true;
+        setConnected(true);
+        setStatus(snapshot);
+      } catch {
+        if (!active.current) await rpc.disconnect().catch(() => {});
+      } finally { connecting.current = false; }
+    })();
+    return () => { cancelled = true; };
+  }, [rpc]);
+
   async function connect(player?: string) {
     if (connecting.current) return;
     connecting.current = true;

@@ -74,6 +74,14 @@ function launchProcess(executable, args) {
   };
 }
 function nodes(node) { return [node, ...node.children.flatMap(nodes)]; }
+/** Extensions try a silent reconnect at launch; answer it as "no stored grant". */
+async function denySilentOpen(runner) {
+  const silent = await runner.waitMessage((message) => message.operation === "open" && message.interactive === false);
+  runner.message({ type: "connectionResponse", requestID: silent.requestID,
+    error: "Connection access is required. Connect from the extension's settings." });
+  await runner.waitMessage((message) => message.operation === "close" && message.sessionID === silent.sessionID);
+  return silent;
+}
 function findToggle(tree, title) {
   const item = tree && nodes(tree).find((node) => node.type === "listItem" && node.props.text === title);
   return item && nodes(item).find((node) => node.type === "toggle");
@@ -161,9 +169,9 @@ test("Music connects through the generic SDK, receives state, and sends playback
     const initial = await runner.wait((message) => !!message.settings);
     assert.deepEqual(initial.surfaces, []);
     assert.ok(nodes(initial.settings).some((node) => node.props.text === "Connect Spotify"));
-    assert.equal(runner.messages.some((message) => message.type === "connectionCommand"), false);
+    await denySilentOpen(runner);
     runner.send(action({ expanded: initial.settings }, "Connect Spotify"));
-    const open = await runner.waitMessage((message) => message.type === "connectionCommand" && message.operation === "open");
+    const open = await runner.waitMessage((message) => message.type === "connectionCommand" && message.operation === "open" && message.interactive !== false);
     assert.equal(open.connectionID, "player");
     acknowledge(open);
     const get = await runner.waitMessage((message) => message.message?.method === "music/getState");
@@ -208,7 +216,7 @@ test("Music connects through the generic SDK, receives state, and sends playback
     runner.message({ type: "connectionEvent", connectionID: "player", sessionID: open.sessionID, event: "closed" });
     await runner.wait((message) => message.revision > art.revision &&
       message.surfaces.length === 0 && nodes(message.settings).some((node) => node.props.text === "Connect Spotify"));
-    assert.equal(runner.messages.filter((message) => message.operation === "open").length, 1);
+    assert.equal(runner.messages.filter((message) => message.operation === "open" && message.interactive !== false).length, 1);
     assert.equal(runner.messages.some((message) => message.type === "mediaCommand"), false);
   } finally { await runner.stop(); }
 });
@@ -254,9 +262,9 @@ test("Calendar connects explicitly, selects calendars, and follows event changes
   try {
     const initial = await runner.wait((message) => !!message.settings);
     assert.deepEqual(initial.surfaces, []);
-    assert.equal(runner.messages.some((message) => message.type === "connectionCommand"), false);
+    await denySilentOpen(runner);
     runner.send(action({ expanded: initial.settings }, "Connect"));
-    const open = await runner.waitMessage((message) => message.operation === "open");
+    const open = await runner.waitMessage((message) => message.operation === "open" && message.interactive !== false);
     assert.equal(open.connectionID, "calendar");
     acknowledge(open);
     const connect = await runner.waitMessage((message) => message.message?.method === "calendar/connect");
@@ -300,7 +308,7 @@ test("Calendar connects explicitly, selects calendars, and follows event changes
     assert.ok(nodes(denied.settings).some((node) => node.type === "button" && node.props.text === "Connect"));
     runner.message({ type: "connectionEvent", connectionID: "calendar", sessionID: open.sessionID, event: "closed" });
     await runner.wait((message) => nodes(message.settings).some((node) => /Calendar disconnected/.test(node.props.text ?? "")));
-    assert.equal(runner.messages.filter((message) => message.operation === "open").length, 1);
+    assert.equal(runner.messages.filter((message) => message.operation === "open" && message.interactive !== false).length, 1);
   } finally { await runner.stop(); }
 });
 
@@ -345,5 +353,23 @@ test("Focus Timer example renders settings components and starts a session", asy
     assert.equal(running.surfaces[0].compact.trailing[0].props.text, "15:00");
     const timer = nodes(running.surfaces[0].expanded).find((node) => node.props.size === "timer");
     assert.equal(timer.props.text, "15:00");
+  } finally { await runner.stop(); }
+});
+
+test("Music reconnects silently at launch when access was always allowed", async () => {
+  const runner = launch("music", "dev.notchnotch.music");
+  const state = { id: "spotify:track:resume", eventID: "playback-9", player: "com.spotify.client", playerName: "Spotify",
+    title: "Resume", artist: "Artist", album: "Album", duration: 100, position: 5, isPlaying: false, volume: 0.5,
+    shuffle: false, repeating: false, updatedAt: Date.now() / 1000 };
+  try {
+    const silent = await runner.waitMessage((message) => message.operation === "open" && message.interactive === false);
+    runner.message({ type: "connectionResponse", requestID: silent.requestID, result: null });
+    const get = await runner.waitMessage((message) => message.message?.method === "music/getState");
+    runner.message({ type: "connectionResponse", requestID: get.requestID, result: null });
+    runner.message({ type: "connectionEvent", connectionID: "player", sessionID: silent.sessionID, event: "message",
+      message: { jsonrpc: "2.0", id: get.message.id, result: { state, authorized: ["com.spotify.client"], errors: {} } } });
+    const resumed = await runner.wait((message) => message.surfaces[0]?.id === "now-playing");
+    assert.equal(resumed.surfaces[0].phase, "paused");
+    assert.equal(runner.messages.some((message) => message.message?.method === "music/connect"), false);
   } finally { await runner.stop(); }
 });

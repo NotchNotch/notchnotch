@@ -66,6 +66,21 @@ function Calendar() {
       void rpc.dispose().catch(() => {});
     };
   }, [rpc]);
+  // Reconnect at launch when the user chose "Always Allow" before; otherwise
+  // stay quiet until Connect is pressed in Settings.
+  useEffect(() => {
+    const current = generation.current;
+    working.current = true;
+    void (async () => {
+      try {
+        await rpc.connect({ interactive: false });
+        const result = await rpc.request<CalendarStatus>("calendar/getState");
+        if (generation.current === current) { setStatus(result); setNow(Date.now() / 1000); }
+      } catch {
+        await rpc.disconnect().catch(() => {});
+      } finally { working.current = false; }
+    })();
+  }, [rpc]);
   const authorized = status?.authorization === "authorized";
   const hasEvents = authorized && !!status?.events.length;
   useEffect(() => {
