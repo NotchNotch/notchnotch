@@ -7,11 +7,20 @@ struct SettingsActionButton: View {
     var body: some View {
         Group {
             if node.props.tone == .accent {
-                Button(node.props.text ?? "Continue", action: send).buttonStyle(.borderedProminent)
+                Button(action: send) { label }.buttonStyle(.borderedProminent)
             } else {
-                Button(node.props.text ?? "Continue", action: send).buttonStyle(.bordered)
+                Button(action: send) { label }.buttonStyle(.bordered).tint(node.props.tone == .danger ? .red : nil)
             }
         }.controlSize(.regular).disabled(node.props.disabled ?? false)
+    }
+    @ViewBuilder private var label: some View {
+        if let symbol = node.props.name {
+            if let title = node.props.text, !title.isEmpty {
+                Label(title, systemImage: symbol)
+            } else {
+                Image(systemName: symbol).accessibilityLabel(symbol)
+            }
+        } else { Text(node.props.text ?? "") }
     }
     private func send() { if let action = node.props.action { onEvent(action, nil) } }
 }

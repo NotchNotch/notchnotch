@@ -6,9 +6,22 @@ public let maximumMessageBytes = 262_144
 public enum SurfaceKind: String, Codable, Sendable { case activity, prompt }
 public enum Presentation: String, Codable, Sendable { case compact, expanded }
 public enum SurfacePhase: String, Codable, Sendable { case active, paused, completed, pending }
-public enum NodeKind: String, Codable, Sendable { case column, row, text, symbol, progress, button, textField, artwork, waveform, player }
-public enum Tone: String, Codable, Sendable { case primary, secondary, accent, success, warning }
-public enum TextSize: String, Codable, Sendable { case caption, body, title, timer }
+public enum NodeKind: String, Codable, Sendable {
+    case column, row, text, symbol, progress, button, textField, artwork, waveform, player
+    case spacer, divider, toggle, section, listItem, badge
+
+    /// Nodes that send user actions. Compact wings are a single host click target.
+    public var isInteractive: Bool { [.button, .textField, .toggle, .player].contains(self) }
+    /// Nodes the management window can render with system controls.
+    public static let settingsKinds: Set<NodeKind> = [
+        .column, .row, .text, .symbol, .progress, .button, .textField,
+        .spacer, .divider, .toggle, .section, .listItem, .badge,
+    ]
+}
+public enum Tone: String, Codable, Sendable { case primary, secondary, accent, success, warning, danger }
+public enum TextSize: String, Codable, Sendable { case caption, body, headline, title, timer }
+public enum Spacing: String, Codable, Sendable { case none, tight, regular, loose }
+public enum LayoutAlignment: String, Codable, Sendable { case start, center, end }
 
 public struct NodeProps: Codable, Equatable, Sendable {
     public var text: String?
@@ -21,13 +34,18 @@ public struct NodeProps: Codable, Equatable, Sendable {
     public var source: String?
     public var media: NowPlayingState?
     public var disabled: Bool?
+    /// Secondary line: list item subtitle or section footer.
+    public var detail: String?
+    public var spacing: Spacing?
+    public var align: LayoutAlignment?
 
     public init(text: String? = nil, name: String? = nil, tone: Tone? = nil, size: TextSize? = nil,
                 value: Double? = nil, action: String? = nil, placeholder: String? = nil, disabled: Bool? = nil,
-                source: String? = nil, media: NowPlayingState? = nil) {
+                source: String? = nil, media: NowPlayingState? = nil, detail: String? = nil,
+                spacing: Spacing? = nil, align: LayoutAlignment? = nil) {
         self.text = text; self.name = name; self.tone = tone; self.size = size
         self.value = value; self.action = action; self.placeholder = placeholder; self.disabled = disabled
-        self.source = source; self.media = media
+        self.source = source; self.media = media; self.detail = detail; self.spacing = spacing; self.align = align
     }
 }
 
@@ -100,14 +118,19 @@ public struct Snapshot: Codable, Sendable {
             guard depth <= 16, count <= 512, !node.id.isEmpty, node.id.count <= 128,
                   identifiers.insert(node.id).inserted,
                   (node.props.text?.count ?? 0) <= 4096,
+                  (node.props.detail?.count ?? 0) <= 4096,
+                  (node.props.name?.count ?? 0) <= 128,
                   (node.props.action?.count ?? 0) <= 128 else {
                 throw ProtocolError.invalid("Invalid or oversized UI tree")
             }
-            if compact && (node.type == .button || node.type == .textField || node.type == .player) {
+            if compact && node.type.isInteractive {
                 throw ProtocolError.invalid("Compact content cannot contain interactive controls")
             }
-            if settings && ![NodeKind.column, .row, .text, .symbol, .progress, .button, .textField].contains(node.type) {
-                throw ProtocolError.invalid("Settings support layout, text, symbols, progress, buttons and text fields")
+            if settings && !NodeKind.settingsKinds.contains(node.type) {
+                throw ProtocolError.invalid("Settings cannot contain media components")
+            }
+            if [.spacer, .divider].contains(node.type), !node.children.isEmpty {
+                throw ProtocolError.invalid("Spacers and dividers cannot have children")
             }
             if let source = node.props.source, !NowPlayingState.isArtworkSource(source) {
                 throw ProtocolError.invalid("Artwork must use an approved artwork CDN or bounded image data")

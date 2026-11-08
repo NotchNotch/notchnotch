@@ -241,7 +241,13 @@
             "textField",
             "artwork",
             "waveform",
-            "player"
+            "player",
+            "spacer",
+            "divider",
+            "toggle",
+            "section",
+            "listItem",
+            "badge"
           ]
         },
         "props": {
@@ -252,7 +258,8 @@
               "maxLength": 4096
             },
             "name": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 128
             },
             "tone": {
               "enum": [
@@ -260,13 +267,15 @@
                 "secondary",
                 "accent",
                 "success",
-                "warning"
+                "warning",
+                "danger"
               ]
             },
             "size": {
               "enum": [
                 "caption",
                 "body",
+                "headline",
                 "title",
                 "timer"
               ]
@@ -292,6 +301,25 @@
             },
             "media": {
               "$ref": "#/$defs/nowPlaying"
+            },
+            "detail": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "spacing": {
+              "enum": [
+                "none",
+                "tight",
+                "regular",
+                "loose"
+              ]
+            },
+            "align": {
+              "enum": [
+                "start",
+                "center",
+                "end"
+              ]
             }
           },
           "additionalProperties": false
@@ -404,7 +432,13 @@
                 "symbol",
                 "progress",
                 "button",
-                "textField"
+                "textField",
+                "spacer",
+                "divider",
+                "toggle",
+                "section",
+                "listItem",
+                "badge"
               ]
             },
             "children": {

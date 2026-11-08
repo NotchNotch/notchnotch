@@ -1,8 +1,11 @@
 export const PROTOCOL_VERSION = 1 as const;
 export const MAX_MESSAGE_BYTES = 262_144;
-export type Tone = "primary" | "secondary" | "accent" | "success" | "warning";
-export type TextSize = "caption" | "body" | "title" | "timer";
-export type NodeType = "column" | "row" | "text" | "symbol" | "progress" | "button" | "textField" | "artwork" | "waveform" | "player";
+export type Tone = "primary" | "secondary" | "accent" | "success" | "warning" | "danger";
+export type TextSize = "caption" | "body" | "headline" | "title" | "timer";
+export type Spacing = "none" | "tight" | "regular" | "loose";
+export type Alignment = "start" | "center" | "end";
+export type NodeType = "column" | "row" | "text" | "symbol" | "progress" | "button" | "textField" | "artwork" | "waveform" | "player"
+  | "spacer" | "divider" | "toggle" | "section" | "listItem" | "badge";
 export interface UINode {
   id: string;
   type: NodeType;
@@ -17,6 +20,9 @@ export interface UINode {
     disabled?: boolean;
     source?: string;
     media?: NowPlayingState;
+    detail?: string;
+    spacing?: Spacing;
+    align?: Alignment;
   };
   children: UINode[];
 }

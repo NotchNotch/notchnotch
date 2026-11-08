@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import NotchExtensions
 import NotchRenderer
+import NotchProtocol
 
 struct ManagementExtensionPage: View {
     @Bindable var coordinator: ManagementCoordinator
@@ -39,13 +40,21 @@ struct ManagementExtensionPage: View {
             }
             if coordinator.model.isEnabled(record.id) {
                 if let tree = coordinator.model.extensionSettings[record.id] {
-                    Section("Setup") {
-                        SettingsNodeView(node: tree) { action, value in
-                            coordinator.model.sendSettings(extensionID: record.id, action: action, value: value)
+                    ForEach(SettingsBlock.blocks(for: tree)) { block in
+                        Section {
+                            ForEach(block.nodes) { node in
+                                SettingsNodeView(node: node) { action, value in
+                                    coordinator.model.sendSettings(extensionID: record.id, action: action, value: value)
+                                }
+                            }
+                        } header: {
+                            Text(block.title ?? "Setup")
+                        } footer: {
+                            if let footer = block.footer { Text(footer) }
                         }
-                        .id(coordinator.model.extensionSessionIDs[record.id])
-                        .disabled(coordinator.busy)
                     }
+                    .id(coordinator.model.extensionSessionIDs[record.id])
+                    .disabled(coordinator.busy)
                 } else if !coordinator.model.hasRendered(record.id), coordinator.model.errors[record.id] == nil {
                     Section {
                         HStack {
@@ -112,5 +121,32 @@ struct ManagementExtensionPage: View {
                 }
             }
         }.formStyle(.grouped)
+    }
+}
+
+/// Root-level `section` nodes become native form sections; consecutive loose
+/// nodes are grouped into an untitled "Setup" section between them.
+private struct SettingsBlock: Identifiable {
+    let id: String
+    let title: String?
+    let footer: String?
+    let nodes: [UINode]
+
+    static func blocks(for root: UINode) -> [SettingsBlock] {
+        var blocks: [SettingsBlock] = []
+        var loose: [UINode] = []
+        func flush() {
+            guard let first = loose.first else { return }
+            blocks.append(.init(id: "loose-\(first.id)", title: nil, footer: nil, nodes: loose))
+            loose = []
+        }
+        for node in root.children {
+            if node.type == .section {
+                flush()
+                blocks.append(.init(id: node.id, title: node.props.text, footer: node.props.detail, nodes: node.children))
+            } else { loose.append(node) }
+        }
+        flush()
+        return blocks
     }
 }

@@ -1,19 +1,7 @@
 import SwiftUI
 import NotchProtocol
 
-public enum NotchPalette {
-    public static let accent = Color.white
-    public static func color(_ tone: Tone?) -> Color {
-        switch tone {
-        case .secondary: Color.white.opacity(0.53)
-        case .accent: accent
-        case .success: Color(red: 0.56, green: 0.83, blue: 0.65)
-        case .warning: Color(red: 0.98, green: 0.72, blue: 0.40)
-        default: .white
-        }
-    }
-}
-
+/// Renders an extension UI tree inside the notch using `NotchTheme` tokens.
 public struct NativeNodeView: View {
     public let node: UINode
     public let compact: Bool
@@ -24,62 +12,83 @@ public struct NativeNodeView: View {
     }
 
     public var body: some View {
-        content.foregroundStyle(NotchPalette.color(node.props.tone))
+        content.foregroundStyle(NotchTheme.color(node.props.tone))
     }
+
+    private func child(_ node: UINode) -> NativeNodeView {
+        NativeNodeView(node: node, compact: compact, cameraHeight: cameraHeight, onEvent: onEvent)
+    }
+    private var children: some View { ForEach(node.children) { child($0) } }
 
     @ViewBuilder private var content: some View {
         switch node.type {
         case .column:
-            VStack(alignment: .leading, spacing: compact ? 4 : 8) {
-                ForEach(node.children) { child in
-                    NativeNodeView(node: child, compact: compact, cameraHeight: cameraHeight, onEvent: onEvent)
-                }
-            }.frame(maxWidth: compact ? nil : .infinity, alignment: .leading)
+            let align = node.props.align ?? .start
+            VStack(alignment: align.horizontal, spacing: NotchTheme.spacing(node.props.spacing, compact: compact)) { children }
+                .frame(maxWidth: compact ? nil : .infinity, alignment: align.frame)
         case .row:
-            HStack(spacing: compact ? 6 : 10) {
-                ForEach(node.children) { child in
-                    NativeNodeView(node: child, compact: compact, cameraHeight: cameraHeight, onEvent: onEvent)
-                }
-            }
+            HStack(alignment: (node.props.align ?? .center).vertical,
+                   spacing: NotchTheme.spacing(node.props.spacing, compact: compact, fallback: compact ? .regular : .loose)) { children }
         case .text:
             Text(node.props.text ?? "")
-                .font(font)
+                .font(NotchTheme.font(node.props.size, compact: compact))
                 .monospacedDigit()
-                .tracking(node.props.size == .caption && !compact ? 0.9 : node.props.size == .timer ? -1.4 : 0)
+                .tracking(NotchTheme.tracking(node.props.size, compact: compact))
                 .lineLimit(compact ? 1 : nil)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityLabel(node.props.text ?? "")
         case .symbol:
             Image(systemName: node.props.name ?? "circle")
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: NotchTheme.symbolSize(node.props.size, compact: compact), weight: .medium))
                 .accessibilityHidden(true)
         case .progress:
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(.white.opacity(0.12))
-                    Capsule().fill(NotchPalette.color(node.props.tone))
+                    Capsule().fill(NotchTheme.Ink.fillStrong)
+                    Capsule().fill(NotchTheme.color(node.props.tone))
                         .frame(width: geometry.size.width * (node.props.value ?? 0))
                 }
-            }.frame(height: 3)
+            }.frame(height: 4)
                 .accessibilityElement()
                 .accessibilityLabel("Progress")
                 .accessibilityValue("\(Int((node.props.value ?? 0) * 100)) percent")
         case .button:
-            Button {
-                if let action = node.props.action { onEvent(action, nil) }
-            } label: {
-                Text(node.props.text ?? "Continue")
-                    .font(.system(size: 11, weight: .medium))
-                    .padding(.horizontal, 15).frame(height: 29)
-                    .foregroundStyle(node.props.tone == .accent ? .black : .white.opacity(0.85))
-                    .background(node.props.tone == .accent ? NotchPalette.accent : .white.opacity(0.10), in: Capsule())
-                    .contentShape(Capsule())
-            }
-            .buttonStyle(NotchPressStyle())
-            .disabled(node.props.disabled ?? false)
-            .opacity(node.props.disabled == true ? 0.4 : 1)
+            NotchButton(node: node, onEvent: onEvent)
         case .textField:
             NativeTextField(node: node, onEvent: onEvent)
+        case .spacer:
+            Spacer(minLength: 0)
+        case .divider:
+            Rectangle().fill(NotchTheme.Ink.separator).frame(height: 0.5)
+                .frame(maxWidth: .infinity).accessibilityHidden(true)
+        case .toggle:
+            NotchToggle(node: node, onEvent: onEvent)
+        case .badge:
+            Text(node.props.text ?? "")
+                .font(.system(size: 10, weight: .semibold)).monospacedDigit()
+                .padding(.horizontal, 7).frame(height: 18)
+                .foregroundStyle(NotchTheme.color(node.props.tone ?? .secondary))
+                .background(NotchTheme.color(node.props.tone ?? .secondary).opacity(0.16), in: Capsule())
+                .fixedSize()
+        case .section:
+            VStack(alignment: .leading, spacing: 6) {
+                if let title = node.props.text, !title.isEmpty {
+                    Text(title.uppercased())
+                        .font(NotchTheme.font(.caption)).tracking(NotchTheme.tracking(.caption))
+                        .foregroundStyle(NotchTheme.Ink.tertiary)
+                        .accessibilityAddTraits(.isHeader)
+                }
+                VStack(alignment: .leading, spacing: NotchTheme.spacing(node.props.spacing, fallback: .regular)) { children }
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(NotchTheme.Ink.fill, in: RoundedRectangle(cornerRadius: NotchTheme.groupRadius))
+                if let footer = node.props.detail, !footer.isEmpty {
+                    Text(footer).font(NotchTheme.font(.caption)).foregroundStyle(NotchTheme.Ink.tertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        case .listItem:
+            NotchListItem(node: node, compact: compact, cameraHeight: cameraHeight, onEvent: onEvent)
         case .artwork:
             AlbumArtwork(source: node.props.source, size: compact ? 18 : 60)
         case .waveform:
@@ -95,15 +104,6 @@ public struct NativeNodeView: View {
             }
         }
     }
-
-    private var font: Font {
-        switch node.props.size {
-        case .timer: .system(size: 40, weight: .light, design: .rounded)
-        case .title: .system(size: 21, weight: .medium)
-        case .caption: .system(size: compact ? 10 : 8, weight: .medium)
-        default: .system(size: 12, weight: .regular)
-        }
-    }
 }
 
 struct NotchPressStyle: ButtonStyle {
@@ -116,6 +116,139 @@ struct NotchPressStyle: ButtonStyle {
     }
 }
 
+/// Accent is the single prominent action; danger is destructive; everything
+/// else is a quiet filled capsule. An optional SF Symbol leads the title.
+private struct NotchButton: View {
+    let node: UINode
+    let onEvent: (String, String?) -> Void
+    private var foreground: Color {
+        switch node.props.tone {
+        case .accent: .black
+        case .danger: NotchTheme.danger
+        case .success: NotchTheme.success
+        case .warning: NotchTheme.warning
+        default: NotchTheme.Ink.primary
+        }
+    }
+    private var background: Color {
+        switch node.props.tone {
+        case .accent: .white
+        case .danger: NotchTheme.danger.opacity(0.16)
+        default: NotchTheme.Ink.fillStrong
+        }
+    }
+    var body: some View {
+        let title = node.props.text ?? ""
+        Button {
+            if let action = node.props.action { onEvent(action, nil) }
+        } label: {
+            HStack(spacing: 5) {
+                if let symbol = node.props.name {
+                    Image(systemName: symbol).font(.system(size: 11, weight: .semibold))
+                }
+                if !title.isEmpty { Text(title).lineLimit(1) }
+            }
+            .font(.system(size: 12, weight: .medium))
+            .padding(.horizontal, title.isEmpty ? 0 : 13)
+            .frame(minWidth: NotchTheme.controlHeight, minHeight: NotchTheme.controlHeight)
+            .foregroundStyle(foreground)
+            .background(background, in: Capsule())
+            .contentShape(Capsule())
+        }
+        .buttonStyle(NotchPressStyle())
+        .disabled(node.props.disabled ?? false)
+        .opacity(node.props.disabled == true ? 0.4 : 1)
+        .accessibilityLabel(title.isEmpty ? (node.props.name ?? "Button") : title)
+    }
+}
+
+/// A compact switch drawn for a black surface; the system switch renders as
+/// inactive inside a nonactivating panel.
+private struct NotchToggle: View {
+    let node: UINode
+    let onEvent: (String, String?) -> Void
+    @State private var isOn = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    var body: some View {
+        Button {
+            guard let action = node.props.action else { return }
+            isOn.toggle()
+            onEvent(action, isOn ? "true" : "false")
+        } label: {
+            HStack(spacing: 10) {
+                if let label = node.props.text, !label.isEmpty {
+                    Text(label).font(NotchTheme.font(.body)).foregroundStyle(NotchTheme.Ink.primary)
+                    Spacer(minLength: 0)
+                }
+                Capsule()
+                    .fill(isOn ? NotchTheme.success : NotchTheme.Ink.fillStrong)
+                    .frame(width: 30, height: 18)
+                    .overlay(alignment: isOn ? .trailing : .leading) {
+                        Circle().fill(.white).frame(width: 14, height: 14).padding(2)
+                    }
+                    .animation(reduceMotion ? nil : .spring(response: 0.25, dampingFraction: 0.8), value: isOn)
+            }.contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(node.props.disabled ?? false)
+        .opacity(node.props.disabled == true ? 0.4 : 1)
+        .onAppear { isOn = node.props.value == 1 }
+        .onChange(of: node.props.value) { _, value in isOn = value == 1 }
+        .accessibilityRepresentation {
+            Toggle(node.props.text ?? "", isOn: Binding(get: { isOn }, set: { _ in
+                if let action = node.props.action { isOn.toggle(); onEvent(action, isOn ? "true" : "false") }
+            }))
+        }
+    }
+}
+
+/// Icon tile, title, optional detail line, and trailing accessories (children).
+/// With an action the whole row is one button.
+private struct NotchListItem: View {
+    let node: UINode
+    let compact: Bool
+    let cameraHeight: CGFloat
+    let onEvent: (String, String?) -> Void
+    private var row: some View {
+        HStack(spacing: 10) {
+            if let symbol = node.props.name {
+                Image(systemName: symbol)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(NotchTheme.color(node.props.tone))
+                    .frame(width: NotchTheme.iconTile, height: NotchTheme.iconTile)
+                    .background(NotchTheme.Ink.fillStrong, in: RoundedRectangle(cornerRadius: 7))
+            }
+            VStack(alignment: .leading, spacing: 1) {
+                Text(node.props.text ?? "").font(NotchTheme.font(.body).weight(.medium))
+                    .foregroundStyle(NotchTheme.Ink.primary).lineLimit(1)
+                if let detail = node.props.detail, !detail.isEmpty {
+                    Text(detail).font(NotchTheme.font(.caption).weight(.regular))
+                        .foregroundStyle(NotchTheme.Ink.secondary).lineLimit(2)
+                }
+            }
+            Spacer(minLength: 6)
+            ForEach(node.children) {
+                NativeNodeView(node: $0, compact: compact, cameraHeight: cameraHeight, onEvent: onEvent)
+            }
+            if node.props.action != nil {
+                Image(systemName: "chevron.right").font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(NotchTheme.Ink.tertiary)
+            }
+        }
+        .frame(minHeight: NotchTheme.iconTile)
+        .contentShape(Rectangle())
+    }
+    var body: some View {
+        if let action = node.props.action {
+            Button { onEvent(action, nil) } label: { row }
+                .buttonStyle(NotchPressStyle())
+                .disabled(node.props.disabled ?? false)
+        } else {
+            row.accessibilityElement(children: .combine)
+        }
+    }
+}
+
 private struct NativeTextField: View {
     let node: UINode
     let onEvent: (String, String?) -> Void
@@ -125,9 +258,12 @@ private struct NativeTextField: View {
         TextField(node.props.placeholder ?? "", text: $text)
             .focused($isEditing)
             .textFieldStyle(.plain)
-            .font(.system(size: 12))
-            .padding(10)
-            .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 9))
+            .font(NotchTheme.font(.body))
+            .padding(.horizontal, 10).frame(height: 32)
+            .background(NotchTheme.Ink.fill, in: RoundedRectangle(cornerRadius: NotchTheme.controlRadius))
+            .overlay(RoundedRectangle(cornerRadius: NotchTheme.controlRadius)
+                .strokeBorder(isEditing ? NotchTheme.Ink.tertiary : NotchTheme.Ink.separator, lineWidth: 0.5))
+            .disabled(node.props.disabled ?? false)
             .onAppear { text = node.props.text ?? "" }
             .onChange(of: node.props.text) { _, value in
                 // A runner acknowledgement can arrive several keystrokes behind.

@@ -222,7 +222,7 @@ struct NotchView: View {
                 }
                 if !model.errors.isEmpty && model.platform.selected != nil {
                     Text("An extension stopped. Restart it from the menu bar.")
-                        .font(.system(size: 10)).foregroundStyle(NotchPalette.color(.warning))
+                        .font(.system(size: 10)).foregroundStyle(NotchTheme.color(.warning))
                 }
             }
             .padding(.horizontal, 28)

@@ -87,7 +87,10 @@ const reconciler = Reconciler({
   bindToConsole: (_method: string, args: unknown[]) => () => console.log(...args),
 });
 
-const nodeTypes = new Set(["column", "row", "text", "symbol", "progress", "button", "textField", "artwork", "waveform", "player"]);
+const nodeTypes = new Set(["column", "row", "text", "symbol", "progress", "button", "textField", "artwork", "waveform", "player",
+  "spacer", "divider", "toggle", "section", "listItem", "badge"]);
+/** Leaf nodes whose React children are flattened into the `text` prop. */
+const textNodes = new Set(["text", "badge"]);
 function plainText(node: Instance): string {
   return node.type === "#text" ? node.text ?? "" : node.children.map(plainText).join("");
 }
@@ -98,10 +101,10 @@ export function createRenderer(extensionID: string, send: (snapshot: Snapshot) =
   function serialize(node: Instance, registry: typeof actions): UINode {
     if (!nodeTypes.has(node.type)) throw new Error(`Unsupported component: ${node.type}`);
     const props: UINode["props"] = {};
-    for (const key of ["text", "name", "tone", "size", "value", "placeholder", "disabled", "source", "media"] as const) {
+    for (const key of ["text", "name", "tone", "size", "value", "placeholder", "disabled", "source", "media", "detail", "spacing", "align"] as const) {
       if (node.props[key] !== undefined) Object.assign(props, { [key]: node.props[key] });
     }
-    if (node.type === "text") props.text = plainText(node);
+    if (textNodes.has(node.type)) props.text = plainText(node);
     const callback = node.props.onPress ?? node.props.onChange;
     if (typeof callback === "function") {
       props.action = `${node.id}:action`;
@@ -109,7 +112,7 @@ export function createRenderer(extensionID: string, send: (snapshot: Snapshot) =
     }
     return {
       id: node.id, type: node.type as UINode["type"], props,
-      children: node.type === "text" ? [] : node.children.map((child) => serialize(child, registry)),
+      children: textNodes.has(node.type) ? [] : node.children.map((child) => serialize(child, registry)),
     };
   }
   function surface(node: Instance, registry: typeof actions): Surface {
