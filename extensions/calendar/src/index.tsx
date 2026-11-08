@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Activity, Button, ConnectionStream, JSONRPCClient, Progress, Row, Settings, Symbol, Text } from "@notchnotch/sdk";
+import {
+  Activity, Badge, Button, ConnectionStream, Divider, JSONRPCClient, ListItem, Progress, Row, Section, Settings,
+  Spacer, Symbol, Text, Toggle,
+} from "@notchnotch/sdk";
 import type { JSONValue } from "@notchnotch/protocol";
 import { start } from "@notchnotch/runtime";
 
@@ -104,28 +107,29 @@ function Calendar() {
   const imminent = !!event && event.start - now <= 15 * 60;
   const remaining = event ? (ongoing ? event.end : event.start) - now : 0;
   const problem = error || status?.error;
+  const next = events[1];
+  const accessDetail = busy ? (authorized ? "Updating…" : "Waiting for access…")
+    : authorized ? `${status.calendars.filter((calendar) => calendar.selected).length} of ${status.calendars.length} calendars shown`
+    : "Not connected";
   return <>
     <Settings>
       <Text tone="secondary">See your next event from the calendars on this Mac. Events are never edited.</Text>
-      <Row>
-        <Button title={authorized ? "Refresh calendars" : "Connect Calendar"} tone="accent" disabled={busy}
-          onPress={() => { void request(authorized ? "calendar/getState" : "calendar/connect"); }} />
-        <Button title="Open Calendar" disabled={busy} onPress={() => { void request("calendar/open"); }} />
-      </Row>
-      {busy ? <Text tone="secondary">{authorized ? "Updating Calendar…" : "Connecting to Calendar…"}</Text> : null}
-      {problem ? <Text tone="warning">{problem.slice(0, 1024)}</Text> : null}
-      {authorized ? <>
-        <Text size="caption" tone="secondary">CALENDARS</Text>
-        <Text tone="secondary">Choose the calendars to include. All-day and declined events are excluded.</Text>
-        {status.calendars.map((calendar) => <Row key={calendar.id}>
-          <Symbol name={calendar.selected ? "checkmark.circle.fill" : "circle"} tone={calendar.selected ? "success" : "secondary"} />
-          <Button title={`${calendar.selected ? "Hide" : "Show"} ${calendar.title}`} disabled={busy}
-            onPress={() => toggleCalendar(calendar.id)} />
-        </Row>)}
+      <Section title="Access">
+        <ListItem icon="calendar" title="Calendar" subtitle={accessDetail}>
+          <Button title={authorized ? "Refresh" : "Connect"} tone={authorized ? "secondary" : "accent"} disabled={busy}
+            onPress={() => { void request(authorized ? "calendar/getState" : "calendar/connect"); }} />
+          <Button icon="arrow.up.forward.app" disabled={busy} onPress={() => { void request("calendar/open"); }} />
+        </ListItem>
+        {problem ? <Text tone="danger">{problem.slice(0, 1024)}</Text> : null}
+      </Section>
+      {authorized ? <Section title="Calendars" footer="All-day and declined events are excluded. The notch appears 15 minutes before an event and stays until it ends; hover to preview events further away.">
+        {status.calendars.map((calendar) => <ListItem key={calendar.id} title={calendar.title}>
+          <Toggle value={calendar.selected} disabled={busy} onChange={() => toggleCalendar(calendar.id)} />
+        </ListItem>)}
         {!status.calendars.length ? <Text tone="secondary">No calendars found. Add an account in Calendar, then refresh.</Text> : null}
-        {!events.length ? <Text tone="secondary">No upcoming timed events in your selected calendars for the next seven days.</Text> : null}
-        <Text tone="secondary">The notch appears 15 minutes before an event and stays until it ends. Hover to preview an event further away.</Text>
-      </> : null}
+        {status.calendars.length > 0 && !events.length
+          ? <Text tone="secondary">No upcoming timed events in the next seven days.</Text> : null}
+      </Section> : null}
     </Settings>
     {event ? <Activity id="next-event" title={event.title.slice(0, 128)} phase={imminent ? "active" : "paused"} idlePreview>
       <Activity.Compact leading={<Symbol name={ongoing ? "calendar.badge.clock" : "calendar"} />}
@@ -133,20 +137,31 @@ function Calendar() {
       {imminent ? <Activity.Peek id={`${event.id}:${ongoing ? "started" : "soon"}`}
         text={`${ongoing ? "Now" : "Up next"} • ${event.title}`.slice(0, 256)} /> : null}
       <Activity.Expanded>
-        <Row><Symbol name="calendar" /><Text size="caption" tone="secondary">{ongoing ? "IN PROGRESS · ENDS IN" : "NEXT EVENT · STARTS IN"}</Text></Row>
-        <Text size="timer">{countdown(remaining)}</Text>
-        <Text size="title">{event.title.slice(0, 180)}</Text>
-        <Text tone="secondary">{`${date(event.start)} · ${time(event.start)} – ${time(event.end)}`}</Text>
-        <Text size="caption" tone="secondary">{event.calendarTitle}</Text>
-        {event.location && !event.location.startsWith("https://") ? <Text tone="secondary">{event.location.slice(0, 160)}</Text> : null}
-        {ongoing ? <Progress value={Math.max(0, Math.min(1, (now - event.start) / (event.end - event.start)))} /> : null}
-        <Row>
-          {event.meetingURL ? <Button title="Join meeting" tone="accent" disabled={busy}
-            onPress={() => { void request("calendar/join", { id: event.id }); }} /> : null}
-          <Button title="Open Calendar" disabled={busy} onPress={() => { void request("calendar/open"); }} />
+        <Row spacing="tight">
+          <Symbol name={ongoing ? "calendar.badge.clock" : "calendar"} size="caption" tone="secondary" />
+          <Text size="caption" tone="secondary">{ongoing ? "IN PROGRESS" : "UP NEXT"}</Text>
+          <Spacer />
+          <Badge tone={ongoing ? "success" : imminent ? "warning" : "secondary"}>
+            {ongoing ? `Ends in ${countdown(remaining, true)}` : `In ${countdown(remaining, true)}`}
+          </Badge>
         </Row>
-        {error ? <Text tone="warning">{error.slice(0, 256)}</Text> : null}
-        {events[1] ? <Text size="caption" tone="secondary">{`${events[1].start <= now ? "ALSO NOW" : "THEN"} · ${date(events[1].start)} ${time(events[1].start)} · ${events[1].title.slice(0, 96)}`}</Text> : null}
+        <Text size="title">{event.title.slice(0, 180)}</Text>
+        <Text tone="secondary">{`${date(event.start)} · ${time(event.start)} – ${time(event.end)} · ${event.calendarTitle}`}</Text>
+        {event.location && !event.location.startsWith("https://")
+          ? <Row spacing="tight"><Symbol name="mappin.and.ellipse" size="caption" tone="secondary" /><Text tone="secondary">{event.location.slice(0, 160)}</Text></Row>
+          : null}
+        {ongoing ? <Progress value={Math.max(0, Math.min(1, (now - event.start) / (event.end - event.start)))} tone="success" /> : null}
+        <Row spacing="regular">
+          {event.meetingURL ? <Button title="Join" icon="video.fill" tone="accent" disabled={busy}
+            onPress={() => { void request("calendar/join", { id: event.id }); }} /> : null}
+          <Button title="Open in Calendar" icon="calendar" disabled={busy} onPress={() => { void request("calendar/open"); }} />
+        </Row>
+        {error ? <Text tone="danger">{error.slice(0, 256)}</Text> : null}
+        {next ? <>
+          <Divider />
+          <ListItem icon="arrow.turn.down.right" tone="secondary" title={next.title.slice(0, 96)}
+            subtitle={`${next.start <= now ? "Also now" : "Then"} · ${date(next.start)} ${time(next.start)}`} />
+        </> : null}
       </Activity.Expanded>
     </Activity> : null}
   </>;

@@ -74,6 +74,15 @@ function launchProcess(executable, args) {
   };
 }
 function nodes(node) { return [node, ...node.children.flatMap(nodes)]; }
+function findToggle(tree, title) {
+  const item = tree && nodes(tree).find((node) => node.type === "listItem" && node.props.text === title);
+  return item && nodes(item).find((node) => node.type === "toggle");
+}
+function toggle(tree, title) {
+  const control = findToggle(tree, title);
+  assert.ok(control?.props.action, `Missing toggle: ${title}`);
+  return control;
+}
 function action(surface, title) {
   const button = nodes(surface.expanded).find((node) => node.type === "button" && node.props.text === title);
   assert.ok(button?.props.action, `Missing action: ${title}`);
@@ -246,7 +255,7 @@ test("Calendar connects explicitly, selects calendars, and follows event changes
     const initial = await runner.wait((message) => !!message.settings);
     assert.deepEqual(initial.surfaces, []);
     assert.equal(runner.messages.some((message) => message.type === "connectionCommand"), false);
-    runner.send(action({ expanded: initial.settings }, "Connect Calendar"));
+    runner.send(action({ expanded: initial.settings }, "Connect"));
     const open = await runner.waitMessage((message) => message.operation === "open");
     assert.equal(open.connectionID, "calendar");
     acknowledge(open);
@@ -256,13 +265,14 @@ test("Calendar connects explicitly, selects calendars, and follows event changes
     assert.equal(upcoming.surfaces[0].phase, "paused");
     assert.equal(upcoming.surfaces[0].idlePreview, true);
     assert.equal(upcoming.surfaces[0].peek, undefined);
-    assert.ok(nodes(upcoming.settings).some((node) => node.props.text === "Hide Personal"));
+    const personal = toggle(upcoming.settings, "Personal");
+    assert.equal(personal.props.value, 1);
 
-    runner.send(action({ expanded: upcoming.settings }, "Hide Personal"));
+    runner.send(personal.props.action, "false");
     const select = await runner.waitMessage((message) => message.message?.method === "calendar/select");
     assert.deepEqual(select.message.params, { ids: ["work"] });
     acknowledge(select, status([distant], { calendars: [choices[0], { ...choices[1], selected: false }] }));
-    await runner.wait((message) => nodes(message.settings).some((node) => node.props.text === "Show Personal"));
+    await runner.wait((message) => findToggle(message.settings, "Personal")?.props.value === 0);
 
     const soon = { ...distant, start: now + 600, end: now + 2400 };
     incoming(open.sessionID, { method: "calendar/state", params: status([soon]) });
@@ -270,7 +280,7 @@ test("Calendar connects explicitly, selects calendars, and follows event changes
     assert.equal(imminent.surfaces[0].peek.id, "meeting-1:soon");
     assert.match(imminent.surfaces[0].peek.text, /Project review/);
 
-    runner.send(action(imminent.surfaces[0], "Join meeting"));
+    runner.send(action(imminent.surfaces[0], "Join"));
     const join = await runner.waitMessage((message) => message.message?.method === "calendar/join");
     assert.deepEqual(join.message.params, { id: distant.id });
     acknowledge(join, null);
@@ -287,7 +297,7 @@ test("Calendar connects explicitly, selects calendars, and follows event changes
     incoming(open.sessionID, { method: "calendar/state", params: status([], { authorization: "denied", calendars: [], error: "Calendar access denied" }) });
     const denied = await runner.wait((message) => nodes(message.settings).some((node) => node.props.text === "Calendar access denied"));
     assert.deepEqual(denied.surfaces, []);
-    assert.ok(nodes(denied.settings).some((node) => node.props.text === "Connect Calendar"));
+    assert.ok(nodes(denied.settings).some((node) => node.type === "button" && node.props.text === "Connect"));
     runner.message({ type: "connectionEvent", connectionID: "calendar", sessionID: open.sessionID, event: "closed" });
     await runner.wait((message) => nodes(message.settings).some((node) => /Calendar disconnected/.test(node.props.text ?? "")));
     assert.equal(runner.messages.filter((message) => message.operation === "open").length, 1);
