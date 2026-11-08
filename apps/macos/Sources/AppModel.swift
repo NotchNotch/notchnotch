@@ -25,10 +25,17 @@ final class AppModel {
             onLayoutChange?()
         }
     }
-    var extensionStore: ExtensionStore {
+    private static var supportDirectory: URL {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
-        return ExtensionStore(directory: support.appendingPathComponent("NotchNotch/Extensions"))
+        return support.appendingPathComponent("NotchNotch")
+    }
+    var extensionStore: ExtensionStore {
+        ExtensionStore(directory: Self.supportDirectory.appendingPathComponent("Extensions"))
+    }
+    /// Per-extension key-value storage written by the runner (manifest ids are validated path-safe).
+    func storageURL(for id: String) -> URL {
+        Self.supportDirectory.appendingPathComponent("Storage").appendingPathComponent("\(id).json")
     }
     var errors: [String: String] = [:]
     var notchWidth: CGFloat = 180
@@ -137,7 +144,7 @@ final class AppModel {
                 }
                 connections[manifest.id] = connection
                 reloads[manifest.id] = revision
-                try connection.start(executable: runnerURL, bundle: bundle)
+                try connection.start(executable: runnerURL, bundle: bundle, storage: storageURL(for: manifest.id))
             } catch { errors[manifest.id] = error.localizedDescription }
         }
         synchronizePeek()
@@ -219,6 +226,7 @@ final class AppModel {
     func removeExtension(_ record: InstalledExtension) async throws {
         guard extensionStore.isManaged(record) else { throw ProtocolError.invalid("Included extensions can be disabled but not removed.") }
         forgetAccess(record.id)
+        try? FileManager.default.removeItem(at: storageURL(for: record.id))
         installingIDs.insert(record.id)
         stopExtension(record.id)
         defer { installingIDs.remove(record.id); reloadExtensions() }

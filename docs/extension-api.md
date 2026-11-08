@@ -105,6 +105,20 @@ Guidelines:
 
 React hooks, promises, `setTimeout`, `setInterval`, and `console` are available. Console output appears under **Settings & Extensions… → your extension → Console** (the last 300 lines; errors are kept longest). DOM components, CSS, global `fetch`, Node built-ins and native modules are not exposed to extension JavaScript. API v1 accepts `local-network` and `process` permissions. Local networking and native tools additionally require named manifest connections and explicit session consent. The SDK is a local workspace package and is not published to npm yet.
 
+## Storage
+
+`storage` and `useStoredState` keep small JSON values across app restarts (256 KiB per extension). Reads are synchronous; a write that would exceed the limit returns `false` and leaves the stored data unchanged. Storage is removed with the extension.
+
+```tsx
+import { storage, useStoredState } from "@notchnotch/sdk";
+
+const [minutes, setMinutes] = useStoredState("minutes", "25"); // like useState, but persisted
+storage.set("lastRun", Date.now());
+const lastRun = storage.get<number>("lastRun");
+```
+
+Do not store secrets: the file is plain JSON in the user's Application Support folder.
+
 ## Local services and third-party apps
 
 Use `localHTTP`, `ConnectionStream` and `JSONRPCClient` to connect to a declared loopback service or JSONL command-line tool. A bundled helper can adapt another app's public integration interface. Transport support is generic; new app integrations do not need changes to the host. See [Connections](connections.md) for manifest schemas, the Zeytun decision example, lifecycle/permission rules and the bundled Music adapter.
@@ -144,7 +158,7 @@ An `Activity` may set `idlePreview` to opt into the resumable fallback; it must 
 
 Build a folder containing `notchnotch.json`, `bundle.js`, and any bundled helper/assets. Open **Settings & Extensions… → Install from Folder…** and select that built folder. The manager validates it and shows a review before copying it into the user's extension library. Keep a stable manifest id for updates, and use an id distinct from the included examples. Installed ids cannot shadow included extensions. Package limits are 512 files/folders, no symbolic links, 8 MiB for `bundle.js` and 64 MiB total. Development `build.mjs` files are never executed by the installer.
 
-This preview supports explicitly trusted local packages. Installing native code is a trust decision; transport session consent does not sandbox a helper. A public marketplace and generic persistent extension-preference storage are not yet implemented. Use the manager for enable/disable, restart, connection access review and disconnect actions; setup controls use the extension’s `Settings` panel; live activity controls remain in the notch.
+This preview supports explicitly trusted local packages. Installing native code is a trust decision; transport session consent does not sandbox a helper. A public marketplace is not yet implemented. Use the manager for enable/disable, restart, connection access review and disconnect actions; setup controls use the extension’s `Settings` panel; live activity controls remain in the notch.
 
 ## Extension-owned setup in the management window
 

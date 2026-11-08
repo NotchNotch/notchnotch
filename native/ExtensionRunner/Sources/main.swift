@@ -6,8 +6,8 @@ import NotchProtocol
 final class Runner {
     let runtime: JavaScriptRuntime
     private var input = Data()
-    init(bundle: URL, extensionID: String) throws {
-        runtime = try JavaScriptRuntime(extensionID: extensionID) { json in
+    init(bundle: URL, extensionID: String, storage: URL?) throws {
+        runtime = try JavaScriptRuntime(extensionID: extensionID, storageURL: storage) { json in
             FileHandle.standardOutput.write(Data((json + "\n").utf8))
         }
         try runtime.evaluate(String(contentsOf: bundle, encoding: .utf8), sourceURL: bundle)
@@ -25,12 +25,13 @@ final class Runner {
     }
 }
 
-guard CommandLine.arguments.count == 3 else {
-    FileHandle.standardError.write(Data("Usage: ExtensionRunner <bundle.js> <extension-id>\n".utf8))
+guard (3...4).contains(CommandLine.arguments.count) else {
+    FileHandle.standardError.write(Data("Usage: ExtensionRunner <bundle.js> <extension-id> [storage.json]\n".utf8))
     exit(64)
 }
 do {
-    let runner = try Runner(bundle: URL(fileURLWithPath: CommandLine.arguments[1]), extensionID: CommandLine.arguments[2])
+    let storage = CommandLine.arguments.count == 4 ? URL(fileURLWithPath: CommandLine.arguments[3]) : nil
+    let runner = try Runner(bundle: URL(fileURLWithPath: CommandLine.arguments[1]), extensionID: CommandLine.arguments[2], storage: storage)
     FileHandle.standardInput.readabilityHandler = { handle in
         let data = handle.availableData
         Task { @MainActor in runner.read(data) }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Actions, Activity, Badge, Button, Divider, ListItem, Picker, Progress, Prompt, Row, Section, Settings,
-  Spacer, Symbol, Text, Toggle,
+  Spacer, Symbol, Text, Toggle, useStoredState,
 } from "@notchnotch/sdk";
 import { start } from "@notchnotch/runtime";
 
@@ -22,8 +22,9 @@ function clock(seconds: number) {
 }
 
 function FocusTimer() {
-  const [minutes, setMinutes] = useState<Duration>("25");
-  const [askBeforeBreak, setAskBeforeBreak] = useState(true);
+  // Preferences survive app restarts through extension storage.
+  const [minutes, setMinutes] = useStoredState<Duration>("minutes", "25");
+  const [askBeforeBreak, setAskBeforeBreak] = useStoredState<boolean>("askBeforeBreak", true);
   const [phase, setPhase] = useState<Phase>("idle");
   const [paused, setPaused] = useState(false);
   const [remaining, setRemaining] = useState(0);

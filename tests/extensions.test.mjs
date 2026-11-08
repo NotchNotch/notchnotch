@@ -29,8 +29,9 @@ function launchFixture() {
     [path.join(fixtureDirectory, "bundle.js"), "test.runtime"]);
 }
 
-function launch(name, id) {
-  return launchProcess(path.join(root, ".build/debug/ExtensionRunner"), [path.join(root, "dist/extensions", name, "bundle.js"), id]);
+function launch(name, id, storage) {
+  return launchProcess(path.join(root, ".build/debug/ExtensionRunner"),
+    [path.join(root, "dist/extensions", name, "bundle.js"), id, ...(storage ? [storage] : [])]);
 }
 function launchProcess(executable, args) {
   const child = spawn(executable, args);
@@ -371,5 +372,21 @@ test("Music reconnects silently at launch when access was always allowed", async
     const resumed = await runner.wait((message) => message.surfaces[0]?.id === "now-playing");
     assert.equal(resumed.surfaces[0].phase, "paused");
     assert.equal(runner.messages.some((message) => message.message?.method === "music/connect"), false);
+  } finally { await runner.stop(); }
+});
+
+test("Extension storage persists across runner restarts", async () => {
+  const storage = path.join(fixtureDirectory, "focus-storage.json");
+  let runner = launch("focus-timer", "dev.notchnotch.example.focus", storage);
+  try {
+    const initial = await runner.wait((message) => !!message.settings);
+    const picker = nodes(initial.settings).find((node) => node.type === "picker");
+    runner.send(picker.props.action, "50");
+    await runner.wait((message) => nodes(message.settings).some((node) => node.type === "picker" && node.props.selection === "50"));
+  } finally { await runner.stop(); }
+  runner = launch("focus-timer", "dev.notchnotch.example.focus", storage);
+  try {
+    const restored = await runner.wait((message) => !!message.settings);
+    assert.equal(nodes(restored.settings).find((node) => node.type === "picker").props.selection, "50");
   } finally { await runner.stop(); }
 });

@@ -34,6 +34,10 @@ Native buttons and fields send an action identifier and optional text value. The
 
 React 19.3.1 and react-reconciler 0.34.0 are pinned together. The reconciler API is experimental; upgrades require running native integration tests.
 
+## Extension storage
+
+The host passes each runner a storage path, `~/Library/Application Support/NotchNotch/Storage/<id>.json`. The runner reads and atomically writes one JSON object there (at most 256 KiB); the app process never parses it. Removing a managed extension deletes its storage file.
+
 ## Transport and validation
 
 Transport is newline-delimited UTF-8 JSON over child stdin/stdout. Console output uses structured log messages, never unframed stdout. Stderr reports runner startup failures. Every message carries protocol version 1 and an extension identifier where applicable.
@@ -88,7 +92,7 @@ A separate, reusable `NSWindow` hosts `ManagementView` in SwiftUI. The menu's **
 
 Installation selects an already built folder. Inspection checks the manifest, a nonempty regular `bundle.js` up to 8 MiB, up to 512 regular files/folders, no symlinks and up to 64 MiB total. The confirmation shows identity, version, declared permissions/destinations and the native-process trust boundary. File validation/copying run off the UI thread. The installer copies into a hidden staging folder, validates that copy and compares its manifest with the review before moving it into place. Updates retain the previous installation until replacement succeeds. Build scripts never execute during import. Native connection consent remains separate from package installation. Removing a managed local extension stops it and uses Finder's Trash operation; included examples can be disabled.
 
-Local import lives on the Extensions page. A public catalog is not part of this preview; remote catalog discovery, publisher verification, download/update feeds and persistent extension preference storage remain future work.
+Local import lives on the Extensions page. A public catalog is not part of this preview; remote catalog discovery, publisher verification and download/update feeds remain future work.
 
 ### Extension settings UI
 

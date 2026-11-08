@@ -39,3 +39,19 @@ import NotchProtocol
     runtime.receive(#"{"protocolVersion":1,"type":"media","state":{"title":"ignored"}}"#)
     #expect(messages.count == 1)
 }
+
+@Test @MainActor func storageRoundTripsAndRejectsOversizedOrInvalidWrites() throws {
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent("notchnotch-storage-\(UUID().uuidString)/store.json")
+    defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+    var messages: [String] = []
+    let runtime = try JavaScriptRuntime(extensionID: "test.storage", storageURL: url) { messages.append($0) }
+    defer { runtime.stop() }
+    try runtime.evaluate(#"""
+    if (__nativeStorageRead() !== '{}') throw Error('Expected empty storage');
+    if (!__nativeStorageWrite(JSON.stringify({ minutes: '50' }))) throw Error('Write failed');
+    if (__nativeStorageWrite('[1, 2]')) throw Error('Arrays must be rejected');
+    if (__nativeStorageWrite(JSON.stringify({ big: 'x'.repeat(300000) }))) throw Error('Oversized write must be rejected');
+    if (JSON.parse(__nativeStorageRead()).minutes !== '50') throw Error('Read failed');
+    """#)
+    #expect(try String(contentsOf: url, encoding: .utf8) == #"{"minutes":"50"}"#)
+}

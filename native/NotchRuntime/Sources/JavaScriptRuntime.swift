@@ -12,10 +12,13 @@ public final class JavaScriptRuntime {
     private var lastException: String?
     private let extensionID: String
     private let send: (String) -> Void
+    private let storageURL: URL?
+    public static let maximumStorageBytes = 262_144
 
-    public init(extensionID: String, send: @escaping (String) -> Void) throws {
+    public init(extensionID: String, storageURL: URL? = nil, send: @escaping (String) -> Void) throws {
         self.extensionID = extensionID
         self.send = send
+        self.storageURL = storageURL
         guard let context = JSContext() else { throw ProtocolError.invalid("Could not create JavaScript context") }
         self.context = context
         context.exceptionHandler = { [weak self] _, exception in
@@ -43,6 +46,14 @@ public final class JavaScriptRuntime {
                 self?.callbacks.removeValue(forKey: identifier)
             }
         }
+        let storageReadBlock: @convention(block) () -> String = { [weak self] in
+            MainActor.assumeIsolated { self?.readStorage() ?? "{}" }
+        }
+        let storageWriteBlock: @convention(block) (String) -> Bool = { [weak self] json in
+            MainActor.assumeIsolated { self?.writeStorage(json) ?? false }
+        }
+        context.setObject(storageReadBlock, forKeyedSubscript: "__nativeStorageRead" as NSString)
+        context.setObject(storageWriteBlock, forKeyedSubscript: "__nativeStorageWrite" as NSString)
         context.setObject(sendBlock, forKeyedSubscript: "__nativeSend" as NSString)
         context.setObject(scheduleBlock, forKeyedSubscript: "__nativeSchedule" as NSString)
         context.setObject(cancelBlock, forKeyedSubscript: "__nativeCancel" as NSString)
@@ -106,6 +117,30 @@ public final class JavaScriptRuntime {
         timers[identifier] = timer
         RunLoop.main.add(timer, forMode: .common)
         return identifier
+    }
+
+    /// One JSON object per extension. Missing or unreadable storage starts empty.
+    private func readStorage() -> String {
+        guard let storageURL, let data = try? Data(contentsOf: storageURL), data.count <= Self.maximumStorageBytes,
+              (try? JSONSerialization.jsonObject(with: data)) is [String: Any],
+              let json = String(data: data, encoding: .utf8) else { return "{}" }
+        return json
+    }
+
+    private func writeStorage(_ json: String) -> Bool {
+        guard let storageURL else { notice("Storage is not available for this extension", type: "log"); return false }
+        let data = Data(json.utf8)
+        guard data.count <= Self.maximumStorageBytes else {
+            notice("Extension storage is limited to 256 KiB", type: "log"); return false
+        }
+        guard (try? JSONSerialization.jsonObject(with: data)) is [String: Any] else { return false }
+        do {
+            try FileManager.default.createDirectory(at: storageURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try data.write(to: storageURL, options: .atomic)
+            return true
+        } catch {
+            notice("Could not save extension storage: \(error.localizedDescription)", type: "log"); return false
+        }
     }
 
     private func notice(_ message: String, type: String) {

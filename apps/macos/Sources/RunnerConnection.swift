@@ -27,10 +27,10 @@ final class RunnerConnection {
         self.directory = directory
     }
 
-    func start(executable: URL, bundle: URL) throws {
+    func start(executable: URL, bundle: URL, storage: URL) throws {
         try manifest.validate()
         process.executableURL = executable
-        process.arguments = [bundle.path, manifest.id]
+        process.arguments = [bundle.path, manifest.id, storage.path]
         process.standardInput = input
         process.standardOutput = output
         process.standardError = errors
