@@ -1,10 +1,25 @@
 import SwiftUI
+import ServiceManagement
 
 struct ManagementGeneralPage: View {
     @Bindable var coordinator: ManagementCoordinator
     var body: some View {
         @Bindable var model = coordinator.model
         Form {
+            Section {
+                Toggle("Open at login", isOn: Binding(get: { model.launchAtLogin || model.launchAtLoginNeedsApproval },
+                                                      set: { model.setLaunchAtLogin($0) }))
+                    .toggleStyle(.switch)
+                if model.launchAtLoginNeedsApproval {
+                    LabeledContent("Allow NotchNotch in Login Items") {
+                        Button("Open System Settings") { SMAppService.openSystemSettingsLoginItems() }
+                    }
+                }
+                if let error = model.launchAtLoginError {
+                    Text(error).foregroundStyle(.red).font(.callout)
+                }
+            }
+            .onAppear { model.refreshLaunchAtLogin() }
             Section {
                 Picker("Show on", selection: $model.preferredDisplayID) {
                     Text("Automatic").tag(String?.none)

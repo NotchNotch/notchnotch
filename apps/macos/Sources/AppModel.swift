@@ -1,4 +1,5 @@
 import AppKit
+import ServiceManagement
 import Observation
 import NotchCore
 import NotchProtocol
@@ -37,7 +38,26 @@ final class AppModel {
     func storageURL(for id: String) -> URL {
         Self.supportDirectory.appendingPathComponent("Storage").appendingPathComponent("\(id).json")
     }
-    struct Display: Identifiable, Equatable { let id: String; let name: String; let hasNotch: Bool }
+    /// Mirrors SMAppService; the system owns the actual state and the user can
+    /// change it in System Settings › General › Login Items.
+    private(set) var launchAtLogin = SMAppService.mainApp.status == .enabled
+    private(set) var launchAtLoginNeedsApproval = SMAppService.mainApp.status == .requiresApproval
+    var launchAtLoginError: String?
+    func setLaunchAtLogin(_ enabled: Bool) {
+        launchAtLoginError = nil
+        do {
+            if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
+        } catch {
+            launchAtLoginError = error.localizedDescription
+        }
+        refreshLaunchAtLogin()
+    }
+    func refreshLaunchAtLogin() {
+        let status = SMAppService.mainApp.status
+        launchAtLogin = status == .enabled
+        launchAtLoginNeedsApproval = status == .requiresApproval
+    }
+        struct Display: Identifiable, Equatable { let id: String; let name: String; let hasNotch: Bool }
     /// Connected screens, refreshed by the app delegate on display changes.
     var displays: [Display] = []
     /// nil = automatic: the built-in display with a camera housing, else the main display.
