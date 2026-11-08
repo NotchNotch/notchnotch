@@ -17,7 +17,7 @@ Download the latest DMG from the project's GitHub Releases, open it and drag Not
 
 ## Development
 
-Requires macOS 14+, a Swift 6 toolchain, Node.js 22+, and pnpm.
+Building requires Xcode 26 (Swift 6.2 or later and the macOS 26 SDK), Node.js 22+ and pnpm. The app runs on macOS 14 or later.
 
 ```sh
 pnpm install
