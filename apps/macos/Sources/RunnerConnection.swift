@@ -77,17 +77,19 @@ final class RunnerConnection {
 
     private func handleConnection(_ command: ConnectionCommand) {
         if broker == nil {
-            broker = ConnectionBroker(manifest: manifest, directory: directory) { [manifest] id, target in
-                let definition = manifest.connections?[id]
-                let alert = NSAlert()
-                alert.messageText = "Allow \(manifest.name) to \(definition?.transport == .stdio ? "run a local tool" : "connect locally")?"
-                alert.informativeText = "Connection: \(id)\n\(target)\n\n" + (definition?.transport == .stdio
-                    ? "This tool runs with your user account and can access files and network. Allow only extensions and tools you trust."
-                    : "The extension can exchange data with this local service. Access ends when the extension is reloaded or connections are disconnected.")
-                alert.addButton(withTitle: "Allow for This Session")
-                alert.addButton(withTitle: "Don't Allow")
-                NSApp.activate(ignoringOtherApps: true)
-                return alert.runModal() == .alertFirstButtonReturn
+            broker = ConnectionBroker(manifest: manifest, directory: directory) { [manifest] request in
+                let store = ConnectionGrantStore()
+                if store.isGranted(extensionID: manifest.id, connectionID: request.connectionID, fingerprint: request.fingerprint) {
+                    return true
+                }
+                guard request.interactive else { return false }
+                let decision = await ConnectionConsentPresenter.shared.ask(.init(
+                    extensionName: manifest.name, extensionIcon: manifest.icon, connectionID: request.connectionID,
+                    target: request.target, runsTool: manifest.connections?[request.connectionID]?.transport == .stdio))
+                if decision == .always {
+                    store.grant(extensionID: manifest.id, connectionID: request.connectionID, fingerprint: request.fingerprint)
+                }
+                return decision != .deny
             } emit: { [weak self] json in self?.sendConnectionMessage(json) }
         }
         broker?.receive(command)

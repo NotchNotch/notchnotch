@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import NotchProtocol
 
@@ -5,6 +6,20 @@ private final class LocalSessionDelegate: NSObject, URLSessionTaskDelegate, @unc
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest, completionHandler: @escaping @Sendable (URLRequest?) -> Void) {
         completionHandler(nil)
+    }
+}
+
+/// What the host needs to decide whether a connection may start.
+public struct ConnectionAuthorizationRequest: Sendable, Equatable {
+    public var connectionID: String
+    /// Human-readable destination: an endpoint, or an executable path and arguments.
+    public var target: String
+    /// Changes whenever the destination changes, including a rebuilt helper binary.
+    public var fingerprint: String
+    /// `false` must not show UI; answer from stored grants only.
+    public var interactive: Bool
+    public init(connectionID: String, target: String, fingerprint: String, interactive: Bool) {
+        self.connectionID = connectionID; self.target = target; self.fingerprint = fingerprint; self.interactive = interactive
     }
 }
 
@@ -24,18 +39,20 @@ public final class ConnectionBroker {
 
     private let manifest: ExtensionManifest
     private let directory: URL
-    private let authorize: (String, String) -> Bool
+    private let authorize: @MainActor (ConnectionAuthorizationRequest) async -> Bool
     private let emit: (String) -> Void
     private let session: URLSession
     private let websocketSession: URLSession
-    private var decisions: [String: Bool] = [:]
+    /// Only grants are cached; a denial is asked again on the next explicit attempt.
+    private var granted: Set<String> = []
+    private var pendingDecisions: [String: Task<Bool, Never>] = [:]
     private var streams: [String: Stream] = [:]
     private var closedSessions: [String: String] = [:]
     private var operations: [String: Task<Void, Never>] = [:]
     private var stopped = false
 
     public init(manifest: ExtensionManifest, directory: URL,
-                authorize: @escaping (String, String) -> Bool, emit: @escaping (String) -> Void) {
+                authorize: @escaping @MainActor (ConnectionAuthorizationRequest) async -> Bool, emit: @escaping (String) -> Void) {
         self.manifest = manifest; self.directory = directory.resolvingSymlinksInPath()
         self.authorize = authorize; self.emit = emit
         let configuration = URLSessionConfiguration.ephemeral
@@ -83,9 +100,27 @@ public final class ConnectionBroker {
         for operation in operations.values { operation.cancel() }
         operations.removeAll()
         for stream in streams.values { stream.stop() }
-        streams.removeAll(); decisions.removeAll()
+        streams.removeAll(); granted.removeAll()
+        for decision in pendingDecisions.values { decision.cancel() }
+        pendingDecisions.removeAll()
         session.invalidateAndCancel()
         websocketSession.invalidateAndCancel()
+    }
+
+    /// SHA-256 over the transport, destination and, for helpers, the binary itself.
+    nonisolated static func fingerprint(executable: URL?, definition: ConnectionDefinition) throws -> String {
+        var hash = SHA256()
+        hash.update(data: Data(definition.transport.rawValue.utf8))
+        if let executable {
+            hash.update(data: Data(executable.path.utf8))
+            for argument in definition.arguments ?? [] { hash.update(data: Data([0])); hash.update(data: Data(argument.utf8)) }
+            let handle = try FileHandle(forReadingFrom: executable)
+            defer { try? handle.close() }
+            while let chunk = try handle.read(upToCount: 1 << 20), !chunk.isEmpty { hash.update(data: chunk) }
+        } else {
+            hash.update(data: Data((definition.endpoint ?? "").utf8))
+        }
+        return hash.finalize().map { String(format: "%02x", $0) }.joined()
     }
 
     private func perform(_ command: ConnectionCommand) async throws -> JSONValue {
@@ -102,13 +137,25 @@ public final class ConnectionBroker {
             return .null
         }
         let executable = definition.transport == .stdio ? try resolveExecutable(definition.executable!) : nil
-        if decisions[command.connectionID] == nil {
+        if !granted.contains(command.connectionID) {
+            let interactive = command.interactive ?? true
             let target = executable.map { $0.path + "\nArguments: " + (definition.arguments ?? []).joined(separator: " · ") }
                 ?? definition.endpoint!
-            decisions[command.connectionID] = authorize(command.connectionID, target)
-        }
-        guard decisions[command.connectionID] == true, !stopped, !Task.isCancelled else {
-            throw ProtocolError.invalid("Connection access was not granted. Reload the extension to ask again.")
+            let request = ConnectionAuthorizationRequest(
+                connectionID: command.connectionID, target: target,
+                fingerprint: try Self.fingerprint(executable: executable, definition: definition), interactive: interactive)
+            // Concurrent operations on one connection share a single question.
+            let key = "\(command.connectionID)|\(interactive)"
+            let decision = pendingDecisions[key] ?? Task { [authorize] in await authorize(request) }
+            pendingDecisions[key] = decision
+            let allowed = await decision.value
+            if pendingDecisions[key] == decision { pendingDecisions.removeValue(forKey: key) }
+            guard !stopped, !Task.isCancelled else { throw ProtocolError.invalid("Extension connections disconnected") }
+            guard allowed else {
+                throw ProtocolError.invalid(interactive ? "Connection access was not granted."
+                                            : "Connection access is required. Connect from the extension's settings.")
+            }
+            granted.insert(command.connectionID)
         }
         switch command.operation {
         case .request:

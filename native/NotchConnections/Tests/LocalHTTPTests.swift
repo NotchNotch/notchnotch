@@ -70,7 +70,7 @@ private final class HTTPFixture: @unchecked Sendable {
     """.utf8))
     var messages: [ConnectionEvent] = []
     var opened = false
-    let broker = ConnectionBroker(manifest: manifest, directory: URL(fileURLWithPath: "/tmp"), authorize: { _, _ in true }, emit: { json in
+    let broker = ConnectionBroker(manifest: manifest, directory: URL(fileURLWithPath: "/tmp"), authorize: { _ in true }, emit: { json in
         let data = Data(json.utf8)
         if let event = try? JSONDecoder().decode(ConnectionEvent.self, from: data) { messages.append(event) }
         if let response = try? JSONDecoder().decode(ConnectionResponse.self, from: data), response.requestID == "open", response.error == nil { opened = true }
@@ -93,7 +93,7 @@ private final class HTTPFixture: @unchecked Sendable {
      "connections":{"service":{"transport":"http","endpoint":"http://127.0.0.1:\(port)"}}}
     """.utf8))
     var responses: [ConnectionResponse] = []
-    let broker = ConnectionBroker(manifest: manifest, directory: URL(fileURLWithPath: "/tmp"), authorize: { _, _ in true }, emit: { json in
+    let broker = ConnectionBroker(manifest: manifest, directory: URL(fileURLWithPath: "/tmp"), authorize: { _ in true }, emit: { json in
         if let response = try? JSONDecoder().decode(ConnectionResponse.self, from: Data(json.utf8)) { responses.append(response) }
     })
     defer { broker.stop() }

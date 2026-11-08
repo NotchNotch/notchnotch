@@ -44,9 +44,9 @@ private func manifest(permissions: [String] = ["process"], connections: String =
 @Test @MainActor func stdioRoundTripRequiresConsentAndRetainsSessionIdentity() async throws {
     var messages: [[String: Any]] = []
     var authorizations = 0
-    let broker = ConnectionBroker(manifest: try manifest(), directory: URL(fileURLWithPath: "/tmp"), authorize: { _, target in
+    let broker = ConnectionBroker(manifest: try manifest(), directory: URL(fileURLWithPath: "/tmp"), authorize: { request in
         authorizations += 1
-        return target.contains("/usr/bin/tee")
+        return request.interactive && request.target.contains("/usr/bin/tee")
     }, emit: { json in
         if let value = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any] { messages.append(value) }
     })
@@ -68,7 +68,7 @@ private func manifest(permissions: [String] = ["process"], connections: String =
 @Test @MainActor func undeclaredDeniedAndCrossExtensionRequestsCannotStartAProcess() async throws {
     var responses: [ConnectionResponse] = []
     var authorizations = 0
-    let broker = ConnectionBroker(manifest: try manifest(), directory: URL(fileURLWithPath: "/tmp"), authorize: { _, _ in
+    let broker = ConnectionBroker(manifest: try manifest(), directory: URL(fileURLWithPath: "/tmp"), authorize: { _ in
         authorizations += 1; return false
     }, emit: { json in
         if let value = try? JSONDecoder().decode(ConnectionResponse.self, from: Data(json.utf8)) { responses.append(value) }
@@ -81,4 +81,44 @@ private func manifest(permissions: [String] = ["process"], connections: String =
     #expect(responses.count == 3)
     #expect(responses.allSatisfy { $0.error != nil })
     #expect(authorizations == 1)
+}
+
+@Test @MainActor func deniedAccessIsAskedAgainAndSilentOpensNeverPrompt() async throws {
+    var responses: [ConnectionResponse] = []
+    var requests: [ConnectionAuthorizationRequest] = []
+    var allow = false
+    let broker = ConnectionBroker(manifest: try manifest(), directory: URL(fileURLWithPath: "/tmp"), authorize: { request in
+        requests.append(request); return request.interactive && allow
+    }, emit: { json in
+        if let value = try? JSONDecoder().decode(ConnectionResponse.self, from: Data(json.utf8)) { responses.append(value) }
+    })
+    defer { broker.stop() }
+    broker.receive(.init(extensionID: "dev.test.bridge", requestID: "silent", connectionID: "echo", operation: .open,
+                         sessionID: "a", interactive: false))
+    for _ in 0..<100 where responses.isEmpty { try await Task.sleep(for: .milliseconds(10)) }
+    #expect(responses.first?.error?.contains("required") == true)
+    #expect(requests.first?.interactive == false)
+    #expect(requests.first?.fingerprint.count == 64)
+
+    allow = true
+    broker.receive(.init(extensionID: "dev.test.bridge", requestID: "asked", connectionID: "echo", operation: .open, sessionID: "b"))
+    for _ in 0..<100 where responses.count < 2 { try await Task.sleep(for: .milliseconds(10)) }
+    #expect(responses.last?.requestID == "asked" && responses.last?.error == nil)
+    #expect(requests.count == 2)
+    #expect(requests[0].fingerprint == requests[1].fingerprint)
+}
+
+@Test func grantStoreBindsGrantsToFingerprints() throws {
+    let suite = "dev.notchnotch.tests.grants.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let store = ConnectionGrantStore(defaults: defaults)
+    #expect(!store.isGranted(extensionID: "a", connectionID: "player", fingerprint: "1"))
+    store.grant(extensionID: "a", connectionID: "player", fingerprint: "1")
+    #expect(store.isGranted(extensionID: "a", connectionID: "player", fingerprint: "1"))
+    #expect(!store.isGranted(extensionID: "a", connectionID: "player", fingerprint: "2"))
+    #expect(!store.isGranted(extensionID: "b", connectionID: "player", fingerprint: "1"))
+    #expect(store.grantedConnections(extensionID: "a") == ["player"])
+    store.revoke(extensionID: "a")
+    #expect(store.grantedConnections(extensionID: "a").isEmpty)
 }

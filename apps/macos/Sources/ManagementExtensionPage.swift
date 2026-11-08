@@ -78,7 +78,8 @@ struct ManagementExtensionPage: View {
             }
             Section {
                 DisclosureGroup("App Access", isExpanded: $showAccess) {
-                    ManagementAccessView(manifest: record.manifest)
+                    ManagementAccessView(manifest: record.manifest,
+                                         alwaysAllowed: coordinator.model.alwaysAllowedConnections(record.id))
                 }
                 DisclosureGroup(isExpanded: $showConsole) {
                     ExtensionLogView(entries: coordinator.model.extensionLogs[record.id] ?? []) {
@@ -111,6 +112,12 @@ struct ManagementExtensionPage: View {
                     LabeledContent("App connections") {
                         Button("Disconnect") { coordinator.model.disconnectExtension(record.id) }
                             .disabled(!coordinator.model.isEnabled(record.id) || coordinator.busy)
+                    }
+                }
+                if !coordinator.model.alwaysAllowedConnections(record.id).isEmpty {
+                    LabeledContent("Saved access") {
+                        Button("Forget App Access") { coordinator.model.forgetAccess(record.id) }
+                            .disabled(coordinator.busy)
                     }
                 }
                 if coordinator.model.extensionStore.isManaged(record) {

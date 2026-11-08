@@ -25,7 +25,7 @@ globalThis.__notchnotchConnectionDispatch = (message) => {
 };
 
 function command(connectionID: string, operation: ConnectionCommand["operation"],
-                 fields: Pick<ConnectionCommand, "request" | "message" | "sessionID"> = {}, timeoutMs = 35_000): Promise<JSONValue> {
+                 fields: Pick<ConnectionCommand, "request" | "message" | "sessionID" | "interactive"> = {}, timeoutMs = 35_000): Promise<JSONValue> {
   if (pending.size >= 32) return Promise.reject(new Error("Too many pending connection operations"));
   const requestID = `connection-${++serial}`;
   return new Promise((resolve, reject) => {
@@ -58,6 +58,14 @@ export function localHTTP(connectionID: string) {
   };
 }
 
+export interface OpenOptions {
+  /**
+   * `false` connects only if the user chose "Always Allow" before, and fails
+   * without showing a dialog otherwise. Use it to reconnect at launch.
+   */
+  interactive?: boolean;
+}
+
 /** One manifest-declared WebSocket or JSONL subprocess. Subscribe before opening. */
 export class ConnectionStream {
   private sessionID: string | undefined;
@@ -72,13 +80,14 @@ export class ConnectionStream {
 
   constructor(readonly connectionID: string) { listeners.add(this.dispatch); }
 
-  open(): Promise<void> {
+  open(options: OpenOptions = {}): Promise<void> {
     if (this.opening) return this.opening;
     if (this.sessionID) return Promise.resolve();
     const sessionID = `stream-${++serial}`;
     const generation = ++this.generation;
     this.sessionID = sessionID;
-    this.opening = command(this.connectionID, "open", { sessionID }, 120_000).then(() => {
+    const fields = options.interactive === false ? { sessionID, interactive: false } : { sessionID };
+    this.opening = command(this.connectionID, "open", fields, 120_000).then(() => {
       if (generation !== this.generation || this.sessionID !== sessionID) throw new Error("Connection closed while opening");
       this.opening = undefined;
     }).catch((error: unknown) => {
@@ -148,7 +157,7 @@ export class JSONRPCClient {
     });
   }
 
-  connect(): Promise<void> { return this.stream.open(); }
+  connect(options?: OpenOptions): Promise<void> { return this.stream.open(options); }
 
   async request<T = JSONValue>(method: string, params?: JSONValue, timeoutMs = 30_000): Promise<T> {
     const generation = this.generation;

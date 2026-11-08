@@ -105,6 +105,8 @@ export interface ConnectionCommand {
   sessionID?: string;
   request?: ConnectionHTTPRequest;
   message?: JSONValue;
+  /** `false` fails instead of asking the user when access was not granted before. */
+  interactive?: boolean;
 }
 export interface ConnectionResponse {
   protocolVersion: 1;

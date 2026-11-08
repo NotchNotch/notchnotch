@@ -91,6 +91,10 @@
         },
         "message": {
           "$ref": "#/$defs/json"
+        },
+        "interactive": {
+          "type": "boolean",
+          "description": "false fails instead of asking the user when access was not granted before"
         }
       },
       "additionalProperties": false

@@ -3,6 +3,7 @@ import Observation
 import NotchCore
 import NotchProtocol
 import NotchExtensions
+import NotchConnections
 
 @MainActor @Observable
 final class AppModel {
@@ -162,6 +163,18 @@ final class AppModel {
     }
     func restartExtension(_ id: String) { reloadExtensions(restarting: id) }
     func clearLogs(_ id: String) { extensionLogs.removeValue(forKey: id) }
+    /// Bumped when stored grants change; UserDefaults itself is not observable.
+    private(set) var grantsRevision = 0
+    func alwaysAllowedConnections(_ id: String) -> [String] {
+        _ = grantsRevision
+        return ConnectionGrantStore().grantedConnections(extensionID: id)
+    }
+    /// Removes stored "Always Allow" grants and closes current connections.
+    func forgetAccess(_ id: String) {
+        ConnectionGrantStore().revoke(extensionID: id)
+        grantsRevision += 1
+        disconnectExtension(id)
+    }
     private func appendLog(_ id: String, _ message: String, level: ExtensionLogEntry.Level) {
         let entry = ExtensionLogEntry(date: .now, level: level, message: message)
         var entries = extensionLogs[id, default: []]
@@ -205,6 +218,7 @@ final class AppModel {
     }
     func removeExtension(_ record: InstalledExtension) async throws {
         guard extensionStore.isManaged(record) else { throw ProtocolError.invalid("Included extensions can be disabled but not removed.") }
+        forgetAccess(record.id)
         installingIDs.insert(record.id)
         stopExtension(record.id)
         defer { installingIDs.remove(record.id); reloadExtensions() }

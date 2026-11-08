@@ -115,8 +115,10 @@ public struct ConnectionCommand: Codable, Sendable {
     public var sessionID: String?
     public var request: ConnectionHTTPRequest?
     public var message: JSONValue?
+    /// `false` fails instead of asking the user when access was not granted before.
+    public var interactive: Bool?
 
-    private enum CodingKeys: String, CodingKey { case protocolVersion, type, extensionID, requestID, connectionID, operation, sessionID, request, message }
+    private enum CodingKeys: String, CodingKey { case protocolVersion, type, extensionID, requestID, connectionID, operation, sessionID, request, message, interactive }
 
     public init(from decoder: any Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -129,12 +131,14 @@ public struct ConnectionCommand: Codable, Sendable {
         sessionID = try values.decodeIfPresent(String.self, forKey: .sessionID)
         request = try values.decodeIfPresent(ConnectionHTTPRequest.self, forKey: .request)
         message = values.contains(.message) ? try values.decode(JSONValue.self, forKey: .message) : nil
+        interactive = try values.decodeIfPresent(Bool.self, forKey: .interactive)
     }
 
     public init(extensionID: String, requestID: String, connectionID: String, operation: Operation,
-                sessionID: String? = nil, request: ConnectionHTTPRequest? = nil, message: JSONValue? = nil) {
+                sessionID: String? = nil, request: ConnectionHTTPRequest? = nil, message: JSONValue? = nil, interactive: Bool? = nil) {
         self.extensionID = extensionID; self.requestID = requestID; self.connectionID = connectionID
         self.operation = operation; self.sessionID = sessionID; self.request = request; self.message = message
+        self.interactive = interactive
     }
 
     public func validate(expectedExtensionID: String) throws {

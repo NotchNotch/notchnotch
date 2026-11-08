@@ -50,11 +50,13 @@ Before arbitrary third-party code is supported, add an OS-enforced runner/helper
 
 ### Generic connection broker
 
+Consent is asked in a floating, non-modal window (one request at a time), so the notch and other runners keep working. **Allow Once** lasts until the extension stops; **Always Allow** is stored by `ConnectionGrantStore` in app preferences, bound to a SHA-256 fingerprint of the transport, endpoint or helper path, arguments and helper binary. A rebuilt or moved helper is asked again. Denials are never cached: the next explicit attempt asks again. Commands with `interactive: false` answer from stored grants only and fail without UI, which lets extensions reconnect silently at launch. **Forget App Access** on the extension page, and removing an extension, delete its stored grants.
+
 `NotchConnections.ConnectionBroker` belongs to one extension runner and immutable manifest. It checks extension identity, declared destinations and transport-specific permissions, asks the host for consent to the concrete target, and emits correlated responses and session-tagged events. Application payloads remain opaque JSON. Application-specific protocols and routing live in the extensions.
 
 HTTP uses a dedicated ephemeral URLSession with redirects disabled, no cookies/cache/proxy and bounded UTF-8 responses. Only explicit IPv4/IPv6 loopback destinations are accepted; WebSockets have fixed manifest endpoints and separate long-lived sessions. Stdio uses a dedicated process, bounded JSONL decoding, fixed arguments, canonical bundle-path checks and a minimal environment. A process grant trusts the native adapter with the user's filesystem/network privileges; it does not sandbox it. Stream messages have a 64 KiB limit and 256-message-per-second limit, pending commands are bounded, and session ids reject stale messages after reconnect. Runner input is serialized off the UI thread with bounded backpressure.
 
-Stopping/reloading an extension or using the disconnect command cancels tasks, closes sockets, terminates immediate helper processes and clears session grants. The SDK correlates responses, rejects pending requests on disconnect and leaves reconnection and application-level decisions to the extension. See [Connections](connections.md) for transport/lifecycle details and limitations.
+Stopping/reloading an extension or using the disconnect command cancels tasks, closes sockets, terminates immediate helper processes and clears in-memory grants. The SDK correlates responses, rejects pending requests on disconnect and leaves reconnection and application-level decisions to the extension. See [Connections](connections.md) for transport/lifecycle details and limitations.
 
 
 ## Music extension and native adapter
