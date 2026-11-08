@@ -18,6 +18,7 @@ export async function packageApp() {
   await cp(path.join(root, ".build/debug/ExtensionRunner"), path.join(contents, "Helpers/ExtensionRunner"));
   await chmod(path.join(contents, "MacOS/NotchNotch"), 0o755);
   await chmod(path.join(contents, "Helpers/ExtensionRunner"), 0o755);
+  await cp(path.join(root, "apps/macos/Resources/AppIcon.icns"), path.join(contents, "Resources/AppIcon.icns"));
   const extensions = path.join(contents, "Resources/extensions");
   const source = path.join(root, "dist/extensions");
   await mkdir(extensions, { recursive: true });
@@ -34,6 +35,7 @@ export async function packageApp() {
 <key>CFBundleName</key><string>NotchNotch</string>
 <key>CFBundleDisplayName</key><string>NotchNotch</string>
 <key>CFBundleExecutable</key><string>NotchNotch</string>
+<key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>${version.split("-")[0]}</string>
 <key>CFBundleVersion</key><string>${build}</string>

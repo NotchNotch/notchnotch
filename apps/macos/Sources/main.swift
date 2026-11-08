@@ -120,9 +120,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return result.handled
     }
 
+    /// Template image: a screen outline with a filled notch hanging from its top edge.
+    private static func menuBarImage() -> NSImage {
+        let image = NSImage(size: NSSize(width: 18, height: 14), flipped: true) { _ in
+            let screen = NSBezierPath(roundedRect: NSRect(x: 1.5, y: 1.5, width: 15, height: 11), xRadius: 2.5, yRadius: 2.5)
+            screen.lineWidth = 1.5
+            NSColor.black.setStroke(); screen.stroke()
+            let notch = NSBezierPath(roundedRect: NSRect(x: 5.5, y: 1, width: 7, height: 4.5), xRadius: 1.8, yRadius: 1.8)
+            NSColor.black.setFill(); notch.fill()
+            NSRect(x: 5.5, y: 1, width: 7, height: 2).fill()
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = "NotchNotch"
+        return image
+    }
+
     private func makeMenu() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(systemSymbolName: "circle.lefthalf.filled", accessibilityDescription: "NotchNotch")
+        item.button?.image = Self.menuBarImage()
         let menu = NSMenu()
         menu.addItem(withTitle: "NotchNotch · Developer Preview", action: nil, keyEquivalent: "")
         menu.addItem(.separator())
