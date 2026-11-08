@@ -36,6 +36,8 @@ function Counter() {
 start(<Counter />);
 ```
 
+See [`examples/focus-timer`](../examples/focus-timer/src/index.tsx) for a complete extension using an activity, a prompt and a settings page. Run it with `pnpm dev:examples`.
+
 ## Surfaces
 
 - `Activity`: stable `id`, human-readable `title`, optional `phase` (`active`, `paused`, `completed`), and `initialView` (`compact` by default).

@@ -19,7 +19,7 @@ pnpm install
 pnpm dev
 ```
 
-Connect Music and Calendar from **Settings & Extensions…** in the menu bar.
+Connect Music and Calendar from **Settings & Extensions…** in the menu bar. `pnpm dev:examples` also loads the [example extensions](examples/).
 
 ## Build and test
 

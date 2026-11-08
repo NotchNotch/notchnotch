@@ -10,8 +10,9 @@
     "build:extensions": "node scripts/build-extensions.mjs",
     "build:native": "swift build --cache-path .build/cache",
     "typecheck": "tsc --noEmit",
-    "test": "pnpm typecheck && pnpm build:extensions && swift test --cache-path .build/cache && node --test tests/*.test.mjs",
-    "check": "pnpm test && pnpm build:native"
+    "test": "pnpm typecheck && node scripts/build-extensions.mjs --examples && swift test --cache-path .build/cache && node --test tests/*.test.mjs",
+    "check": "pnpm test && pnpm build:native",
+    "dev:examples": "node scripts/dev.mjs --examples"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

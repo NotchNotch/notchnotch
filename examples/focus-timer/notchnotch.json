@@ -1,0 +1,10 @@
+{
+  "id": "dev.notchnotch.example.focus",
+  "name": "Focus Timer",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "entry": "bundle.js",
+  "permissions": [],
+  "icon": "timer",
+  "description": "Example extension: a focus timer that asks before starting a break."
+}

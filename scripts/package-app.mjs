@@ -1,7 +1,7 @@
 import { mkdir, cp, writeFile, chmod, readdir, rm, readFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
-import { root } from "./build-extensions.mjs";
+import { bundledExtensionNames, root } from "./build-extensions.mjs";
 
 export async function packageApp() {
   // package.json is the single source of truth for the app version.
@@ -21,11 +21,12 @@ export async function packageApp() {
   const extensions = path.join(contents, "Resources/extensions");
   const source = path.join(root, "dist/extensions");
   await mkdir(extensions, { recursive: true });
-  const names = await readdir(source);
+  // Only extensions/* ship in the app; examples built for development stay out.
+  const names = await bundledExtensionNames();
   for (const name of await readdir(extensions)) {
     if (!names.includes(name)) await rm(path.join(extensions, name), { recursive: true, force: true });
   }
-  await cp(source, extensions, { recursive: true });
+  for (const name of names) await cp(path.join(source, name), path.join(extensions, name), { recursive: true });
   await writeFile(path.join(contents, "Info.plist"), `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>

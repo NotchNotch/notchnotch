@@ -3,7 +3,7 @@ import path from "node:path";
 import { buildExtensions, root } from "./build-extensions.mjs";
 import { packageApp } from "./package-app.mjs";
 
-const watchers = await buildExtensions({ watch: true });
+const watchers = await buildExtensions({ watch: true, examples: process.argv.includes("--examples") });
 const build = spawn("swift", ["build", "--cache-path", ".build/cache"], { cwd: root, stdio: "inherit" });
 const status = await new Promise((resolve, reject) => { build.on("exit", resolve); build.on("error", reject); });
 if (status !== 0) {

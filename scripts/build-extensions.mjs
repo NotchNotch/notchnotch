@@ -5,16 +5,30 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { validateManifest } from "./manifest.mjs";
 
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-export async function buildExtensions({ watch = false } = {}) {
+/** Folder names of the extensions bundled with the app. */
+export async function bundledExtensionNames() {
+  return (await readdir(path.join(root, "extensions"), { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+}
+
+/** Builds `extensions/*` (and `examples/*` when requested) into dist/extensions. */
+export async function buildExtensions({ watch = false, examples = false } = {}) {
   const contexts = [];
-  const names = (await readdir(path.join(root, "extensions"))).sort();
+  const sources = (await bundledExtensionNames()).map((name) => ({ name, source: path.join(root, "extensions", name) }));
+  if (examples) {
+    for (const entry of await readdir(path.join(root, "examples"), { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      if (sources.some((item) => item.name === entry.name)) throw new Error(`Example name collides with an extension: ${entry.name}`);
+      sources.push({ name: entry.name, source: path.join(root, "examples", entry.name) });
+    }
+  }
+  const names = sources.map((item) => item.name);
   const output = path.join(root, "dist/extensions");
   await mkdir(output, { recursive: true });
   for (const name of await readdir(output)) {
     if (!names.includes(name)) await rm(path.join(output, name), { recursive: true, force: true });
   }
-  for (const name of names) {
-    const source = path.join(root, "extensions", name);
+  for (const { name, source } of sources) {
     const manifest = JSON.parse(await readFile(path.join(source, "notchnotch.json"), "utf8"));
     validateManifest(manifest);
     const destination = path.join(root, "dist", "extensions", name);
@@ -47,4 +61,4 @@ export async function buildExtensions({ watch = false } = {}) {
   }
   return contexts;
 }
-if (process.argv[1] === fileURLToPath(import.meta.url)) await buildExtensions();
+if (process.argv[1] === fileURLToPath(import.meta.url)) await buildExtensions({ examples: process.argv.includes("--examples") });

@@ -325,3 +325,25 @@ test("The Calendar helper exposes status without prompting and rejects unsupport
     assert.equal((await runner.waitMessage((message) => message.id === "join")).error.code, -32602);
   } finally { await runner.stop(); }
 });
+
+test("Focus Timer example renders settings components and starts a session", async () => {
+  const runner = launch("focus-timer", "dev.notchnotch.example.focus");
+  try {
+    const initial = await runner.wait((message) => !!message.settings);
+    assert.deepEqual(initial.surfaces, []);
+    const picker = nodes(initial.settings).find((node) => node.type === "picker");
+    assert.equal(picker.props.selection, "25");
+    assert.deepEqual(picker.props.options.map((option) => option.value), ["15", "25", "50"]);
+
+    runner.send(picker.props.action, "15");
+    const shorter = await runner.wait((message) =>
+      nodes(message.settings).some((node) => node.type === "picker" && node.props.selection === "15"));
+    assert.ok(nodes(shorter.settings).some((node) => node.type === "toggle" && node.props.value === 1));
+
+    runner.send(action({ expanded: shorter.settings }, "Start Focus"));
+    const running = await runner.wait((message) => message.surfaces[0]?.id === "session");
+    assert.equal(running.surfaces[0].compact.trailing[0].props.text, "15:00");
+    const timer = nodes(running.surfaces[0].expanded).find((node) => node.props.size === "timer");
+    assert.equal(timer.props.text, "15:00");
+  } finally { await runner.stop(); }
+});
