@@ -87,6 +87,8 @@ public struct NativeNodeView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
+        case .picker:
+            NotchSegmentedPicker(node: node, onEvent: onEvent)
         case .listItem:
             NotchListItem(node: node, compact: compact, cameraHeight: cameraHeight, onEvent: onEvent)
         case .artwork:
@@ -199,6 +201,57 @@ private struct NotchToggle: View {
                 if let action = node.props.action { isOn.toggle(); onEvent(action, isOn ? "true" : "false") }
             }))
         }
+    }
+}
+
+/// Segmented control drawn for the black notch surface. Selection is
+/// optimistic so the highlight moves before the runner round-trip.
+private struct NotchSegmentedPicker: View {
+    let node: UINode
+    let onEvent: (String, String?) -> Void
+    @State private var selection: String?
+    @Namespace private var highlight
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    var body: some View {
+        HStack(spacing: 10) {
+            if let label = node.props.text, !label.isEmpty {
+                Text(label).font(NotchTheme.font(.body)).foregroundStyle(NotchTheme.Ink.primary)
+                Spacer(minLength: 0)
+            }
+            HStack(spacing: 2) {
+                ForEach(node.props.options ?? [], id: \.value) { option in
+                    let selected = option.value == selection
+                    Button {
+                        guard let action = node.props.action, !selected else { return }
+                        selection = option.value
+                        onEvent(action, option.value)
+                    } label: {
+                        Text(option.label)
+                            .font(.system(size: 11, weight: selected ? .semibold : .medium))
+                            .lineLimit(1)
+                            .foregroundStyle(selected ? Color.black : NotchTheme.Ink.secondary)
+                            .padding(.horizontal, 10).frame(height: 22)
+                            .background {
+                                if selected {
+                                    Capsule().fill(.white).matchedGeometryEffect(id: "selection", in: highlight)
+                                }
+                            }
+                            .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(selected ? .isSelected : [])
+                }
+            }
+            .padding(3)
+            .background(NotchTheme.Ink.fillStrong, in: Capsule())
+            .animation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.85), value: selection)
+        }
+        .disabled(node.props.disabled ?? false)
+        .opacity(node.props.disabled == true ? 0.4 : 1)
+        .onAppear { selection = node.props.selection }
+        .onChange(of: node.props.selection) { _, value in selection = value }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(node.props.text ?? "Options")
     }
 }
 

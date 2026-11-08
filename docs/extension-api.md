@@ -73,6 +73,7 @@ Paused surfaces do not automatically claim the notch. Completion announces autom
 | `Button` | `title` and/or SF Symbol `icon`, `onPress`, `tone`, `disabled` |
 | `TextField` | controlled `value`, `onChange`, `placeholder`, `disabled` |
 | `Toggle` | controlled `value`, `onChange(boolean)`, optional `label`, `disabled` |
+| `Picker` | `options` (`{ value, label }`, 1–32), controlled `value`, `onChange`, optional `label`; segmented in the notch, a menu in Settings |
 | `Row`, `Column` | children, `spacing` (`none`/`tight`/`regular`/`loose`), `align` (`start`/`center`/`end`) |
 | `Spacer`, `Divider` | — |
 | `Section` | `title`, `footer`, `spacing`, children |
@@ -85,7 +86,7 @@ Guidelines:
 
 - Use one `accent` button per view for the primary action. `danger` is for destructive actions.
 - In `Settings`, top-level `Section`s become native form sections. Prefer `ListItem` + `Toggle` over pairs of on/off buttons.
-- Compact content is a single click target: it cannot contain `Button`, `TextField` or `Toggle`.
+- Compact content is a single click target: it cannot contain `Button`, `TextField`, `Toggle` or `Picker`.
 - The host shows the extension icon, the prompt `title` and the extension name above every prompt. Do not repeat the title inside `Prompt.Expanded`.
 
 ```tsx

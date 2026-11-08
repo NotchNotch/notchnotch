@@ -247,7 +247,8 @@
             "toggle",
             "section",
             "listItem",
-            "badge"
+            "badge",
+            "picker"
           ]
         },
         "props": {
@@ -320,6 +321,34 @@
                 "center",
                 "end"
               ]
+            },
+            "options": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 32,
+              "items": {
+                "type": "object",
+                "required": [
+                  "value",
+                  "label"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 128
+                  }
+                }
+              }
+            },
+            "selection": {
+              "type": "string",
+              "maxLength": 128
             }
           },
           "additionalProperties": false
@@ -438,7 +467,8 @@
                 "toggle",
                 "section",
                 "listItem",
-                "badge"
+                "badge",
+                "picker"
               ]
             },
             "children": {

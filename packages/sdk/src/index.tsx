@@ -1,6 +1,6 @@
 import { createElement, type ReactNode } from "react";
-import type { Alignment, MediaRequest, NowPlayingState, Spacing, TextSize, Tone } from "@notchnotch/protocol";
-export type { Alignment, Spacing, TextSize, Tone } from "@notchnotch/protocol";
+import type { Alignment, MediaRequest, NowPlayingState, PickerOption, Spacing, TextSize, Tone } from "@notchnotch/protocol";
+export type { Alignment, PickerOption, Spacing, TextSize, Tone } from "@notchnotch/protocol";
 export * from "./connections";
 
 type Children = { children?: ReactNode };
@@ -92,6 +92,24 @@ export function Toggle({ label, value, onChange, disabled = false }: {
 }) {
   return createElement("toggle", { text: label, value: value ? 1 : 0, disabled,
     onChange: (next?: string) => onChange(next === "true") });
+}
+
+/**
+ * Choose one of up to 32 options. In the notch it renders as a segmented
+ * control (keep it to 2–4 short labels); in Settings as a pop-up menu.
+ */
+export function Picker<Value extends string>({ label, options, value, onChange, disabled = false }: {
+  label?: string;
+  options: readonly { value: Value; label: string }[];
+  value: Value | undefined;
+  onChange: (value: Value) => void;
+  disabled?: boolean;
+}) {
+  return createElement("picker", { text: label, options: options as readonly PickerOption[], selection: value, disabled,
+    onChange: (next?: string) => {
+      const option = options.find((item) => item.value === next);
+      if (option) onChange(option.value);
+    } });
 }
 
 /**

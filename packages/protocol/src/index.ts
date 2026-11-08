@@ -5,7 +5,8 @@ export type TextSize = "caption" | "body" | "headline" | "title" | "timer";
 export type Spacing = "none" | "tight" | "regular" | "loose";
 export type Alignment = "start" | "center" | "end";
 export type NodeType = "column" | "row" | "text" | "symbol" | "progress" | "button" | "textField" | "artwork" | "waveform" | "player"
-  | "spacer" | "divider" | "toggle" | "section" | "listItem" | "badge";
+  | "spacer" | "divider" | "toggle" | "section" | "listItem" | "badge" | "picker";
+export interface PickerOption { value: string; label: string }
 export interface UINode {
   id: string;
   type: NodeType;
@@ -23,6 +24,8 @@ export interface UINode {
     detail?: string;
     spacing?: Spacing;
     align?: Alignment;
+    options?: PickerOption[];
+    selection?: string;
   };
   children: UINode[];
 }

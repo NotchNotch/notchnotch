@@ -8,20 +8,25 @@ public enum Presentation: String, Codable, Sendable { case compact, expanded }
 public enum SurfacePhase: String, Codable, Sendable { case active, paused, completed, pending }
 public enum NodeKind: String, Codable, Sendable {
     case column, row, text, symbol, progress, button, textField, artwork, waveform, player
-    case spacer, divider, toggle, section, listItem, badge
+    case spacer, divider, toggle, section, listItem, badge, picker
 
     /// Nodes that send user actions. Compact wings are a single host click target.
-    public var isInteractive: Bool { [.button, .textField, .toggle, .player].contains(self) }
+    public var isInteractive: Bool { [.button, .textField, .toggle, .picker, .player].contains(self) }
     /// Nodes the management window can render with system controls.
     public static let settingsKinds: Set<NodeKind> = [
         .column, .row, .text, .symbol, .progress, .button, .textField,
-        .spacer, .divider, .toggle, .section, .listItem, .badge,
+        .spacer, .divider, .toggle, .section, .listItem, .badge, .picker,
     ]
 }
 public enum Tone: String, Codable, Sendable { case primary, secondary, accent, success, warning, danger }
 public enum TextSize: String, Codable, Sendable { case caption, body, headline, title, timer }
 public enum Spacing: String, Codable, Sendable { case none, tight, regular, loose }
 public enum LayoutAlignment: String, Codable, Sendable { case start, center, end }
+public struct PickerOption: Codable, Equatable, Hashable, Sendable {
+    public var value: String
+    public var label: String
+    public init(value: String, label: String) { self.value = value; self.label = label }
+}
 
 public struct NodeProps: Codable, Equatable, Sendable {
     public var text: String?
@@ -38,14 +43,19 @@ public struct NodeProps: Codable, Equatable, Sendable {
     public var detail: String?
     public var spacing: Spacing?
     public var align: LayoutAlignment?
+    /// Picker choices; `selection` holds the chosen value.
+    public var options: [PickerOption]?
+    public var selection: String?
 
     public init(text: String? = nil, name: String? = nil, tone: Tone? = nil, size: TextSize? = nil,
                 value: Double? = nil, action: String? = nil, placeholder: String? = nil, disabled: Bool? = nil,
                 source: String? = nil, media: NowPlayingState? = nil, detail: String? = nil,
-                spacing: Spacing? = nil, align: LayoutAlignment? = nil) {
+                spacing: Spacing? = nil, align: LayoutAlignment? = nil,
+                options: [PickerOption]? = nil, selection: String? = nil) {
         self.text = text; self.name = name; self.tone = tone; self.size = size
         self.value = value; self.action = action; self.placeholder = placeholder; self.disabled = disabled
         self.source = source; self.media = media; self.detail = detail; self.spacing = spacing; self.align = align
+        self.options = options; self.selection = selection
     }
 }
 
@@ -129,8 +139,21 @@ public struct Snapshot: Codable, Sendable {
             if settings && !NodeKind.settingsKinds.contains(node.type) {
                 throw ProtocolError.invalid("Settings cannot contain media components")
             }
-            if [.spacer, .divider].contains(node.type), !node.children.isEmpty {
-                throw ProtocolError.invalid("Spacers and dividers cannot have children")
+            if let options = node.props.options {
+                guard node.type == .picker, (1...32).contains(options.count),
+                      Set(options.map(\.value)).count == options.count,
+                      options.allSatisfy({ !$0.value.isEmpty && $0.value.count <= 128 && $0.label.count <= 128 }) else {
+                    throw ProtocolError.invalid("A picker needs 1–32 options with unique values")
+                }
+            }
+            if node.type == .picker {
+                guard let options = node.props.options,
+                      node.props.selection.map({ value in options.contains { $0.value == value } }) ?? true else {
+                    throw ProtocolError.invalid("A picker selection must match one of its options")
+                }
+            }
+            if [.spacer, .divider, .picker].contains(node.type), !node.children.isEmpty {
+                throw ProtocolError.invalid("Spacers, dividers and pickers cannot have children")
             }
             if let source = node.props.source, !NowPlayingState.isArtworkSource(source) {
                 throw ProtocolError.invalid("Artwork must use an approved artwork CDN or bounded image data")

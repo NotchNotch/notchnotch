@@ -53,3 +53,17 @@ import NotchCore
         .init(id: "root", type: .column, children: [.init(id: "s", type: .spacer, children: [.init(id: "x", type: .text)])]))
     #expect(throws: ProtocolError.self) { try spacerWithChild.validate(expectedExtensionID: "test.contract") }
 }
+
+@Test func pickerSelectionMustMatchAnOption() throws {
+    func snapshot(_ selection: String?, options: [PickerOption]) -> Snapshot {
+        .init(extensionID: "test.picker", revision: 1, surfaces: [], settings: .init(id: "root", type: .column, children: [
+            .init(id: "p", type: .picker, props: .init(action: "p:action", options: options, selection: selection)),
+        ]))
+    }
+    let options = [PickerOption(value: "25", label: "25 min"), .init(value: "50", label: "50 min")]
+    try snapshot("25", options: options).validate(expectedExtensionID: "test.picker")
+    try snapshot(nil, options: options).validate(expectedExtensionID: "test.picker")
+    #expect(throws: ProtocolError.self) { try snapshot("90", options: options).validate(expectedExtensionID: "test.picker") }
+    #expect(throws: ProtocolError.self) { try snapshot(nil, options: options + [options[0]]).validate(expectedExtensionID: "test.picker") }
+    #expect(throws: ProtocolError.self) { try snapshot(nil, options: []).validate(expectedExtensionID: "test.picker") }
+}

@@ -63,6 +63,16 @@ public struct SettingsNodeView: View {
                     Text(footer).font(.callout).foregroundStyle(.secondary)
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
+        case .picker:
+            Picker(node.props.text ?? "", selection: Binding(
+                get: { node.props.selection ?? "" },
+                set: { value in if let action = node.props.action { onEvent(action, value) } })) {
+                if node.props.selection == nil { Text("Choose…").tag("") }
+                ForEach(node.props.options ?? [], id: \.value) { Text($0.label).tag($0.value) }
+            }
+            .pickerStyle(.menu)
+            .labelsHidden(node.props.text?.isEmpty ?? true)
+            .disabled(node.props.disabled ?? false)
         case .listItem:
             SettingsListItem(node: node, onEvent: onEvent)
         case .artwork, .waveform, .player:
@@ -122,5 +132,11 @@ private struct SettingsListItem: View {
             Button { onEvent(action, nil) } label: { row.contentShape(Rectangle()) }
                 .buttonStyle(.plain).disabled(node.props.disabled ?? false)
         } else { row }
+    }
+}
+
+private extension View {
+    @ViewBuilder func labelsHidden(_ hidden: Bool) -> some View {
+        if hidden { labelsHidden() } else { self }
     }
 }
