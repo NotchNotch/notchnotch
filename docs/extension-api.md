@@ -75,7 +75,7 @@ Paused surfaces do not automatically claim the notch. Completion announces autom
 
 Tones: `primary`, `secondary`, `accent`, `success`, `warning`. Text sizes: `caption`, `body`, `title`, `timer`. The native host controls layout metrics, typography, window dimensions, and animation.
 
-React hooks, promises, `setTimeout`, `setInterval`, and `console` are available. DOM components, CSS, global `fetch`, Node built-ins and native modules are not exposed to extension JavaScript. API v1 accepts `local-network` and `process` permissions. Local networking and native tools additionally require named manifest connections and explicit session consent. The SDK is a local workspace package and is not published to npm yet.
+React hooks, promises, `setTimeout`, `setInterval`, and `console` are available. Console output appears under **Settings & Extensions… → your extension → Console** (the last 300 lines; errors are kept longest). DOM components, CSS, global `fetch`, Node built-ins and native modules are not exposed to extension JavaScript. API v1 accepts `local-network` and `process` permissions. Local networking and native tools additionally require named manifest connections and explicit session consent. The SDK is a local workspace package and is not published to npm yet.
 
 ## Local services and third-party apps
 

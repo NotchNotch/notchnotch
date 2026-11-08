@@ -15,14 +15,15 @@ final class RunnerConnection {
     private var failed = false
     private let onSnapshot: (Snapshot) -> Void
     private let onFailure: (String) -> Void
+    private let onLog: (String) -> Void
     private let directory: URL
     private var broker: ConnectionBroker?
     private let writer = DispatchQueue(label: "dev.notchnotch.runner-input", qos: .utility)
     private var queuedBytes = 0
 
     init(manifest: ExtensionManifest, directory: URL, onSnapshot: @escaping (Snapshot) -> Void,
-         onFailure: @escaping (String) -> Void) {
-        self.manifest = manifest; self.onSnapshot = onSnapshot; self.onFailure = onFailure
+         onFailure: @escaping (String) -> Void, onLog: @escaping (String) -> Void = { _ in }) {
+        self.manifest = manifest; self.onSnapshot = onSnapshot; self.onFailure = onFailure; self.onLog = onLog
         self.directory = directory
     }
 
@@ -146,7 +147,8 @@ final class RunnerConnection {
                 case "error":
                     let notice = try JSONDecoder().decode(RuntimeNotice.self, from: line)
                     fail(notice.message)
-                case "log": break
+                case "log":
+                    onLog(try JSONDecoder().decode(RuntimeNotice.self, from: line).message)
                 case "connectionCommand":
                     let command = try JSONDecoder().decode(ConnectionCommand.self, from: line)
                     try command.validate(expectedExtensionID: manifest.id)

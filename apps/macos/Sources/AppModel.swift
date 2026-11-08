@@ -6,11 +6,13 @@ import NotchExtensions
 
 @MainActor @Observable
 final class AppModel {
+    static let maximumLogEntries = 300
     var platform = PlatformState()
     private(set) var installedExtensions: [InstalledExtension] = []
     private(set) var libraryIssues: [String: String] = [:]
     private(set) var extensionSettings: [String: UINode] = [:]
     private(set) var extensionSessionIDs: [String: UUID] = [:]
+    private(set) var extensionLogs: [String: [ExtensionLogEntry]] = [:]
     private var snapshotRevisions: [String: Int] = [:]
     private var disabledExtensionIDs = Set(UserDefaults.standard.stringArray(forKey: "disabledExtensionIDs") ?? [])
     private var installingIDs: Set<String> = []
@@ -126,7 +128,11 @@ final class AppModel {
                     self.extensionSettings.removeValue(forKey: manifest.id)
                     self.synchronizePeek()
                     self.errors[manifest.id] = message
+                    self.appendLog(manifest.id, message, level: .error)
                     self.onLayoutChange?()
+                } onLog: { [weak self] message in
+                    guard let self, self.extensionSessionIDs[manifest.id] == sessionID else { return }
+                    self.appendLog(manifest.id, message, level: .info)
                 }
                 connections[manifest.id] = connection
                 reloads[manifest.id] = revision
@@ -155,6 +161,18 @@ final class AppModel {
         if let key = platform.surfaces.first(where: { $0.key.extensionID == id })?.key { onRevealActivity?(key) }
     }
     func restartExtension(_ id: String) { reloadExtensions(restarting: id) }
+    func clearLogs(_ id: String) { extensionLogs.removeValue(forKey: id) }
+    private func appendLog(_ id: String, _ message: String, level: ExtensionLogEntry.Level) {
+        let entry = ExtensionLogEntry(date: .now, level: level, message: message)
+        var entries = extensionLogs[id, default: []]
+        entries.append(entry)
+        // Bounded per extension. Drop the oldest info lines first so the
+        // errors explaining a crash survive a chatty timer loop.
+        while entries.count > Self.maximumLogEntries {
+            entries.remove(at: entries.firstIndex { $0.level == .info } ?? 0)
+        }
+        extensionLogs[id] = entries
+    }
     func disconnectExtension(_ id: String) { connections[id]?.resetConnections() }
     private func stopExtension(_ id: String) {
         extensionSessionIDs.removeValue(forKey: id)

@@ -8,6 +8,7 @@ struct ManagementExtensionPage: View {
     let record: InstalledExtension
     @State private var showAccess = false
     @State private var showPackage = false
+    @State private var showConsole = false
 
     var body: some View {
         @Bindable var model = coordinator.model
@@ -69,6 +70,17 @@ struct ManagementExtensionPage: View {
             Section {
                 DisclosureGroup("App Access", isExpanded: $showAccess) {
                     ManagementAccessView(manifest: record.manifest)
+                }
+                DisclosureGroup(isExpanded: $showConsole) {
+                    ExtensionLogView(entries: coordinator.model.extensionLogs[record.id] ?? []) {
+                        coordinator.model.clearLogs(record.id)
+                    }
+                } label: {
+                    LabeledContent("Console") {
+                        if let count = coordinator.model.extensionLogs[record.id]?.count, count > 0 {
+                            Text("\(count)").monospacedDigit().foregroundStyle(.secondary)
+                        }
+                    }
                 }
                 DisclosureGroup("Package Details", isExpanded: $showPackage) {
                     LabeledContent("Version", value: record.manifest.version)
