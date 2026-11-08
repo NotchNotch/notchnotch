@@ -123,11 +123,28 @@ struct NotchView: View {
                     Image(systemName: "chevron.down")
                         .font(.system(size: 10, weight: .semibold)).foregroundStyle(.white.opacity(0.45))
                 }
-                if model.platform.pendingCount > 0 {
-                    Circle().fill(.white).frame(width: 3, height: 3)
+                if model.platform.pendingCount > 0, model.wingSurface?.surface.kind != .prompt {
+                    pendingBadge
                 }
             }.frame(maxWidth: .infinity).clipped()
         }
+    }
+
+    /// A waiting question must be noticeable next to another activity's wings
+    /// without stealing the notch: a small white pill with the pending count.
+    private var pendingBadge: some View {
+        HStack(spacing: 2) {
+            Image(systemName: "bubble.left.fill").font(.system(size: 8, weight: .bold))
+            if model.platform.pendingCount > 1 {
+                Text("\(model.platform.pendingCount)").font(.system(size: 9, weight: .bold)).monospacedDigit()
+            }
+        }
+        .foregroundStyle(.black)
+        .padding(.horizontal, 5).frame(height: 14)
+        .background(.white, in: Capsule())
+        .transition(.scale.combined(with: .opacity))
+        .accessibilityLabel(model.platform.pendingCount == 1 ? "A question is waiting"
+                            : "\(model.platform.pendingCount) questions are waiting")
     }
 
     private var pageTransition: AnyTransition {
