@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "pnpm typecheck && node scripts/build-extensions.mjs --examples && swift test --cache-path .build/cache && node --test tests/*.test.mjs",
     "check": "pnpm test && pnpm build:native",
-    "dev:examples": "node scripts/dev.mjs --examples"
+    "dev:examples": "node scripts/dev.mjs --examples",
+    "release": "node scripts/release.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

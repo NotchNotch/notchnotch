@@ -1,7 +1,7 @@
 import { mkdir, cp, writeFile, chmod, readdir, rm, readFile } from "node:fs/promises";
-import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { bundledExtensionNames, root } from "./build-extensions.mjs";
+import { codesign, productPath } from "./native.mjs";
 
 export async function packageApp() {
   // package.json is the single source of truth for the app version.
@@ -14,8 +14,8 @@ export async function packageApp() {
   await mkdir(path.join(contents, "MacOS"), { recursive: true });
   await mkdir(path.join(contents, "Helpers"), { recursive: true });
   await mkdir(path.join(contents, "Resources"), { recursive: true });
-  await cp(path.join(root, ".build/debug/NotchNotch"), path.join(contents, "MacOS/NotchNotch"));
-  await cp(path.join(root, ".build/debug/ExtensionRunner"), path.join(contents, "Helpers/ExtensionRunner"));
+  await cp(productPath(root, "NotchNotch"), path.join(contents, "MacOS/NotchNotch"));
+  await cp(productPath(root, "ExtensionRunner"), path.join(contents, "Helpers/ExtensionRunner"));
   await chmod(path.join(contents, "MacOS/NotchNotch"), 0o755);
   await chmod(path.join(contents, "Helpers/ExtensionRunner"), 0o755);
   await cp(path.join(root, "apps/macos/Resources/AppIcon.icns"), path.join(contents, "Resources/AppIcon.icns"));
@@ -47,10 +47,10 @@ export async function packageApp() {
 <key>NSCalendarsUsageDescription</key><string>Allow the Calendar extension to show upcoming events in the notch.</string>
 </dict></plist>
 `);
-  for (const target of [path.join(contents, "Helpers/ExtensionRunner"), app]) {
-    const result = spawnSync("codesign", ["--force", "--sign", "-", target], { stdio: "inherit" });
-    if (result.status !== 0) throw new Error("Local ad-hoc signing failed");
-  }
+  // Inside out: bundled extension helpers were signed by their build modules.
+  codesign(path.join(contents, "Helpers/ExtensionRunner"),
+    { entitlements: path.join(root, "native/ExtensionRunner/ExtensionRunner.entitlements") });
+  codesign(app, { entitlements: path.join(root, "apps/macos/NotchNotch.entitlements") });
   console.log(`App ready: ${app}`);
   return app;
 }
