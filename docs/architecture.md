@@ -26,7 +26,7 @@ Mouse routing follows the visible target path, not the transparent window rectan
 
 ## Runner and React
 
-Each bundled extension has a dedicated Swift `ExtensionRunner` process. It hosts one JavaScriptCore context on its main thread. The app does not forward its shell environment into the runner. App shutdown closes runner stdin and terminates its child processes; EOF also shuts down the runner.
+Each bundled extension has a dedicated Swift `ExtensionRunner` process. The host supervises it: every 5 s it sends a `ping` that the runner answers from the thread executing JavaScript, so a busy loop stops the answers. A runner that does not answer within 10 s, or does not start within 15 s, is terminated. Crashed or hung runners restart automatically after 1, 2 and 4 seconds and stop after three failures within two minutes; a manual restart resets this. Runner stderr is diagnostic output and goes to the extension's Console instead of stopping it. It hosts one JavaScriptCore context on its main thread. The app does not forward its shell environment into the runner. App shutdown closes runner stdin and terminates its child processes; EOF also shuts down the runner.
 
 The TypeScript bundle contains React, a private custom reconciler, the extension, and runtime glue. The SDK uses host components rather than React DOM. Each React commit produces one complete JSON snapshot. Functions stay in a runner-local action registry; only action identifiers cross the wire. Registry entries are replaced with each committed tree, so removed controls cannot invoke stale callbacks.
 
@@ -40,7 +40,7 @@ The host passes each runner a storage path, `~/Library/Application Support/Notch
 
 ## Transport and validation
 
-Transport is newline-delimited UTF-8 JSON over child stdin/stdout. Console output uses structured log messages, never unframed stdout. Stderr reports runner startup failures. Every message carries protocol version 1 and an extension identifier where applicable.
+Transport is newline-delimited UTF-8 JSON over child stdin/stdout. Console output uses structured log messages, never unframed stdout. Stderr is logged; its last line is included when the runner exits. Every message carries protocol version 1 and an extension identifier where applicable.
 
 The host validates identity, protocol version, revision, surface contract, node types, and bounded trees before changing state. Limits are 256 KiB/message, 16 surfaces/snapshot, 512 UI nodes/snapshot, and nesting depth 16. Progress values must be finite and between 0 and 1. Text events are capped at 4096 characters. An invalid snapshot or runtime error removes only that extension's surfaces and offers restart through the menu.
 

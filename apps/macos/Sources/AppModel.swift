@@ -60,6 +60,8 @@ final class AppModel {
     private var connections: [String: RunnerConnection] = [:]
     private var reloads: [String: String] = [:]
     private var reloadTimer: Timer?
+    private var restartPolicy = RestartPolicy()
+    private var restartTasks: [String: Task<Void, Never>] = [:]
 
     var isExpanded: Bool { platform.isExpanded || idlePinned || hoverExpanded }
     var displayedSurface: HostedSurface? {
@@ -100,6 +102,7 @@ final class AppModel {
     }
 
     func reloadExtensions(force: Bool = false, restarting: String? = nil) {
+        if force { restartPolicy = RestartPolicy() }
         let scan = extensionStore.scan(included: extensionRoot, development: ProcessInfo.processInfo.environment["NOTCHNOTCH_EXTENSIONS"] != nil)
         if installedExtensions != scan.extensions { installedExtensions = scan.extensions }
         if libraryIssues != scan.issues { libraryIssues = scan.issues }
@@ -137,10 +140,11 @@ final class AppModel {
                     self.synchronizePeek()
                     self.errors[manifest.id] = message
                     self.appendLog(manifest.id, message, level: .error)
+                    self.scheduleRestart(manifest.id, after: message)
                     self.onLayoutChange?()
-                } onLog: { [weak self] message in
+                } onLog: { [weak self] level, message in
                     guard let self, self.extensionSessionIDs[manifest.id] == sessionID else { return }
-                    self.appendLog(manifest.id, message, level: .info)
+                    self.appendLog(manifest.id, message, level: level)
                 }
                 connections[manifest.id] = connection
                 reloads[manifest.id] = revision
@@ -160,6 +164,8 @@ final class AppModel {
     }
     func setEnabled(_ enabled: Bool, for id: String) {
         guard isEnabled(id) != enabled else { return }
+        restartPolicy.reset(id)
+        restartTasks.removeValue(forKey: id)?.cancel()
         if enabled { disabledExtensionIDs.remove(id) } else { disabledExtensionIDs.insert(id) }
         UserDefaults.standard.set(disabledExtensionIDs.sorted(), forKey: "disabledExtensionIDs")
         reloadExtensions()
@@ -168,7 +174,28 @@ final class AppModel {
     func revealActivity(_ id: String) {
         if let key = platform.surfaces.first(where: { $0.key.extensionID == id })?.key { onRevealActivity?(key) }
     }
-    func restartExtension(_ id: String) { reloadExtensions(restarting: id) }
+    func restartExtension(_ id: String) {
+        restartPolicy.reset(id)
+        reloadExtensions(restarting: id)
+    }
+    /// Crashed or hung runners restart with backoff (1 s, 2 s, 4 s) and give
+    /// up after three failures in two minutes.
+    private func scheduleRestart(_ id: String, after message: String) {
+        restartTasks.removeValue(forKey: id)?.cancel()
+        guard let delay = restartPolicy.failed(id, now: .now) else {
+            errors[id] = message + "\nStopped after repeated failures. Fix the problem, then restart the extension."
+            return
+        }
+        appendLog(id, "Restarting in \(Int(delay)) s…", level: .info)
+        restartTasks[id] = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(delay))
+            guard let self, !Task.isCancelled else { return }
+            self.restartTasks.removeValue(forKey: id)
+            // Skip when the user disabled, removed or manually restarted it meanwhile.
+            guard self.isEnabled(id), self.errors[id] != nil, self.extensionSessionIDs[id] == nil else { return }
+            self.reloadExtensions(restarting: id)
+        }
+    }
     func clearLogs(_ id: String) { extensionLogs.removeValue(forKey: id) }
     /// Bumped when stored grants change; UserDefaults itself is not observable.
     private(set) var grantsRevision = 0
@@ -238,6 +265,8 @@ final class AppModel {
     }
 
     func stop() {
+        for task in restartTasks.values { task.cancel() }
+        restartTasks.removeAll()
         hoverTask?.cancel()
         peekTask?.cancel()
         reloadTimer?.invalidate()

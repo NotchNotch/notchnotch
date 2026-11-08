@@ -200,6 +200,23 @@ public struct UserEvent: Codable, Sendable {
     public init(action: String, value: String? = nil) { self.action = action; self.value = value }
 }
 
+/// Host-to-runner liveness check. The runner answers with `RunnerPong` from
+/// the thread that executes JavaScript.
+public struct RunnerPing: Codable, Sendable {
+    public var protocolVersion = 1
+    public var type = "ping"
+    public var id: Int
+    public init(id: Int) { self.id = id }
+}
+
+public struct RunnerPong: Codable, Sendable {
+    public var protocolVersion = 1
+    public var type = "pong"
+    public var extensionID: String
+    public var id: Int
+    public init(extensionID: String, id: Int) { self.extensionID = extensionID; self.id = id }
+}
+
 public struct RuntimeNotice: Codable, Sendable {
     public var protocolVersion = 1
     public var type: String

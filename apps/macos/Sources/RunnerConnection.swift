@@ -2,6 +2,7 @@ import Foundation
 import NotchProtocol
 import NotchConnections
 import AppKit
+import NotchCore
 
 @MainActor
 final class RunnerConnection {
@@ -15,14 +16,17 @@ final class RunnerConnection {
     private var failed = false
     private let onSnapshot: (Snapshot) -> Void
     private let onFailure: (String) -> Void
-    private let onLog: (String) -> Void
+    private let onLog: (ExtensionLogEntry.Level, String) -> Void
+    private var liveness = RunnerLiveness(startedAt: .now)
+    private var livenessTimer: Timer?
+    private var lastStderr = ""
     private let directory: URL
     private var broker: ConnectionBroker?
     private let writer = DispatchQueue(label: "dev.notchnotch.runner-input", qos: .utility)
     private var queuedBytes = 0
 
     init(manifest: ExtensionManifest, directory: URL, onSnapshot: @escaping (Snapshot) -> Void,
-         onFailure: @escaping (String) -> Void, onLog: @escaping (String) -> Void = { _ in }) {
+         onFailure: @escaping (String) -> Void, onLog: @escaping (ExtensionLogEntry.Level, String) -> Void = { _, _ in }) {
         self.manifest = manifest; self.onSnapshot = onSnapshot; self.onFailure = onFailure; self.onLog = onLog
         self.directory = directory
     }
@@ -40,22 +44,37 @@ final class RunnerConnection {
             let data = handle.availableData
             Task { @MainActor in self?.read(data) }
         }
+        // Stderr is diagnostic output (JavaScriptCore and system frameworks write
+        // there too). It is logged; only exit, protocol errors or liveness fail.
         errors.fileHandleForReading.readabilityHandler = { [weak self] handle in
             let data = handle.availableData
             if !data.isEmpty {
                 let message = String(decoding: data.prefix(4096), as: UTF8.self)
-                Task { @MainActor in self?.fail(message) }
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                Task { @MainActor in
+                    guard let self, !message.isEmpty else { return }
+                    self.lastStderr = message
+                    self.onLog(.error, message)
+                }
             }
         }
         process.terminationHandler = { [weak self] process in
             let status = process.terminationStatus
             Task { @MainActor in
                 guard let self, !self.stopping else { return }
-                self.fail("\(self.manifest.name) stopped (exit \(status)). Restart extensions to try again.")
+                let detail = self.lastStderr.isEmpty ? "" : ": \(self.lastStderr.split(separator: "\n").last ?? "")"
+                self.fail("\(self.manifest.name) stopped (exit \(status))\(detail)")
             }
         }
         do { try process.run() }
         catch { stop(); throw error }
+        liveness = RunnerLiveness(startedAt: .now)
+        let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkLiveness() }
+        }
+        timer.tolerance = 0.5
+        RunLoop.main.add(timer, forMode: .common)
+        livenessTimer = timer
     }
 
     func send(action: String, value: String?) {
@@ -64,7 +83,23 @@ final class RunnerConnection {
         enqueue(data + Data([10]), failure: "Could not send event to \(manifest.name)")
     }
 
+    private func checkLiveness() {
+        guard !stopping, !failed else { return }
+        switch liveness.tick(now: .now) {
+        case .none: break
+        case .ping(let id):
+            if let data = try? JSONEncoder().encode(RunnerPing(id: id)) {
+                enqueue(data + Data([10]), failure: "Could not reach \(manifest.name)")
+            }
+        case .fail(let reason):
+            // terminate() is SIGTERM; a runner stuck in JavaScript still exits.
+            fail("\(manifest.name) \(reason) and was stopped.")
+        }
+    }
+
     func stop() {
+        livenessTimer?.invalidate()
+        livenessTimer = nil
         stopping = true
         resetConnections()
         output.fileHandleForReading.readabilityHandler = nil
@@ -141,7 +176,10 @@ final class RunnerConnection {
                 guard header.protocolVersion == 1, header.extensionID == manifest.id else {
                     throw ProtocolError.invalid("Extension sent an invalid envelope")
                 }
+                liveness.received()
                 switch header.type {
+                case "pong":
+                    liveness.pong(try JSONDecoder().decode(RunnerPong.self, from: line).id)
                 case "snapshot":
                     let snapshot = try JSONDecoder().decode(Snapshot.self, from: line)
                     try snapshot.validate(expectedExtensionID: manifest.id)
@@ -150,7 +188,7 @@ final class RunnerConnection {
                     let notice = try JSONDecoder().decode(RuntimeNotice.self, from: line)
                     fail(notice.message)
                 case "log":
-                    onLog(try JSONDecoder().decode(RuntimeNotice.self, from: line).message)
+                    onLog(.info, try JSONDecoder().decode(RuntimeNotice.self, from: line).message)
                 case "connectionCommand":
                     let command = try JSONDecoder().decode(ConnectionCommand.self, from: line)
                     try command.validate(expectedExtensionID: manifest.id)

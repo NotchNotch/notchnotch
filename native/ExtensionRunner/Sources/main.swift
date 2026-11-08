@@ -5,8 +5,10 @@ import NotchProtocol
 @MainActor
 final class Runner {
     let runtime: JavaScriptRuntime
+    let extensionID: String
     private var input = Data()
     init(bundle: URL, extensionID: String, storage: URL?) throws {
+        self.extensionID = extensionID
         runtime = try JavaScriptRuntime(extensionID: extensionID, storageURL: storage) { json in
             FileHandle.standardOutput.write(Data((json + "\n").utf8))
         }
@@ -19,6 +21,13 @@ final class Runner {
             let line = input.prefix(upTo: newline)
             guard line.count <= maximumMessageBytes else { runtime.stop(); exit(1) }
             input.removeSubrange(...newline)
+            if let ping = try? JSONDecoder().decode(RunnerPing.self, from: line), ping.type == "ping", ping.protocolVersion == 1 {
+                // Answered on the JavaScript thread: a busy extension cannot answer.
+                if let pong = try? JSONEncoder().encode(RunnerPong(extensionID: extensionID, id: ping.id)) {
+                    FileHandle.standardOutput.write(pong + Data([10]))
+                }
+                continue
+            }
             if let json = String(data: line, encoding: .utf8) { runtime.receive(json) }
         }
         guard input.count <= maximumMessageBytes else { runtime.stop(); exit(1) }

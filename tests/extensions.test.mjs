@@ -390,3 +390,24 @@ test("Extension storage persists across runner restarts", async () => {
     assert.equal(nodes(restored.settings).find((node) => node.type === "picker").props.selection, "50");
   } finally { await runner.stop(); }
 });
+
+test("The runner answers pings only while JavaScript is responsive", async () => {
+  const { writeFile } = await import("node:fs/promises");
+  const healthy = launchFixture();
+  try {
+    await healthy.wait((message) => message.surfaces.length > 0);
+    healthy.child.stdin.write(JSON.stringify({ protocolVersion: 1, type: "ping", id: 7 }) + "\n");
+    const pong = await healthy.waitMessage((message) => message.type === "pong");
+    assert.deepEqual(pong, { protocolVersion: 1, type: "pong", extensionID: "test.runtime", id: 7 });
+  } finally { await healthy.stop(); }
+
+  const busyBundle = path.join(fixtureDirectory, "busy.js");
+  await writeFile(busyBundle, "setTimeout(() => { for (;;) {} }, 50);");
+  const busy = launchProcess(path.join(root, ".build/debug/ExtensionRunner"), [busyBundle, "test.busy"]);
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    busy.child.stdin.write(JSON.stringify({ protocolVersion: 1, type: "ping", id: 1 }) + "\n");
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    assert.equal(busy.messages.some((message) => message.type === "pong"), false);
+  } finally { busy.child.kill("SIGKILL"); }
+});
