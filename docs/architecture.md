@@ -16,9 +16,9 @@ Activities may also supply optional `peek` content: an event id, a short text li
 
 The peek body is 46 points taller than the camera, with an intermediate width and corner radii. Its compact wings stay visible and move inward as the lower text row fades and slides upward. The same silhouette and presentation enum drive rendering and pointer routing.
 
-The shape is visually reconstructed from the installed Tuneful app, without its source code or assets. On the tested display the reference's open body is roughly 384 points wide with outward top shoulders and larger lower corners. `NotchSilhouette` draws those concave shoulders explicitly; a rounded rectangle cannot create this attachment to the screen edge.
+The open body is roughly 384 points wide with outward top shoulders and larger lower corners. `NotchSilhouette` draws those concave shoulders explicitly; a rounded rectangle cannot create this attachment to the screen edge.
 
-A transparent window reserves room for all three states and the shadow. It grows when taller content needs more space, preserving the screen's top-center anchor, and retains that room for subsequent spring transitions. SwiftUI animates body width, height, shoulder radius, and lower radius together, using an interruptible spring (0.44 response / 0.82 damping opening; 0.36 / 0.9 closing). Content fades and slightly deblurs into place after the shell begins to expand. Closing fades content sooner than the silhouette finishes shrinking. These timing values are a reconstruction of the observed feel, not Tuneful's internal parameters.
+A transparent window reserves room for all three states and the shadow. It grows when taller content needs more space, preserving the screen's top-center anchor, and retains that room for subsequent spring transitions. SwiftUI animates body width, height, shoulder radius, and lower radius together, using an interruptible spring (0.44 response / 0.82 damping opening; 0.36 / 0.9 closing). Content fades and slightly deblurs into place after the shell begins to expand. Closing fades content sooner than the silhouette finishes shrinking.
 
 **The notch must never scroll.** Expanded content uses an intrinsically sized vertical stack with no scroll container, height cap, or expanded-text line limit. The full measured height, rounded up to avoid subpixel clipping, determines the silhouette height; the window reserves enough space for all of it plus its shadow before expansion. Smaller content shrinks the visible body while the transparent canvas keeps its reserved height so the spring is not clipped. Extension content fits a compact body without the old brand header, tab pills, or divider. Activity navigation uses page indicators and a compact menu in the top-left wing.
 
@@ -86,7 +86,7 @@ A separate, reusable `NSWindow` hosts `ManagementView` in SwiftUI. The menu's **
 
 Installation selects an already built folder. Inspection checks the manifest, a nonempty regular `bundle.js` up to 8 MiB, up to 512 regular files/folders, no symlinks and up to 64 MiB total. The confirmation shows identity, version, declared permissions/destinations and the native-process trust boundary. File validation/copying run off the UI thread. The installer copies into a hidden staging folder, validates that copy and compares its manifest with the review before moving it into place. Updates retain the previous installation until replacement succeeds. Build scripts never execute during import. Native connection consent remains separate from package installation. Removing a managed local extension stops it and uses Finder's Trash operation; included examples can be disabled.
 
-The Marketplace page currently explains that a public catalog is unavailable and offers the working local import action. Remote catalog discovery, publisher verification, download/update feeds and persistent extension preference storage remain future work.
+Local import lives on the Extensions page. A public catalog is not part of this preview; remote catalog discovery, publisher verification, download/update feeds and persistent extension preference storage remain future work.
 
 ### Extension settings UI
 

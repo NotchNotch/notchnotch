@@ -22,7 +22,6 @@ struct ManagementView: View {
         switch coordinator.destination {
         case .extensions: "Extensions"
         case .general: "General"
-        case .marketplace: "Marketplace"
         case .extensionDetails(let id): coordinator.model.installedExtensions.first(where: { $0.id == id })?.manifest.name ?? "Extension"
         }
     }
@@ -36,7 +35,6 @@ struct ManagementView: View {
                 ContentUnavailableView("Extension unavailable", systemImage: "puzzlepiece.extension",
                     description: Text("Refresh the library or choose another extension."))
             }
-        case .marketplace: ManagementMarketplacePage(coordinator: coordinator)
         case .general: ManagementGeneralPage(coordinator: coordinator)
         }
     }

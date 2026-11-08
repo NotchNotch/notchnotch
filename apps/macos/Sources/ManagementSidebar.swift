@@ -12,8 +12,6 @@ struct ManagementSidebar: View {
                         .tag(ManagementDestination.general)
                     Label { Text("Extensions") } icon: { ManagementSidebarIcon(symbol: "puzzlepiece.extension.fill", color: .blue) }
                         .tag(ManagementDestination.extensions)
-                    Label { Text("Marketplace") } icon: { ManagementSidebarIcon(symbol: "bag.fill", color: .purple) }
-                        .tag(ManagementDestination.marketplace)
                 }
                 Section("Installed") {
                     ForEach(coordinator.visibleExtensions) { record in
