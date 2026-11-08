@@ -149,8 +149,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.mainMenu = mainMenu
     }
 
+    private static func displayID(_ screen: NSScreen) -> String? {
+        (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.stringValue
+    }
+
+    /// The user's chosen display when connected; otherwise the notched display, else the main one.
+    private func targetScreen() -> NSScreen? {
+        let displays = NSScreen.screens.compactMap { screen in
+            Self.displayID(screen).map { AppModel.Display(id: $0, name: screen.localizedName, hasNotch: screen.safeAreaInsets.top > 0) }
+        }
+        if model.displays != displays { model.displays = displays }
+        if let preferred = model.preferredDisplayID,
+           let screen = NSScreen.screens.first(where: { Self.displayID($0) == preferred }) { return screen }
+        return NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 }) ?? NSScreen.main
+    }
+
     private func layoutPanel() {
-        guard let panel, let screen = NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 }) ?? NSScreen.main else { return }
+        guard let panel, let screen = targetScreen() else { return }
         model.hasNotch = screen.safeAreaInsets.top > 0
         if let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea {
             model.notchWidth = max(100, right.minX - left.maxX)

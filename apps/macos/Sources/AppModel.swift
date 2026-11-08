@@ -37,7 +37,17 @@ final class AppModel {
     func storageURL(for id: String) -> URL {
         Self.supportDirectory.appendingPathComponent("Storage").appendingPathComponent("\(id).json")
     }
-    var errors: [String: String] = [:]
+    struct Display: Identifiable, Equatable { let id: String; let name: String; let hasNotch: Bool }
+    /// Connected screens, refreshed by the app delegate on display changes.
+    var displays: [Display] = []
+    /// nil = automatic: the built-in display with a camera housing, else the main display.
+    var preferredDisplayID: String? = UserDefaults.standard.string(forKey: "preferredDisplayID") {
+        didSet {
+            UserDefaults.standard.set(preferredDisplayID, forKey: "preferredDisplayID")
+            onLayoutChange?()
+        }
+    }
+        var errors: [String: String] = [:]
     var notchWidth: CGFloat = 180
     var topHeight: CGFloat = 34
     var hasNotch = false

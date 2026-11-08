@@ -6,6 +6,19 @@ struct ManagementGeneralPage: View {
         @Bindable var model = coordinator.model
         Form {
             Section {
+                Picker("Show on", selection: $model.preferredDisplayID) {
+                    Text("Automatic").tag(String?.none)
+                    ForEach(model.displays) { display in
+                        Text(display.hasNotch ? "\(display.name) (camera housing)" : display.name).tag(Optional(display.id))
+                    }
+                    if let id = model.preferredDisplayID, !model.displays.contains(where: { $0.id == id }) {
+                        Text("Disconnected display").tag(Optional(id))
+                    }
+                }
+            } footer: {
+                Text("Automatic uses the built-in display with a camera housing, or the main display. A disconnected choice falls back to Automatic until it returns.")
+            }
+            Section {
                 Toggle("Expand on hover", isOn: $model.expandOnHover).toggleStyle(.switch)
             } footer: {
                 Text("Keep the pointer over the notch to preview an activity. Clicking always opens it.")
