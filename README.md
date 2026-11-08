@@ -8,7 +8,12 @@ A native macOS notch hub for music, calendar events, and extensible live activit
 
 - Music controls for Spotify and Apple Music.
 - Upcoming calendar events with a live countdown and meeting links.
-- An extension SDK and a settings window for managing integrations.
+- An extension SDK in React and TypeScript with native components, prompts, storage and local app connections.
+- Settings for extensions, displays, hover behavior and opening at login.
+
+## Install
+
+Download the latest DMG from the project's GitHub Releases, open it and drag NotchNotch to Applications. Requires macOS 14 or later.
 
 ## Development
 
@@ -28,11 +33,11 @@ pnpm build
 pnpm test
 ```
 
-The app is built at `dist/NotchNotch.app`. Preview builds are locally signed and not notarized. Only install extensions you trust.
+The app is built at `dist/NotchNotch.app`. `pnpm release` creates a universal DMG; see [Releasing](docs/releasing.md) for signing and notarization. Only install extensions you trust.
 
 ## Documentation
 
-[Architecture](docs/architecture.md) · [Extension API](docs/extension-api.md) · [App connections](docs/connections.md)
+[Architecture](docs/architecture.md) · [Extension API](docs/extension-api.md) · [App connections](docs/connections.md) · [Releasing](docs/releasing.md) · [Changelog](CHANGELOG.md) · [Privacy](PRIVACY.md) · [Security](SECURITY.md)
 
 ## License
 
