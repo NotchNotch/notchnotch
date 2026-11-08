@@ -68,13 +68,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         refreshPointerRouting()
         panel.orderFrontRegardless()
         model.start()
-        // Pointer warps, screen/Space switches, and some input devices do not emit
-        // mouseMoved. Sampling also keeps hit routing correct while the shell morphs.
-        let pointerTimer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
+        schedulePointerSampling(interval: Self.fastSampling)
+    }
+
+    // Pointer warps, screen/Space switches, and some input devices do not emit
+    // mouseMoved. Sampling also keeps hit routing correct while the shell morphs.
+    // It runs fast only near the notch or while it is open; elsewhere the global
+    // mouse monitor covers ordinary movement and a slow sample catches warps.
+    private static let fastSampling: TimeInterval = 0.1
+    private static let slowSampling: TimeInterval = 0.75
+
+    private func schedulePointerSampling(interval: TimeInterval) {
+        guard pointerTimer?.timeInterval != interval else { return }
+        pointerTimer?.invalidate()
+        let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.refreshPointerRouting() }
         }
-        RunLoop.main.add(pointerTimer, forMode: .common)
-        self.pointerTimer = pointerTimer
+        timer.tolerance = interval * 0.3
+        RunLoop.main.add(timer, forMode: .common)
+        pointerTimer = timer
+    }
+
+    private func pointerIsNearNotch() -> Bool {
+        guard let panel else { return false }
+        let mouse = NSEvent.mouseLocation
+        return panel.frame.insetBy(dx: -120, dy: -80).contains(mouse)
     }
 
     private func handlePaging(_ event: NSEvent) -> Bool {
@@ -167,6 +185,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.ignoresMouseEvents = !pointerIsInsideSilhouette() || model.presentation == .idle
         if !model.isExpanded, panel.isKeyWindow { panel.resignKey() }
         model.pointerChanged(inside: inside)
+        // Compact wings stay put; only morphing or open states need fast sampling.
+        let animating = [.hovered, .peek, .expanded].contains(model.presentation)
+        schedulePointerSampling(interval: animating || pointerIsNearNotch() ? Self.fastSampling : Self.slowSampling)
     }
 
     private func closeIfOutsidePanel() {
