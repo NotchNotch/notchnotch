@@ -51,6 +51,10 @@ export function Column({ children, spacing, align }: Stack) { return createEleme
 export function Row({ children, spacing, align }: Stack) { return createElement("row", { spacing, align }, children); }
 /** Flexible empty space inside a `Row` or `Column`. */
 export function Spacer() { return createElement("spacer", null); }
+/** Trailing-aligned row of buttons, e.g. a prompt's answers. Put the primary (`accent`) action last. */
+export function Actions({ children }: Children) {
+  return createElement("row", { spacing: "regular" }, createElement(Spacer), children);
+}
 /** Thin separator line. */
 export function Divider() { return createElement("divider", null); }
 

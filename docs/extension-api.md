@@ -67,13 +67,38 @@ Paused surfaces do not automatically claim the notch. Completion announces autom
 | Component | Props |
 | --- | --- |
 | `Text` | children containing text/numbers, `tone`, `size` |
-| `Symbol` | SF Symbol `name`, `tone` |
+| `Symbol` | SF Symbol `name`, `tone`, `size` (follows the text scale) |
+| `Badge` | short text children, `tone` |
 | `Progress` | `value` in `[0, 1]`, `tone` |
-| `Button` | `title`, `onPress`, `tone`, `disabled` |
-| `TextField` | controlled `value`, `onChange`, `placeholder` |
-| `Row`, `Column` | children |
+| `Button` | `title` and/or SF Symbol `icon`, `onPress`, `tone`, `disabled` |
+| `TextField` | controlled `value`, `onChange`, `placeholder`, `disabled` |
+| `Toggle` | controlled `value`, `onChange(boolean)`, optional `label`, `disabled` |
+| `Row`, `Column` | children, `spacing` (`none`/`tight`/`regular`/`loose`), `align` (`start`/`center`/`end`) |
+| `Spacer`, `Divider` | — |
+| `Section` | `title`, `footer`, `spacing`, children |
+| `ListItem` | `title`, `subtitle`, SF Symbol `icon`, `tone`, optional `onPress`, trailing accessory children |
+| `Actions` | buttons, aligned to the trailing edge; put the `accent` action last |
 
-Tones: `primary`, `secondary`, `accent`, `success`, `warning`. Text sizes: `caption`, `body`, `title`, `timer`. The native host controls layout metrics, typography, window dimensions, and animation.
+Tones: `primary`, `secondary`, `accent`, `success`, `warning`, `danger`. Text sizes: `caption`, `body`, `headline`, `title`, `timer`. The native host controls the actual metrics, typography, colors, window dimensions and animation through a single theme, so extensions look consistent with each other and with the system.
+
+Guidelines:
+
+- Use one `accent` button per view for the primary action. `danger` is for destructive actions.
+- In `Settings`, top-level `Section`s become native form sections. Prefer `ListItem` + `Toggle` over pairs of on/off buttons.
+- Compact content is a single click target: it cannot contain `Button`, `TextField` or `Toggle`.
+- The host shows the extension icon, the prompt `title` and the extension name above every prompt. Do not repeat the title inside `Prompt.Expanded`.
+
+```tsx
+<Prompt id="rename" title="Name this timer">
+  <Prompt.Expanded>
+    <TextField value={name} onChange={setName} placeholder="Focus" />
+    <Actions>
+      <Button title="Skip" onPress={skip} />
+      <Button title="Save" tone="accent" onPress={save} />
+    </Actions>
+  </Prompt.Expanded>
+</Prompt>
+```
 
 React hooks, promises, `setTimeout`, `setInterval`, and `console` are available. Console output appears under **Settings & Extensions… → your extension → Console** (the last 300 lines; errors are kept longest). DOM components, CSS, global `fetch`, Node built-ins and native modules are not exposed to extension JavaScript. API v1 accepts `local-network` and `process` permissions. Local networking and native tools additionally require named manifest connections and explicit session consent. The SDK is a local workspace package and is not published to npm yet.
 
@@ -134,7 +159,7 @@ return <>
 </>;
 ```
 
-Settings supports `Column`, `Row`, `Text`, `Symbol`, `Progress`, `Button` and `TextField`. The host renders native window controls using system colors. Settings and notch nodes share the 512-node/16-depth snapshot budget and must have unique node ids. Omit Settings to clear the panel. Disabling, removing or crashing an extension clears its setup UI and action handlers; restarting reconstructs it. Local React state lasts for the runner session. Media and artwork components belong to the notch activity. Closing the management window leaves the runner and its connections alive.
+Settings supports every component except the media components (`MusicPlayer`, `Artwork`, `Waveform`). The host renders native window controls using system colors. Settings and notch nodes share the 512-node/16-depth snapshot budget and must have unique node ids. Omit Settings to clear the panel. Disabling, removing or crashing an extension clears its setup UI and action handlers; restarting reconstructs it. Local React state lasts for the runner session. Media and artwork components belong to the notch activity. Closing the management window leaves the runner and its connections alive.
 
 ### Library identity
 

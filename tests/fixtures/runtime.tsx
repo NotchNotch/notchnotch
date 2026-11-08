@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Activity, Button, Prompt, Text, TextField } from "@notchnotch/sdk";
+import { Actions, Activity, Button, Prompt, Text, TextField } from "@notchnotch/sdk";
 import { start } from "@notchnotch/runtime";
 
 // Test-only React state, timer and input callbacks across the runner boundary.
@@ -28,7 +28,10 @@ function RuntimeFixture() {
     {asking ? <Prompt id="input" title="Runtime input" initialView="expanded">
       <Prompt.Expanded>
         <TextField value={name} onChange={setName} placeholder="Test input" />
-        <Button title="Save" onPress={() => { setAnswer(name); setAsking(false); }} />
+        <Actions>
+          <Button title="Cancel" onPress={() => setAsking(false)} />
+          <Button title="Save" tone="accent" onPress={() => { setAnswer(name); setAsking(false); }} />
+        </Actions>
       </Prompt.Expanded>
     </Prompt> : null}
   </>;

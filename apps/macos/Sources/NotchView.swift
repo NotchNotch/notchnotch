@@ -204,6 +204,7 @@ struct NotchView: View {
             topControls.frame(height: model.topHeight + 8)
             VStack(spacing: 14) {
                 if let selected = model.displayedSurface {
+                    if selected.surface.kind == .prompt { promptHeader(selected) }
                     NativeNodeView(node: selected.surface.expanded) { action, value in
                         onInteraction()
                         model.send(extensionID: selected.key.extensionID, action: action, value: value)
@@ -231,6 +232,29 @@ struct NotchView: View {
         }
         .frame(width: geometry.expandedWidth)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// Prompts interrupt the user, so the host always states who is asking.
+    private func promptHeader(_ item: HostedSurface) -> some View {
+        let manifest = model.installedExtensions.first { $0.id == item.key.extensionID }?.manifest
+        return HStack(spacing: 10) {
+            Image(systemName: manifest?.icon ?? "bubble.left.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.black)
+                .frame(width: NotchTheme.iconTile, height: NotchTheme.iconTile)
+                .background(.white, in: RoundedRectangle(cornerRadius: 7))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(item.surface.title).font(NotchTheme.font(.headline)).foregroundStyle(NotchTheme.Ink.primary)
+                    .lineLimit(2)
+                if let name = manifest?.name {
+                    Text(name).font(NotchTheme.font(.caption)).foregroundStyle(NotchTheme.Ink.secondary)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
     }
 
     private var topControls: some View {
