@@ -6,6 +6,9 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- `.notchext` packages: one file that opens NotchNotch's install review on double-click, or with **+**. Make one with `notchnotch pack` or `notchnotch build --pack`; new projects get `npm run pack`. The app unpacks them with its own validating extractor and keeps the download's quarantine flag on the unpacked files.
+
 ## [0.3.1] - 2026-11-09
 
 ### Fixed

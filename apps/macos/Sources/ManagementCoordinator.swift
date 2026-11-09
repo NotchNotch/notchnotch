@@ -1,5 +1,6 @@
 import AppKit
 import Observation
+import UniformTypeIdentifiers
 import NotchExtensions
 
 @MainActor @Observable
@@ -16,7 +17,13 @@ final class ManagementCoordinator {
             }
         }
     }
-    var sheet: ManagementSheet?
+    var sheet: ManagementSheet? {
+        didSet {
+            // A reviewed .notchext is unpacked to a temporary folder; drop it once
+            // the review closes, whether it was installed or cancelled.
+            if case .install(let old) = oldValue, sheet?.id != oldValue?.id { ExtensionStore.discardStaged(old) }
+        }
+    }
     var sheetError: String?
     /// Errors stay until dismissed; messages fade out on their own.
     var error: String?
@@ -72,10 +79,11 @@ final class ManagementCoordinator {
         let panel = NSOpenPanel()
         picker = panel
         panel.title = "Install Extension"
-        panel.message = "Choose a built extension folder containing notchnotch.json and bundle.js."
+        panel.message = "Choose a .notchext package, or a built extension folder containing notchnotch.json and bundle.js."
         panel.prompt = "Review Extension"
-        panel.canChooseFiles = false
+        panel.canChooseFiles = true
         panel.canChooseDirectories = true
+        panel.allowedContentTypes = [.folder, UTType(filenameExtension: ExtensionArchive.fileExtension) ?? .zip]
         panel.allowsMultipleSelection = false
         panel.directoryURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
         Task { @MainActor in
@@ -83,10 +91,27 @@ final class ManagementCoordinator {
             guard await panel.beginSheetModal(for: window) == .OK, let folder = panel.url else { return }
             do {
                 let package = try await model.reviewInstall(folder)
-                guard generation == pickerGeneration else { return }
+                guard generation == pickerGeneration else { ExtensionStore.discardStaged(package); return }
                 sheetError = nil
                 sheet = .install(package)
             } catch { if generation == pickerGeneration { self.error = error.localizedDescription } }
+        }
+    }
+    /// A `.notchext` opened from Finder or a browser: the same review as Install from Folder.
+    func openPackage(_ url: URL) {
+        guard !busy, sheet == nil else {
+            error = "Finish the current installation before opening \(url.lastPathComponent)."
+            return
+        }
+        operating = true
+        error = nil
+        Task { @MainActor in
+            defer { operating = false }
+            do {
+                let package = try await model.reviewInstall(url)
+                sheetError = nil
+                sheet = .install(package)
+            } catch { self.error = "\(url.lastPathComponent) couldn’t be opened. \(error.localizedDescription)" }
         }
     }
     func confirmInstall(_ package: ExtensionPackage) {

@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import NotchCore
+import NotchExtensions
 
 final class NotchPanel: NSPanel {
     override var canBecomeKey: Bool { true }
@@ -18,6 +19,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     private var pagingGesture = ActivityPagingGesture()
     private var managementController: ManagementWindowController?
     private var welcomeController: WelcomeWindowController?
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // Packages unpacked for a review that never finished (the app quit mid-review).
+        // This runs before a double-clicked .notchext is delivered, never after.
+        try? FileManager.default.removeItem(at: ExtensionStore.stagingDirectory)
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let panel = NotchPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
@@ -244,6 +251,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         model.close()
         if managementController == nil { managementController = ManagementWindowController(model: model, updater: updater) }
         managementController?.reveal(extensionID: extensionID)
+    }
+    /// Double-clicking a `.notchext` (or dropping it on the app) opens its install review.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        guard let url = urls.first(where: { $0.pathExtension.lowercased() == ExtensionArchive.fileExtension }) else { return }
+        openManagement()
+        managementController?.coordinator.openPackage(url)
     }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showManagement()

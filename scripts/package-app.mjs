@@ -77,6 +77,19 @@ export async function packageApp() {
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>LSUIElement</key><true/>
 <key>NSHighResolutionCapable</key><true/>
+<key>CFBundleDocumentTypes</key><array><dict>
+  <key>CFBundleTypeName</key><string>NotchNotch Extension</string>
+  <key>CFBundleTypeRole</key><string>Viewer</string>
+  <key>LSHandlerRank</key><string>Owner</string>
+  <key>LSItemContentTypes</key><array><string>dev.notchnotch.extension-package</string></array>
+</dict></array>
+<key>UTExportedTypeDeclarations</key><array><dict>
+  <key>UTTypeIdentifier</key><string>dev.notchnotch.extension-package</string>
+  <key>UTTypeDescription</key><string>NotchNotch Extension</string>
+  <key>UTTypeConformsTo</key><array><string>public.zip-archive</string><string>public.data</string></array>
+  <key>UTTypeIconFile</key><string>AppIcon</string>
+  <key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>notchext</string></array></dict>
+</dict></array>
 <key>NSAppleEventsUsageDescription</key><string>Read the current song and control Spotify or Apple Music for the Music extension.</string>
 <key>NSCalendarsFullAccessUsageDescription</key><string>Read your selected calendars to show the next event and its countdown in the notch. The Calendar extension does not change your events.</string>
 <key>NSCalendarsUsageDescription</key><string>Read your selected calendars to show upcoming events in the notch.</string>

@@ -266,8 +266,11 @@ final class AppModel {
     }
     func reviewInstall(_ folder: URL) async throws -> ExtensionPackage {
         let store = extensionStore
-        let package = try await Task.detached(priority: .userInitiated) { try store.inspect(folder) }.value
+        let package = try await Task.detached(priority: .userInitiated) {
+            folder.pathExtension.lowercased() == ExtensionArchive.fileExtension ? try store.inspectArchive(folder) : try store.inspect(folder)
+        }.value
         if let existing = installedExtensions.first(where: { $0.id == package.id }), !store.isManaged(existing) {
+            ExtensionStore.discardStaged(package)
             throw ProtocolError.invalid("\(existing.manifest.name) is included with NotchNotch and cannot be replaced. Use a different extension identifier.")
         }
         return package

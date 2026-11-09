@@ -94,3 +94,29 @@ private func package(at root: URL, id: String = "dev.test.extension", version: S
     #expect(scan.issues.count == 1)
     #expect(!store.isManaged(scan.extensions[0]))
 }
+
+@Test func archivesInstallLikeFoldersAndOnlyTheirStagingCopyIsDiscarded() throws {
+    let root = try temporaryDirectory()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let source = try package(at: root.appendingPathComponent("source"), id: "dev.test.archived")
+    let archive = root.appendingPathComponent("archived.notchext")
+    let zip = Process()
+    zip.executableURL = URL(fileURLWithPath: "/usr/bin/zip")
+    zip.arguments = ["-q", "-r", "-X", archive.path, "."]
+    zip.currentDirectoryURL = source
+    try zip.run(); zip.waitUntilExit()
+
+    let store = ExtensionStore(directory: root.appendingPathComponent("installed"))
+    let reviewed = try store.inspectArchive(archive)
+    #expect(reviewed.directory.path.hasPrefix(ExtensionStore.stagingDirectory.resolvingSymlinksInPath().path)
+            || reviewed.directory.resolvingSymlinksInPath().path.hasPrefix(ExtensionStore.stagingDirectory.resolvingSymlinksInPath().path))
+    let installed = try store.install(reviewed)
+    #expect(FileManager.default.fileExists(atPath: installed.appendingPathComponent("bundle.js").path))
+    ExtensionStore.discardStaged(reviewed)
+    #expect(!FileManager.default.fileExists(atPath: reviewed.directory.path))
+    #expect(FileManager.default.fileExists(atPath: installed.path))
+    // A folder the user picked is reviewed in place and must never be deleted.
+    let folder = try store.inspect(source)
+    ExtensionStore.discardStaged(folder)
+    #expect(FileManager.default.fileExists(atPath: source.appendingPathComponent("notchnotch.json").path))
+}

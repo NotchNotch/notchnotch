@@ -62,6 +62,29 @@ public struct ExtensionStore: Sendable {
         return result
     }
 
+    /// Unpacked `.notchext` packages wait here for review; never inside the library.
+    public static let stagingDirectory = FileManager.default.temporaryDirectory.appendingPathComponent("NotchNotchPackages", isDirectory: true)
+
+    /// Unpacks a `.notchext` file and inspects it like a folder.
+    public func inspectArchive(_ archive: URL) throws -> ExtensionPackage {
+        let staged = Self.stagingDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: Self.stagingDirectory, withIntermediateDirectories: true)
+        try ExtensionArchive.extract(archive, into: staged)
+        ExtensionArchive.propagateQuarantine(from: archive, to: staged)
+        do { return try inspect(staged) } catch {
+            try? FileManager.default.removeItem(at: staged)
+            throw error
+        }
+    }
+
+    /// Deletes the unpacked copy of a reviewed archive; folders chosen by the user are left alone.
+    public static func discardStaged(_ package: ExtensionPackage) {
+        let staging = stagingDirectory.resolvingSymlinksInPath().standardizedFileURL.path + "/"
+        let directory = package.directory.resolvingSymlinksInPath().standardizedFileURL.path
+        guard directory.hasPrefix(staging) else { return }
+        try? FileManager.default.removeItem(atPath: directory)
+    }
+
     public func inspect(_ source: URL) throws -> ExtensionPackage {
         let root = source.resolvingSymlinksInPath().standardizedFileURL
         let manager = FileManager.default

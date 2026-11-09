@@ -165,6 +165,12 @@ The resting notch remains hidden for paused extensions. On hover, the host revea
 
 An `Activity` may set `idlePreview` to opt into the resumable fallback; it must have `Activity.Compact`. This requests hover visibility only and never claims the resting notch. The music extension opts in only while it has a track, so users can resume a paused song. Its connection setup stays in the management window. Newly installed activities do not take priority merely because they are installed. Recency is local to the running host session and is cleared when a surface or extension disappears.
 
+## Sharing an extension
+
+`notchnotch build . --out dist --pack` (or `npm run pack` in a project from `npm create notchnotch-extension`) also writes `<id>-<version>.notchext`: a zip of the built package. Double-clicking it opens NotchNotch's install review; it can also be chosen with **+**. Share that one file, for example as a GitHub release asset.
+
+NotchNotch unpacks `.notchext` files with its own extractor and checks every entry before writing anything: only relative paths without `..`, no symbolic links, no encryption or Zip64, at most 512 files and 64 MiB unpacked, and a matching CRC-32 for each file. A single top-level folder, as Finder's **Compress** makes, is unwrapped, and `__MACOSX` entries are skipped. If the file was downloaded, its quarantine flag is copied to every unpacked file, as Archive Utility does, so Gatekeeper still assesses native helpers: sign and notarize helpers you distribute, or tell users how to allow them.
+
 ## Installing a local extension
 
 Build a folder containing `notchnotch.json`, `bundle.js`, and any bundled helper/assets. `notchnotch build [folder] --out <dir>` (from `@notchnotch/cli`) bundles `src/index.tsx`, copies `helpers/` and `assets/`, runs an optional `build.mjs`, and then applies the same checks as the installer; `notchnotch check <dir>` runs only the checks. In **Settings & Extensions…**, click **+** at the bottom of the sidebar and select that built folder. The manager validates it and shows a review before copying it into the user's extension library. Keep a stable manifest id for updates, and use an id distinct from the included examples. Installed ids cannot shadow included extensions. Package limits are 512 files/folders, no symbolic links, 8 MiB for `bundle.js` and 64 MiB total. Development `build.mjs` files are never executed by the installer.

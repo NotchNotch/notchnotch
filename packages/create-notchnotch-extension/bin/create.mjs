@@ -35,6 +35,7 @@ export async function create({ folder, name, id, sdkVersion = version }) {
     name: slug(path.basename(target)), private: true, type: "module",
     scripts: {
       build: "notchnotch build . --out dist", watch: "notchnotch build . --out dist --watch",
+      pack: "notchnotch build . --out dist --pack",
       check: "notchnotch check dist", typecheck: "tsc --noEmit",
     },
     dependencies: { "@notchnotch/runtime": range, "@notchnotch/sdk": range, react: "19.3.1" },

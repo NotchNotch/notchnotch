@@ -103,3 +103,21 @@ test("the app carries every privacy entitlement and usage description its bundle
     }
   }
 });
+
+test("notchnotch build --pack writes a .notchext with the package at its root", async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), "notchnotch-pack-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const out = path.join(directory, "dist");
+  const result = cli("build", "examples/focus-timer", "--out", out, "--pack");
+  assert.equal(result.status, 0, result.stderr);
+  const file = path.join(directory, "dev.notchnotch.example.focus-0.1.0.notchext");
+  const listing = spawnSync("/usr/bin/zipinfo", ["-1", file], { encoding: "utf8" });
+  assert.equal(listing.status, 0, listing.stderr);
+  const names = listing.stdout.trim().split("\n");
+  assert.ok(names.includes("notchnotch.json") && names.includes("bundle.js"), names.join(", "));
+  assert.ok(!names.some((name) => name.startsWith("__MACOSX") || name.includes("..")));
+  // A package that fails the install checks is never packed.
+  await writeFile(path.join(out, "notchnotch.json"), "{}");
+  const bad = cli("pack", out, "--out", path.join(directory, "bad.notchext"));
+  assert.notEqual(bad.status, 0);
+});

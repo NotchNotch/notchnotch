@@ -1,4 +1,5 @@
 import { build as esbuild, context } from "esbuild";
+import { spawnSync } from "node:child_process";
 import { access, constants, copyFile, cp, lstat, mkdir, readFile, readdir, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -57,6 +58,24 @@ export async function buildExtension({ source, destination, watch = false, root,
   const instance = await context(options);
   await instance.watch();
   return instance;
+}
+
+/**
+ * Zips a built package into `<id>-<version>.notchext`, which NotchNotch installs
+ * on double-click. Refuses packages that would fail the app's install checks.
+ */
+export async function packExtension({ directory, out }) {
+  directory = path.resolve(directory);
+  const problems = await checkPackage(directory);
+  if (problems.length) throw new Error(problems.join("\n"));
+  const manifest = await readManifest(directory);
+  out = path.resolve(out ?? path.join(path.dirname(directory), `${manifest.id}-${manifest.version}.notchext`));
+  if (out.startsWith(directory + path.sep)) throw new Error("Write the .notchext outside the package folder");
+  await rm(out, { force: true });
+  // zip keeps Unix permissions (executable helpers); -X drops macOS extended attributes.
+  const result = spawnSync("/usr/bin/zip", ["-q", "-r", "-X", out, "."], { cwd: directory, encoding: "utf8" });
+  if (result.status !== 0) throw new Error(`zip failed: ${result.stderr || result.error?.message}`);
+  return out;
 }
 
 /** Mirrors the app's install checks so problems show up before **Install from Folder…**. */
