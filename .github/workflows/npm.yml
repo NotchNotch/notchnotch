@@ -2,8 +2,10 @@ name: Publish SDK to npm
 
 # Publishes @notchnotch/{protocol,react-renderer,runtime,sdk,cli} and
 # create-notchnotch-extension at the release's version, with npm provenance.
-# Requires the NPM_TOKEN secret (an npm automation token for an account that
-# owns the @notchnotch scope); without it the job is skipped.
+#
+# Authentication: pnpm first tries npm Trusted Publishing (OIDC). Configure it
+# on npmjs.com for each package (repository sadeqi-ah/notchnotch, workflow
+# npm.yml); then no secret is needed. Until then it falls back to NPM_TOKEN.
 
 on:
   release:
@@ -17,34 +19,24 @@ permissions:
 jobs:
   publish:
     runs-on: macos-26
-    env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v7
-        if: env.NPM_TOKEN != ''
         with:
           ref: ${{ github.event.release.tag_name || github.ref }}
       - uses: pnpm/action-setup@v6
-        if: env.NPM_TOKEN != ''
       - uses: actions/setup-node@v7
-        if: env.NPM_TOKEN != ''
         with:
           node-version: 22
           cache: pnpm
           registry-url: https://registry.npmjs.org
-      - if: env.NPM_TOKEN != ''
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
       - name: Build and test the packages
-        if: env.NPM_TOKEN != ''
         run: |
           pnpm typecheck
           pnpm build:packages
           node --test tests/create.test.mjs
       - name: Publish
-        if: env.NPM_TOKEN != ''
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         # Private workspace packages (the app, bundled extensions, examples) are skipped.
         run: pnpm -r publish --access public --no-git-checks
-      - if: env.NPM_TOKEN == ''
-        run: echo "::warning::NPM_TOKEN is not set; the SDK was not published."
