@@ -58,7 +58,17 @@ Each runner sandboxes itself with an SBPL profile through `sandbox_init`, as Chr
 
 Native helpers are separate processes the app starts after consent. They are not sandboxed: a helper runs with the user's account.
 
-Still missing before arbitrary third-party code: global CPU, memory and message-rate limits per runner (liveness checks catch a busy loop, not a slow memory leak or a flood of messages), and verified bundle installation through a reviewed catalog.
+### Resource limits
+
+Liveness pings catch a runner that stops answering. `RunnerResources` (`native/NotchCore`) catches one that keeps answering while it misbehaves. Every second the host samples the runner with `proc_pid_rusage` and stops it when:
+
+- its physical memory footprint is over 400 MB in two samples in a row;
+- it used more than 90% of one core on average over 30 seconds, such as a loop that yields with `setTimeout(0)`;
+- it sends messages faster than 30 a second once a burst of 120 is spent.
+
+The extension is stopped with a message that names the limit, and the usual restart policy applies: after three failures in two minutes it stays stopped. CPU times from the kernel are Mach ticks and are converted with `mach_timebase_info`.
+
+Still missing before arbitrary third-party code: verified bundle installation through a reviewed catalog.
 
 ### Generic connection broker
 

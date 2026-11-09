@@ -26,6 +26,7 @@ final class RunnerConnection {
     private var storageURL: URL?
     /// Set by each click or keystroke sent to the extension; lets it open one link.
     private var activation = UserActivation()
+    private var resources = RunnerResources()
     private let writer = DispatchQueue(label: "dev.notchnotch.runner-input", qos: .utility)
     private var queuedBytes = 0
 
@@ -87,6 +88,7 @@ final class RunnerConnection {
             }
         }
         liveness = RunnerLiveness(startedAt: .now)
+        resources = RunnerResources()
         let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.checkLiveness() }
         }
@@ -112,6 +114,11 @@ final class RunnerConnection {
             }
         case .fail(let reason):
             // terminate() is SIGTERM; a runner stuck in JavaScript still exits.
+            fail("\(manifest.name) \(reason) and was stopped.")
+            return
+        }
+        if let usage = ProcessUsage.sample(pid: process.processIdentifier),
+           let reason = resources.sample(memoryBytes: usage.memoryBytes, cpuTime: usage.cpuTime, now: .now) {
             fail("\(manifest.name) \(reason) and was stopped.")
         }
     }
@@ -255,6 +262,7 @@ final class RunnerConnection {
                 guard header.protocolVersion == 1, header.extensionID == manifest.id else {
                     throw ProtocolError.invalid("Extension sent an invalid envelope")
                 }
+                if let reason = resources.message(now: .now) { fail("\(manifest.name) \(reason) and was stopped."); return }
                 liveness.received()
                 switch header.type {
                 case "pong":

@@ -9,6 +9,8 @@ All notable changes to NotchNotch are listed here. The format follows
 ### Security
 - Extension runners are sandboxed by macOS before any extension code runs: they can't read your files, write files, use the network or start programs. Everything extensions do goes through the app. A built-in probe tests that each of these is blocked.
 
+- NotchNotch stops an extension that uses more than 400 MB of memory, keeps the processor busy for 30 seconds, or sends more than 30 messages a second after a short burst, and says which limit it hit.
+
 ### Changed
 - Extension storage is written by the app instead of the extension's process, and holds up to 255 KiB.
 

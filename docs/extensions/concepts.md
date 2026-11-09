@@ -104,6 +104,10 @@ Extensions run in JavaScriptCore, not in a browser or Node.js, in a process that
 - Available: React and hooks, promises, `setTimeout`, `setInterval`, `console`, [storage and secrets](storage.md), [`fetch`](network.md) to hosts you declare, [`open`](#opening-links) for links, and [connections](connections.md) to local apps and tools.
 - Not available: the DOM, CSS, the browser's global `fetch`, Node built-ins and native modules.
 
+## Limits
+
+NotchNotch stops an extension that uses more than 400 MB of memory, keeps the processor busy for 30 seconds, or sends more than 30 updates a second for long. Its page then says which limit it hit. Render when something changes, not on a fast timer, and keep large data out of React state.
+
 ## Design guidelines
 
 - One `accent` button per view, for the main action, placed last. Use `danger` only for destructive actions.
