@@ -11,7 +11,7 @@ name: Release
 #                                 users' permissions across updates
 #   SPARKLE_PRIVATE_KEY           sign the update archive and attach appcast.xml, so installed
 #                                 copies are offered the release once it is published
-#                                 (see .github/workflows/appcast.yml and docs/releasing.md)
+#                                 (see .github/workflows/appcast.yml and docs/internals/releasing.md)
 #   NOTARY_KEY_P8, NOTARY_KEY_ID, NOTARY_ISSUER_ID
 #                                 notarize as well (requires a Developer ID identity)
 

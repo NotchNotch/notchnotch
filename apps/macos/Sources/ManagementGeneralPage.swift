@@ -123,7 +123,7 @@ struct ManagementAboutPage: View {
             }
             Section("Resources") {
                 link("Release notes", "https://github.com/sadeqi-ah/notchnotch/blob/main/CHANGELOG.md")
-                link("Build an extension", "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extension-api.md")
+                link("Build an extension", "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/getting-started.md")
                 link("Privacy", "https://github.com/sadeqi-ah/notchnotch/blob/main/PRIVACY.md")
                 link("Report an issue", "https://github.com/sadeqi-ah/notchnotch/issues")
             }

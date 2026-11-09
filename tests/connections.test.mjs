@@ -27,7 +27,7 @@ function event(connectionID, sessionID, message, kind = "message") {
 test("HTTP responses correlate with concurrent requests even when replies arrive out of order", async (t) => {
   const commands = [];
   const { localHTTP } = await sdk(t, (command) => commands.push(command));
-  const client = localHTTP("zeytun");
+  const client = localHTTP("api");
   const first = client.request("/pending");
   const second = client.request("/decisions", { method: "POST", body: '{"route":"direct"}' });
   response(commands[1], { status: 200, headers: {}, body: "second" });

@@ -18,4 +18,4 @@ start(
 );
 ```
 
-See the [Extension API](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extension-api.md).
+See the [documentation](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/README.md), starting with [Getting started](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/getting-started.md).

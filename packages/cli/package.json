@@ -4,7 +4,7 @@
   "description": "Build and check NotchNotch extensions: notchnotch build, notchnotch check, and helper app packaging.",
   "license": "MIT",
   "author": "AmirHossein Sadeghi",
-  "homepage": "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extension-api.md",
+  "homepage": "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/README.md",
   "bugs": "https://github.com/sadeqi-ah/notchnotch/issues",
   "repository": {
     "type": "git",

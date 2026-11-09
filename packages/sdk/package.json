@@ -4,7 +4,7 @@
   "description": "React components and APIs for building NotchNotch extensions: activities, prompts, settings, storage and app connections.",
   "license": "MIT",
   "author": "AmirHossein Sadeghi",
-  "homepage": "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extension-api.md",
+  "homepage": "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/README.md",
   "bugs": "https://github.com/sadeqi-ah/notchnotch/issues",
   "repository": {
     "type": "git",

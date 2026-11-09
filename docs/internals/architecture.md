@@ -60,7 +60,7 @@ Consent is asked in a floating, non-modal window (one request at a time), so the
 
 HTTP uses a dedicated ephemeral URLSession with redirects disabled, no cookies/cache/proxy and bounded UTF-8 responses. Only explicit IPv4/IPv6 loopback destinations are accepted; WebSockets have fixed manifest endpoints and separate long-lived sessions. Stdio uses a dedicated process, bounded JSONL decoding, fixed arguments, canonical bundle-path checks and a minimal environment. A process grant trusts the native adapter with the user's filesystem/network privileges; it does not sandbox it. Stream messages have a 64 KiB limit and 256-message-per-second limit, pending commands are bounded, and session ids reject stale messages after reconnect. Runner input is serialized off the UI thread with bounded backpressure.
 
-Stopping/reloading an extension or using the disconnect command cancels tasks, closes sockets, terminates immediate helper processes and clears in-memory grants. The SDK correlates responses, rejects pending requests on disconnect and leaves reconnection and application-level decisions to the extension. See [Connections](connections.md) for transport/lifecycle details and limitations.
+Stopping/reloading an extension or using the disconnect command cancels tasks, closes sockets, terminates immediate helper processes and clears in-memory grants. The SDK correlates responses, rejects pending requests on disconnect and leaves reconnection and application-level decisions to the extension. See [Connections](../extensions/connections.md) for transport and lifecycle details and [Native helpers](../extensions/native-helpers.md) for limitations.
 
 
 ## Music extension and native adapter

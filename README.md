@@ -7,53 +7,41 @@
 
 # NotchNotch
 
-A native macOS notch hub for music, calendar events, and extensible live activities.
+The notch on your Mac, put to work. NotchNotch shows what's happening now around the camera: the song that's playing, your next meeting, a running timer, or anything an extension adds.
 
-**Developer preview.** Built with SwiftUI and AppKit, with extensions written in React and TypeScript.
+**Developer preview** for macOS 14 or later. Free and open source.
 
 ## Features
 
-- Music controls for Spotify and Apple Music.
-- Upcoming calendar events with a live countdown and meeting links.
-- An extension SDK in React and TypeScript with native components, prompts, storage and local app connections.
-- Settings for extensions, displays, hover behavior and opening at login.
+- **Music:** what's playing in Spotify or Apple Music, with playback controls.
+- **Calendar:** your next event with a countdown and a button to join the meeting.
+- **Extensions:** add your own, written in React and TypeScript and drawn natively by the app. Install one by double-clicking a `.notchext` file.
+- **Private:** no account, no analytics. Everything stays on your Mac.
 
 ## Install
 
-Requires macOS 14 or later.
-
 1. Download the latest `NotchNotch-<version>.dmg` from [Releases](https://github.com/sadeqi-ah/notchnotch/releases).
 2. Open it and drag **NotchNotch** to **Applications**.
-3. Open NotchNotch. This developer preview is not notarized by Apple, so macOS blocks the first launch. Choose **Done**, then open **System Settings › Privacy & Security**, scroll to *“NotchNotch” was blocked* and choose **Open Anyway**. Confirm with your password. This is needed only once.
+3. Open NotchNotch. This preview isn't notarized by Apple yet, so the first time, open **System Settings › Privacy & Security** and choose **Open Anyway** next to *"NotchNotch" was blocked*.
 
-From 0.3.0 on, NotchNotch updates itself: choose **Check for Updates…** in the menu bar, or let it check daily. Updates are verified with the project's signing key before they install. Download releases only from this repository. If you prefer Terminal, `xattr -dr com.apple.quarantine /Applications/NotchNotch.app` removes the download quarantine instead of step 3.
+NotchNotch updates itself after that. See [Using NotchNotch](docs/guide/using-notchnotch.md) to connect Music and Calendar.
 
-## Development
-
-Building requires Xcode 26 (Swift 6.2 or later and the macOS 26 SDK), Node.js 22+ and pnpm. The app runs on macOS 14 or later.
+## Build an extension
 
 ```sh
-pnpm install
-pnpm dev
+npm create notchnotch-extension@latest my-extension
 ```
 
-Connect Music and Calendar from **Settings & Extensions…** in the menu bar. `pnpm dev:examples` also loads the [example extensions](examples/).
+Start with [Getting started](docs/extensions/getting-started.md), then browse the [documentation](docs/README.md).
 
-## Build and test
+## Contributing
 
-```sh
-pnpm build
-pnpm test
-```
+Bug reports, ideas and pull requests are welcome. See [Contributing](CONTRIBUTING.md) to build the app, and report security problems privately as described in [Security](SECURITY.md).
 
-The app is built at `dist/NotchNotch.app`. `pnpm release` creates a universal DMG; see [Releasing](docs/releasing.md) for signing and notarization. Only install extensions you trust.
-
-## Documentation
-
-[Architecture](docs/architecture.md) · [Extension API](docs/extension-api.md) · [App connections](docs/connections.md) · [Releasing](docs/releasing.md) · [Changelog](CHANGELOG.md) · [Privacy](PRIVACY.md) · [Security](SECURITY.md)
+[Changelog](CHANGELOG.md) · [Privacy](PRIVACY.md) · [Documentation](docs/README.md)
 
 ## License
 
-Copyright © 2026 AmirHossein Sadeghi. Licensed under [GNU GPL v3.0](LICENSE) (GPL-3.0-only).
+Copyright © 2026 AmirHossein Sadeghi. NotchNotch is licensed under the [GNU GPL v3.0](LICENSE) (GPL-3.0-only).
 
 The extension SDK packages in [`packages/`](packages) (`@notchnotch/sdk`, `@notchnotch/runtime`, `@notchnotch/protocol`, `@notchnotch/react-renderer`, `@notchnotch/cli` and `create-notchnotch-extension`) are licensed under the [MIT License](packages/sdk/LICENSE), so extensions built with them can use any license.

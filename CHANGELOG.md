@@ -16,6 +16,7 @@ All notable changes to NotchNotch are listed here. The format follows
 - `notchnotch lint` checks store guidelines: title case, a short description, author, categories, license, your own icon, README and CHANGELOG. New projects have `npm run lint` and a placeholder icon that `lint` asks you to replace.
 
 ### Changed
+- Rewritten documentation: a guide for using NotchNotch, a developer guide split by topic (getting started, concepts, components, storage, connections, native helpers, manifest, publishing), and internal notes in `docs/internals`. The README is about the app; building it from source moved to `CONTRIBUTING.md`.
 - Music, Calendar and the Focus Timer example have their own icons and a README written for the people who use them. The helpers' developer documentation moved to `ADAPTER.md`.
 
 ## [0.3.2] - 2026-11-09
