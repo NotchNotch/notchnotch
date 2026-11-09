@@ -42,13 +42,21 @@ export const storage = {
   keys(): string[] { return Object.keys(load()); },
 };
 
-/** `useState` that is saved to `storage` under `key` and restored on the next launch. */
-export function useStoredState<T extends JSONValue>(key: string, initial: T): [T, (value: T | ((previous: T) => T)) => void] {
-  const [value, setValue] = useState<T>(() => storage.get<T>(key) ?? initial);
-  const update = useCallback((next: T | ((previous: T) => T)) => {
+/** TypeScript infers `true`/`false` literally even here; a stored flag must accept both. */
+export type Stored<T> = [T] extends [boolean] ? boolean : T;
+
+/**
+ * `useState` that is saved to `storage` under `key` and restored on the next launch.
+ * `T` is left unconstrained so `useStoredState("count", 0)` infers `number` rather than
+ * the literal `0`; the intersection still requires a JSON value.
+ */
+export function useStoredState<T>(key: string, initial: T & JSONValue): [Stored<T>, (value: Stored<T> | ((previous: Stored<T>) => Stored<T>)) => void] {
+  type V = Stored<T>;
+  const [value, setValue] = useState<V>(() => (storage.get(key) as V | undefined) ?? (initial as V));
+  const update = useCallback((next: V | ((previous: V) => V)) => {
     setValue((previous) => {
-      const resolved = typeof next === "function" ? (next as (previous: T) => T)(previous) : next;
-      storage.set(key, resolved);
+      const resolved = typeof next === "function" ? (next as (previous: V) => V)(previous) : next;
+      storage.set(key, resolved as JSONValue);
       return resolved;
     });
   }, [key]);
