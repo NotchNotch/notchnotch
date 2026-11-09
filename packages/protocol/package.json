@@ -2,7 +2,7 @@
   "name": "@notchnotch/protocol",
   "version": "0.2.0",
   "description": "Message and UI node types shared by NotchNotch and its extensions.",
-  "license": "GPL-3.0-only",
+  "license": "MIT",
   "author": "AmirHossein Sadeghi",
   "homepage": "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extension-api.md",
   "bugs": "https://github.com/sadeqi-ah/notchnotch/issues",
@@ -21,7 +21,8 @@
   "exports": "./src/index.ts",
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "publishConfig": {
     "exports": {

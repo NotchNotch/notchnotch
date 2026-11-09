@@ -128,7 +128,7 @@ struct ManagementAboutPage: View {
                 link("Report an issue", "https://github.com/sadeqi-ah/notchnotch/issues")
             }
             Section {
-                Text("Copyright © 2026 AmirHossein Sadeghi. Licensed under the GNU GPL v3.0.")
+                Text("Copyright © 2026 AmirHossein Sadeghi. Licensed under the GNU GPL v3.0; the extension SDK is MIT licensed.")
                     .font(.callout).foregroundStyle(.secondary)
             }
         }.formStyle(.grouped)

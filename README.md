@@ -55,3 +55,5 @@ The app is built at `dist/NotchNotch.app`. `pnpm release` creates a universal DM
 ## License
 
 Copyright © 2026 AmirHossein Sadeghi. Licensed under [GNU GPL v3.0](LICENSE) (GPL-3.0-only).
+
+The extension SDK packages in [`packages/`](packages) (`@notchnotch/sdk`, `@notchnotch/runtime`, `@notchnotch/protocol`, `@notchnotch/react-renderer`, `@notchnotch/cli` and `create-notchnotch-extension`) are licensed under the [MIT License](packages/sdk/LICENSE), so extensions built with them can use any license.

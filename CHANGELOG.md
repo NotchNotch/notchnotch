@@ -15,6 +15,7 @@ All notable changes to NotchNotch are listed here. The format follows
 - Manifest `imageHosts` to allow artwork from declared HTTPS hosts. The install review lists them.
 
 ### Changed
+- The extension SDK packages are MIT licensed, so extensions can use any license. The app remains GPL-3.0-only.
 - Redesigned **Settings & Extensions**: General, Notch and About pages; extensions listed with live status; each extension page has a header with its on/off switch and **Setup**, **Access** and **Developer** tabs; install with **+** at the bottom of the sidebar; confirmations fade out on their own.
 - `useStoredState("count", 0)` now infers `number` and boolean values infer `boolean`, instead of their literal types.
 - Extension helpers are their own responsible process for macOS privacy permissions. Prompts name the helper, and access granted to one extension's helper can no longer be used by NotchNotch or by other extensions. Users who connected Music or Calendar are asked once more.
