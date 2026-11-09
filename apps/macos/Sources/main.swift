@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     private var pointerTimer: Timer?
     private var pagingGesture = ActivityPagingGesture()
     private var managementController: ManagementWindowController?
+    private var welcomeController: WelcomeWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let panel = NotchPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
@@ -70,6 +71,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         panel.orderFrontRegardless()
         model.start()
         schedulePointerSampling(interval: Self.fastSampling)
+        let firstLaunch = WelcomeWindowController.shouldShow
+        model.greet(firstLaunch ? "Hi! NotchNotch lives here" : "NotchNotch is running", for: firstLaunch ? 6 : 3)
+        if firstLaunch {
+            let welcome = WelcomeWindowController(model: model) { [weak self] id in self?.openManagement(extensionID: id) }
+            welcomeController = welcome
+            welcome.reveal()
+        }
     }
 
     // Pointer warps, screen/Space switches, and some input devices do not emit

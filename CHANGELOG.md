@@ -7,6 +7,7 @@ All notable changes to NotchNotch are listed here. The format follows
 ## [Unreleased]
 
 ### Added
+- A welcome window on first launch, and a short greeting in the notch on every launch so it's clear NotchNotch is running.
 - Automatic updates with Sparkle: **Check for Updates…** in the menu bar, and update settings in **General**. Updates are EdDSA-signed and published from GitHub Releases.
 - The extension SDK on npm (`@notchnotch/sdk`, `@notchnotch/runtime`, `@notchnotch/cli`) and `npm create notchnotch-extension` to start a project outside this repository.
 - `@notchnotch/cli` with `notchnotch build` and `notchnotch check`, so extensions can be built and checked outside this repository with the same rules as the installer.
@@ -14,6 +15,7 @@ All notable changes to NotchNotch are listed here. The format follows
 - Manifest `imageHosts` to allow artwork from declared HTTPS hosts. The install review lists them.
 
 ### Changed
+- Redesigned **Settings & Extensions**: General, Notch and About pages; extensions listed with live status; each extension page has a header with its on/off switch and **Setup**, **Access** and **Developer** tabs; install with **+** at the bottom of the sidebar; confirmations fade out on their own.
 - `useStoredState("count", 0)` now infers `number` and boolean values infer `boolean`, instead of their literal types.
 - Extension helpers are their own responsible process for macOS privacy permissions. Prompts name the helper, and access granted to one extension's helper can no longer be used by NotchNotch or by other extensions. Users who connected Music or Calendar are asked once more.
 - NotchNotch itself no longer has Apple Events or Calendar entitlements or usage descriptions.

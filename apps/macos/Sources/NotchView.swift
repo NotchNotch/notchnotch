@@ -108,7 +108,10 @@ struct NotchView: View {
     private var compactWings: some View {
         HStack(spacing: 0) {
             HStack(spacing: 3) {
-                if let compact = model.wingSurface?.surface.compact {
+                if model.greeting != nil, model.platform.activePeek == nil {
+                    Image(systemName: "hand.wave.fill")
+                        .font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.8))
+                } else if let compact = model.wingSurface?.surface.compact {
                     ForEach(compact.leading) { node in NativeNodeView(node: node, compact: true) { _, _ in } }
                 } else if model.presentation == .hovered || model.platform.pendingCount > 0 {
                     Image(systemName: model.wingSurface?.surface.kind == .prompt ? "bubble.left.fill" : "square.grid.2x2.fill")

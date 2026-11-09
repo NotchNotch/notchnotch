@@ -87,6 +87,10 @@ final class AppModel {
     private var peekTask: Task<Void, Never>?
     private var scheduledPeek: ActivePeek?
     private(set) var lastPeekText = ""
+    /// A host message shown like an extension's peek, e.g. on launch. A menu bar
+    /// app has no Dock icon or window, so this is the only sign it has opened.
+    private(set) var greeting: String?
+    @ObservationIgnored private var greetingTask: Task<Void, Never>?
     private var connections: [String: RunnerConnection] = [:]
     private var reloads: [String: String] = [:]
     private var reloadTimer: Timer?
@@ -103,7 +107,7 @@ final class AppModel {
     var playerNode: UINode? { displayedSurface?.surface.expanded.children.first { $0.type == .player } }
     var presentation: NotchPresentation {
         if isExpanded { return .expanded }
-        if platform.activePeek != nil { return .peek }
+        if platform.activePeek != nil || greeting != nil { return .peek }
         if hover.isHighlighted { return .hovered }
         return platform.presentation
     }
@@ -306,7 +310,25 @@ final class AppModel {
     func disconnectExtensions() {
         for connection in connections.values { connection.resetConnections() }
     }
+    func greet(_ text: String, for seconds: Double = 4) {
+        greetingTask?.cancel()
+        greeting = text
+        lastPeekText = text
+        onLayoutChange?()
+        greetingTask = Task { [weak self] in
+            do { try await Task.sleep(for: .seconds(seconds)) } catch { return }
+            self?.endGreeting()
+        }
+    }
+    func endGreeting() {
+        guard greeting != nil else { return }
+        greetingTask?.cancel()
+        greeting = nil
+        if let text = platform.peeking?.surface.peek?.text { lastPeekText = text }
+        onLayoutChange?()
+    }
     func toggle() {
+        endGreeting()
         if platform.isExpanded || idlePinned { close() }
         else { pinOpen() }
     }
