@@ -3,14 +3,14 @@
   <channel>
     <title>NotchNotch</title>
     <item>
-      <title>NotchNotch 0.3.0</title>
-      <pubDate>Mon, 09 Nov 2026 12:51:55 GMT</pubDate>
-      <sparkle:version>3</sparkle:version>
-      <sparkle:shortVersionString>0.3.0</sparkle:shortVersionString>
+      <title>NotchNotch 0.3.1</title>
+      <pubDate>Mon, 09 Nov 2026 15:46:18 GMT</pubDate>
+      <sparkle:version>4</sparkle:version>
+      <sparkle:shortVersionString>0.3.1</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <link>https://github.com/sadeqi-ah/notchnotch/releases/tag/v0.3.0</link>
-      <description><![CDATA[<p><b>Upgrading from 0.2.0:</b> install this DMG by hand once. From 0.3.0 on, NotchNotch updates itself. Music and Calendar may ask for macOS access once more.</p><h3>Added</h3><ul><li>A welcome window on first launch, and a short greeting in the notch on every launch so it's clear NotchNotch is running.</li><li>Automatic updates with Sparkle: <b>Check for Updates…</b> in the menu bar, and update settings in <b>About</b>. Updates are EdDSA-signed and published from GitHub Releases.</li><li>The extension SDK as npm packages (<code>@notchnotch/sdk</code>, <code>@notchnotch/runtime</code>, <code>@notchnotch/cli</code>) and <code>npm create notchnotch-extension</code> to start a project outside this repository.</li><li><code>@notchnotch/cli</code> with <code>notchnotch build</code> and <code>notchnotch check</code>, so extensions can be built and checked outside this repository with the same rules as the installer.</li><li><code>helperApp</code> in <code>@notchnotch/cli/native</code> packages and signs a helper app bundle with its own privacy usage descriptions.</li><li>Manifest <code>imageHosts</code> to allow artwork from declared HTTPS hosts. The install review lists them.</li></ul><h3>Changed</h3><ul><li>The extension SDK packages are MIT licensed, so extensions can use any license. The app remains GPL-3.0-only.</li><li>Redesigned <b>Settings &amp; Extensions</b>: General, Notch and About pages; extensions listed with live status; each extension page has a header with its on/off switch and <b>Setup</b>, <b>Access</b> and <b>Developer</b> tabs; install with <b>+</b> at the bottom of the sidebar; confirmations fade out on their own.</li><li><code>useStoredState(&quot;count&quot;, 0)</code> now infers <code>number</code> and boolean values infer <code>boolean</code>, instead of their literal types.</li><li>Helpers of installed extensions are their own responsible process for macOS privacy permissions. Prompts name the helper, and access granted to one extension's helper can't be used by NotchNotch or by other extensions. The bundled Music and Calendar helpers still ask as NotchNotch, because macOS attributes code inside the app bundle to the app.</li><li>Remote artwork is no longer allowed by default from Spotify and Apple Music CDNs; the Music extension declares them in <code>imageHosts</code>.</li><li>The bundled extensions are built through the same <code>@notchnotch/cli</code> code path as third-party extensions.</li></ul>]]></description>
-      <enclosure url="https://github.com/sadeqi-ah/notchnotch/releases/download/v0.3.0/NotchNotch-0.3.0.zip" length="5255670" type="application/octet-stream" sparkle:edSignature="/bcoWz3kJ2Jx4UrvIt+88UV/zzTqYgZ1MAEspxn6q1F5oBUoaTZlfoIOdJ+C6nO5ZjK//tEUv5Ql1HCbVxA+Dg=="/>
+      <link>https://github.com/sadeqi-ah/notchnotch/releases/tag/v0.3.1</link>
+      <description><![CDATA[<h3>Fixed</h3><ul><li><code>@notchnotch/runtime</code> types now include the runtime globals (<code>setTimeout</code>, <code>setInterval</code>, <code>console</code>…). In 0.3.0 a new project created with <code>npm create notchnotch-extension</code> failed <code>npm run typecheck</code>.</li></ul><h3>Changed</h3><ul><li>The SDK is published to npm with Trusted Publishing when it is configured, and release workflows run on Node 24.</li></ul>]]></description>
+      <enclosure url="https://github.com/sadeqi-ah/notchnotch/releases/download/v0.3.1/NotchNotch-0.3.1.zip" length="5255694" type="application/octet-stream" sparkle:edSignature="Fiai3wgEALcIUx6usa7UyoUEMeNtwJIwJ/RgxcGTuOw1RI5wpW701rSYOLQSQAnn8Hdr40kQZN2W/Q+NzrGCAA=="/>
     </item>
   </channel>
 </rss>
