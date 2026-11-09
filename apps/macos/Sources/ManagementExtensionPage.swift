@@ -39,7 +39,7 @@ struct ManagementExtensionPage: View {
     private var header: some View {
         @Bindable var model = coordinator.model
         return HStack(alignment: .center, spacing: 14) {
-            ExtensionIdentityView(manifest: record.manifest, size: 48)
+            ExtensionIdentityView(icon: record.icon, size: 48)
                 .saturation(model.isEnabled(record.id) ? 1 : 0)
             VStack(alignment: .leading, spacing: 3) {
                 Text(record.manifest.name).font(.title2).bold().lineLimit(1)

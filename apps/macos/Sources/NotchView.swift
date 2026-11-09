@@ -1,6 +1,7 @@
 import SwiftUI
 import NotchCore
 import NotchRenderer
+import NotchExtensions
 
 struct NotchView: View {
     let model: AppModel
@@ -256,14 +257,19 @@ struct NotchView: View {
 
     /// Prompts interrupt the user, so the host always states who is asking.
     private func promptHeader(_ item: HostedSurface) -> some View {
-        let manifest = model.installedExtensions.first { $0.id == item.key.extensionID }?.manifest
+        let record = model.installedExtensions.first { $0.id == item.key.extensionID }
+        let manifest = record?.manifest
         return HStack(spacing: 10) {
-            Image(systemName: manifest?.icon ?? "bubble.left.fill")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.black)
-                .frame(width: NotchTheme.iconTile, height: NotchTheme.iconTile)
-                .background(.white, in: RoundedRectangle(cornerRadius: 7))
-                .accessibilityHidden(true)
+            if case .image = record?.icon, let icon = record?.icon {
+                ExtensionIconImage(icon: icon, size: NotchTheme.iconTile, appearance: .dark)
+            } else {
+                Image(systemName: manifest?.icon ?? "bubble.left.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.black)
+                    .frame(width: NotchTheme.iconTile, height: NotchTheme.iconTile)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 7))
+                    .accessibilityHidden(true)
+            }
             VStack(alignment: .leading, spacing: 1) {
                 Text(item.surface.title).font(NotchTheme.font(.headline)).foregroundStyle(NotchTheme.Ink.primary)
                     .lineLimit(2)

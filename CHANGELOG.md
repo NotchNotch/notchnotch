@@ -6,6 +6,9 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Extensions can use their own icon: set `icon` to the name of a 512×512 PNG in `assets/`, such as `"icon.png"`, with an optional `icon@dark.png` for dark backgrounds. It appears in Settings, the install review, connection requests and above prompts in the notch. `notchnotch check` and the installer validate it. SF Symbol names keep working.
+
 ## [0.3.2] - 2026-11-09
 
 ### Added

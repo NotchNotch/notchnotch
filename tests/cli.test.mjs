@@ -52,6 +52,44 @@ test("checkPackage reports what the app's installer would reject", async (t) => 
   assert.deepEqual(await checkPackage(directory), []);
 });
 
+/** Only the signature and IHDR header matter to the CLI's check. */
+const pngHeader = (width, height = width) => {
+  const buffer = Buffer.alloc(33);
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(buffer);
+  buffer.writeUInt32BE(13, 8);
+  buffer.write("IHDR", 12, "latin1");
+  buffer.writeUInt32BE(width, 16);
+  buffer.writeUInt32BE(height, 20);
+  return buffer;
+};
+
+test("checkPackage requires a declared PNG icon to be 512×512, dark variant included", async (t) => {
+  const directory = await temporary(t);
+  await writeFile(path.join(directory, "notchnotch.json"), JSON.stringify({
+    id: "dev.test.icon", name: "Icon", version: "1", apiVersion: 1, entry: "bundle.js", permissions: [], icon: "icon.png",
+  }));
+  await writeFile(path.join(directory, "bundle.js"), "void 0;");
+  assert.match((await checkPackage(directory)).join("\n"), /assets\/icon.png is missing/);
+  await mkdir(path.join(directory, "assets"));
+  await writeFile(path.join(directory, "assets/icon.png"), pngHeader(256));
+  assert.match((await checkPackage(directory)).join("\n"), /512×512 PNG/);
+  await writeFile(path.join(directory, "assets/icon.png"), pngHeader(512));
+  assert.deepEqual(await checkPackage(directory), []);
+  await writeFile(path.join(directory, "assets/icon@dark.png"), "not a png");
+  assert.match((await checkPackage(directory)).join("\n"), /icon@dark.png must be/);
+  await writeFile(path.join(directory, "assets/icon@dark.png"), pngHeader(512));
+  assert.deepEqual(await checkPackage(directory), []);
+});
+
+test("validateManifest keeps PNG icon names inside assets/", () => {
+  const base = { id: "dev.test.icon", name: "Icon", version: "1", apiVersion: 1, entry: "bundle.js", permissions: [] };
+  for (const icon of ["../icon.png", "assets/icon.png", ".png", "icon@dark.png"]) {
+    assert.throws(() => validateManifest({ ...base, icon }), /icon must be/, icon);
+  }
+  validateManifest({ ...base, icon: "icon.png" });
+  validateManifest({ ...base, icon: "timer" });
+});
+
 test("helperApp writes usage descriptions so the helper can ask for its own privacy access", async (t) => {
   const destination = await temporary(t);
   const executable = await helperApp({

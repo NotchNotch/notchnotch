@@ -1,12 +1,13 @@
 import AppKit
 import SwiftUI
 import NotchProtocol
+import NotchExtensions
 
 enum ConsentDecision { case deny, once, always }
 
 struct ConsentRequest {
     let extensionName: String
-    let extensionIcon: String?
+    let extensionIcon: ExtensionIcon
     let connectionID: String
     let target: String
     let runsTool: Bool
@@ -76,10 +77,7 @@ private struct ConsentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 12) {
-                Image(systemName: request.extensionIcon ?? "puzzlepiece.extension")
-                    .font(.system(size: 22)).foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(.tint, in: RoundedRectangle(cornerRadius: 10))
+                ExtensionIdentityView(icon: request.extensionIcon, size: 44)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Allow \(request.extensionName) to \(request.runsTool ? "run a local tool" : "connect to a local app")?")
                         .font(.headline).fixedSize(horizontal: false, vertical: true)

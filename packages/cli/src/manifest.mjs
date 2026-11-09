@@ -1,3 +1,9 @@
+/** The light and dark file names in `assets/` when `icon` names a PNG, otherwise `undefined`. */
+export function iconFiles(manifest) {
+  if (typeof manifest.icon !== "string" || !manifest.icon.endsWith(".png")) return undefined;
+  return { light: manifest.icon, dark: `${manifest.icon.slice(0, -4)}@dark.png` };
+}
+
 const allowedPermissions = new Set(["local-network", "process"]);
 
 export function validateManifest(manifest) {
@@ -9,6 +15,9 @@ export function validateManifest(manifest) {
       manifest.permissions.some((permission) => !allowedPermissions.has(permission))) invalid();
   if ((manifest.icon !== undefined && (typeof manifest.icon !== "string" || manifest.icon.length > 128)) ||
       (manifest.description !== undefined && (typeof manifest.description !== "string" || manifest.description.length > 512))) invalid();
+  if (manifest.icon?.endsWith(".png") && !/^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}\.png$/.test(manifest.icon)) {
+    throw new Error(`Unsupported manifest: ${manifest.id}: icon must be an SF Symbol name or the file name of a PNG in assets/, such as icon.png`);
+  }
   const hosts = manifest.imageHosts;
   if (hosts !== undefined && (!Array.isArray(hosts) || hosts.length > 8 || new Set(hosts).size !== hosts.length ||
       hosts.some((host) => typeof host !== "string" || host.length > 253 ||

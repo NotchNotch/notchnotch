@@ -9,7 +9,13 @@ public struct InstalledExtension: Identifiable, Equatable, Sendable {
     public let manifest: ExtensionManifest
     public let directory: URL
     public let origin: ExtensionOrigin
+    public let icon: ExtensionIcon
     public var id: String { manifest.id }
+
+    public init(manifest: ExtensionManifest, directory: URL, origin: ExtensionOrigin) {
+        self.manifest = manifest; self.directory = directory; self.origin = origin
+        icon = ExtensionIcon(manifest: manifest, directory: directory)
+    }
 }
 
 public struct ExtensionScan: Sendable {
@@ -21,7 +27,13 @@ public struct ExtensionPackage: Identifiable, Sendable {
     public let manifest: ExtensionManifest
     public let directory: URL
     public let byteCount: Int
+    public let icon: ExtensionIcon
     public var id: String { manifest.id }
+
+    public init(manifest: ExtensionManifest, directory: URL, byteCount: Int) {
+        self.manifest = manifest; self.directory = directory; self.byteCount = byteCount
+        icon = ExtensionIcon(manifest: manifest, directory: directory)
+    }
 }
 
 /// Local, explicitly trusted packages. Installing a bundle never runs its build
@@ -118,6 +130,7 @@ public struct ExtensionStore: Sendable {
                 guard bytes <= Self.maximumBundleBytes else { throw ProtocolError.invalid("The extension exceeds 64 MiB.") }
             }
         }
+        try ExtensionIcon.validate(manifest: manifest, directory: root)
         return .init(manifest: manifest, directory: root, byteCount: bytes)
     }
 

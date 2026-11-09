@@ -20,7 +20,7 @@ struct ManagementSidebar: View {
                             Label {
                                 Text(record.manifest.name).lineLimit(1)
                             } icon: {
-                                ExtensionIdentityView(manifest: record.manifest, size: 20)
+                                ExtensionIdentityView(icon: record.icon, size: 20)
                                     .saturation(coordinator.model.isEnabled(record.id) ? 1 : 0)
                             }
                             Spacer(minLength: 0)

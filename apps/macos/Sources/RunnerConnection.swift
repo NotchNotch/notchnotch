@@ -1,6 +1,7 @@
 import Foundation
 import NotchProtocol
 import NotchConnections
+import NotchExtensions
 import AppKit
 import NotchCore
 
@@ -112,6 +113,7 @@ final class RunnerConnection {
 
     private func handleConnection(_ command: ConnectionCommand) {
         if broker == nil {
+            let icon = ExtensionIcon(manifest: manifest, directory: directory)
             broker = ConnectionBroker(manifest: manifest, directory: directory) { [manifest] request in
                 let store = ConnectionGrantStore()
                 if store.isGranted(extensionID: manifest.id, connectionID: request.connectionID, fingerprint: request.fingerprint) {
@@ -119,7 +121,7 @@ final class RunnerConnection {
                 }
                 guard request.interactive else { return false }
                 let decision = await ConnectionConsentPresenter.shared.ask(.init(
-                    extensionName: manifest.name, extensionIcon: manifest.icon, connectionID: request.connectionID,
+                    extensionName: manifest.name, extensionIcon: icon, connectionID: request.connectionID,
                     target: request.target, runsTool: manifest.connections?[request.connectionID]?.transport == .stdio))
                 if decision == .always {
                     store.grant(extensionID: manifest.id, connectionID: request.connectionID, fingerprint: request.fingerprint)

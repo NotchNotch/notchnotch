@@ -240,6 +240,15 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
     public var description: String?
     /// HTTPS hosts the host may fetch artwork from for this extension.
     public var imageHosts: [String]?
+
+    /// An `icon` ending in `.png` names a file in the package's `assets/`
+    /// folder; `name@dark.png` beside it is the optional dark variant. Any
+    /// other value is an SF Symbol name.
+    public var iconFiles: (light: String, dark: String)? {
+        guard let icon, icon.hasSuffix(".png") else { return nil }
+        return (icon, String(icon.dropLast(4)) + "@dark.png")
+    }
+
     public func validate() throws {
         guard id.range(of: "^[a-z][a-z0-9.-]{2,79}$", options: .regularExpression) != nil,
               !name.isEmpty, name.count <= 128, !version.isEmpty, version.count <= 64,
@@ -253,6 +262,11 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
             guard imageHosts.count <= ImageHost.maximumCount, Set(imageHosts).count == imageHosts.count,
                   imageHosts.allSatisfy(ImageHost.isValidPattern) else {
                 throw ProtocolError.invalid("imageHosts must list up to 8 lowercase DNS names, optionally starting with *.")
+            }
+        }
+        if let icon, icon.hasSuffix(".png") {
+            guard icon.range(of: "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}\\.png$", options: .regularExpression) != nil else {
+                throw ProtocolError.invalid("icon must be an SF Symbol name or the file name of a PNG in assets/, such as icon.png.")
             }
         }
         for (id, definition) in connections ?? [:] {

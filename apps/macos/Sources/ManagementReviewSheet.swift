@@ -31,7 +31,7 @@ struct ManagementReviewSheet: View {
         HStack(alignment: .top, spacing: 14) {
             switch item {
             case .install(let package):
-                ExtensionIdentityView(manifest: package.manifest, size: 44)
+                ExtensionIdentityView(icon: package.icon, size: 44)
                 VStack(alignment: .leading, spacing: 6) {
                     Text(isUpdate ? "Update \(package.manifest.name)?" : "Install \(package.manifest.name)?").font(.title2).bold().lineLimit(2)
                     Text("Version \(package.manifest.version) · \(ByteCountFormatter.string(fromByteCount: Int64(package.byteCount), countStyle: .file))")

@@ -197,4 +197,16 @@ Settings supports every component except the media components (`MusicPlayer`, `A
 
 ### Library identity
 
-A manifest can include `icon` (an SF Symbol name, at most 128 characters) and `description` (at most 512 characters). These appear in the management sidebar, overview, extension page and install review. Omit them to use the generic extension identity. `name` must contain 1–128 characters, and `version` 1–64. The extension enable switch controls whether its runner is allowed to run; it does not imply that a local app has connected. Keep connection state and recovery controls in `Settings`.
+A manifest can include `icon` and `description` (at most 512 characters). They appear in the management sidebar, extension page, install review, connection requests and above prompts in the notch. Omit them to use the generic extension identity.
+
+`icon` is either an SF Symbol name, which the app draws on an accent tile, or the file name of your own icon in `assets/`:
+
+```json
+{ "icon": "icon.png" }
+```
+
+- `assets/icon.png`: PNG, exactly 512×512 pixels, at most 512 KiB. Draw the full shape yourself; the app shows it as is, without a mask or background.
+- `assets/icon@dark.png` (optional): the same icon for dark backgrounds. The notch is always dark, so it uses this variant when you provide one, as does Settings in dark mode.
+- The file name may contain letters, digits, `.`, `_` and `-`, and must end in `.png`. Folders are not allowed.
+
+`notchnotch check` and the installer reject a missing or wrongly sized icon. NotchNotch 0.3 and earlier show the generic icon for PNG icons. `name` must contain 1–128 characters, and `version` 1–64. The extension enable switch controls whether its runner is allowed to run; it does not imply that a local app has connected. Keep connection state and recovery controls in `Settings`.
