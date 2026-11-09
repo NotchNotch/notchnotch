@@ -9,7 +9,7 @@
 1. [Getting started](extensions/getting-started.md): a running extension in a few minutes
 2. [Concepts](extensions/concepts.md): activities, prompts, announcements and settings
 3. [Components](extensions/components.md): what you can put in the notch
-4. [Storage](extensions/storage.md): keep values across restarts
+4. [Storage](extensions/storage.md): keep values and secrets across restarts
 5. [Network](extensions/network.md): call web APIs with `fetch`
 6. [Connections](extensions/connections.md): talk to local apps and services
 7. [Native helpers](extensions/native-helpers.md): reach apps through native code

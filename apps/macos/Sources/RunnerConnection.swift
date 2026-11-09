@@ -112,6 +112,7 @@ final class RunnerConnection {
     func resetConnections() { broker?.stop(); broker = nil }
 
     private func handleConnection(_ command: ConnectionCommand) {
+        if [.secretGet, .secretSet, .secretDelete].contains(command.operation) { handleSecret(command); return }
         if broker == nil {
             let icon = ExtensionIcon(manifest: manifest, directory: directory)
             broker = ConnectionBroker(manifest: manifest, directory: directory) { [manifest] request in
@@ -130,6 +131,32 @@ final class RunnerConnection {
             } emit: { [weak self] json in self?.sendConnectionMessage(json) }
         }
         broker?.receive(command)
+    }
+
+    /// Keychain calls may wait for a macOS prompt, so they run off the main thread.
+    private func handleSecret(_ command: ConnectionCommand) {
+        let extensionID = manifest.id
+        Task { [weak self] in
+            let response: ConnectionResponse
+            do {
+                try command.validate(expectedExtensionID: extensionID)
+                guard let secret = command.secret else { throw ProtocolError.invalid("Secret request is missing") }
+                try secret.validate(requiresValue: command.operation == .secretSet)
+                let result: JSONValue = try await Task.detached {
+                    let store = ExtensionSecretStore()
+                    switch command.operation {
+                    case .secretGet: return try store.value(extensionID: extensionID, key: secret.key).map(JSONValue.string) ?? .null
+                    case .secretSet: try store.set(extensionID: extensionID, key: secret.key, value: secret.value ?? ""); return .null
+                    default: try store.delete(extensionID: extensionID, key: secret.key); return .null
+                    }
+                }.value
+                response = ConnectionResponse(requestID: command.requestID, result: result)
+            } catch {
+                response = ConnectionResponse(requestID: command.requestID, error: String(error.localizedDescription.prefix(2048)))
+            }
+            guard let self, let data = try? JSONEncoder().encode(response) else { return }
+            self.sendConnectionMessage(String(decoding: data, as: UTF8.self))
+        }
     }
 
     private func sendConnectionMessage(_ json: String) {

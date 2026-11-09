@@ -56,6 +56,27 @@ test("fetch sends a host-made HTTPS request and wraps the result like a small Re
   await assert.rejects(refused, /network hosts/);
 });
 
+test("secrets travel to the app without a connection and missing keys read as undefined", async (t) => {
+  const commands = [];
+  const { secrets } = await sdk(t, (command) => commands.push(command));
+  const saved = secrets.set("api-token", "abc");
+  assert.equal(commands[0].operation, "secretSet");
+  assert.equal(commands[0].connectionID, "");
+  assert.deepEqual(commands[0].secret, { key: "api-token", value: "abc" });
+  response(commands[0]);
+  await saved;
+  const read = secrets.get("api-token");
+  response(commands[1], "abc");
+  assert.equal(await read, "abc");
+  const missing = secrets.get("other");
+  response(commands[2], null);
+  assert.equal(await missing, undefined);
+  const removed = secrets.delete("api-token");
+  assert.equal(commands[3].operation, "secretDelete");
+  response(commands[3]);
+  await removed;
+});
+
 test("RPC can receive a question and return a user decision over the same declared stream", async (t) => {
   const commands = [];
   const { ConnectionStream, JSONRPCClient } = await sdk(t, (command) => {

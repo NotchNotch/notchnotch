@@ -146,4 +146,4 @@ const info = await rpc.request("initialize", { client: "my-extension" });
 - Up to 32 operations waiting at once, and 256 stream messages per second.
 - Data that breaks a limit, or isn't valid JSON, closes that connection.
 
-Secrets don't belong in the manifest. Extensions have no secret storage yet, so for a token, let the other side handle sign-in. To reach a service on the internet rather than this Mac, use [`fetch`](network.md).
+Secrets don't belong in the manifest. Keep tokens with [`secrets`](storage.md#secrets). To reach a service on the internet rather than this Mac, use [`fetch`](network.md).

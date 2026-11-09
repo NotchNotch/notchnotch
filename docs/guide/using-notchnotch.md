@@ -56,7 +56,7 @@ Each extension has a page with these tabs:
 
 - **Setup:** what it needs from you, such as connecting an app.
 - **About:** what it does and what changed in each version, when the extension includes them.
-- **Access:** what it can connect to, and which access you chose to always allow. **Forget** makes it ask again.
+- **Access:** what it can connect to, which access you chose to always allow, and the secrets it saved in your Keychain. **Forget** makes it ask again.
 - **Developer:** its console, package details and **Remove…**.
 
 Use the switch at the top of the page to turn an extension off. Its activities disappear and its connections close.

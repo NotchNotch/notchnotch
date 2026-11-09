@@ -25,7 +25,7 @@ globalThis.__notchnotchConnectionDispatch = (message) => {
 };
 
 function command(connectionID: string, operation: ConnectionCommand["operation"],
-                 fields: Pick<ConnectionCommand, "request" | "fetch" | "message" | "sessionID" | "interactive"> = {}, timeoutMs = 35_000): Promise<JSONValue> {
+                 fields: Pick<ConnectionCommand, "request" | "fetch" | "secret" | "message" | "sessionID" | "interactive"> = {}, timeoutMs = 35_000): Promise<JSONValue> {
   if (pending.size >= 32) return Promise.reject(new Error("Too many pending connection operations"));
   const requestID = `connection-${++serial}`;
   return new Promise((resolve, reject) => {
@@ -98,6 +98,24 @@ export async function fetch(url: string, options: FetchOptions = {}): Promise<Fe
     json: async <T>() => JSON.parse(result.body) as T,
   };
 }
+
+/**
+ * Text values such as API tokens, kept in the login Keychain and readable only
+ * by this extension. Keys use letters, digits, `.`, `_` and `-` (up to 64);
+ * values are up to 8 KiB; an extension keeps up to 32. Removed with the extension.
+ */
+export const secrets = {
+  async get(key: string): Promise<string | undefined> {
+    const value = await command("", "secretGet", { secret: { key } }, 120_000);
+    return typeof value === "string" ? value : undefined;
+  },
+  async set(key: string, value: string): Promise<void> {
+    await command("", "secretSet", { secret: { key, value } }, 120_000);
+  },
+  async delete(key: string): Promise<void> {
+    await command("", "secretDelete", { secret: { key } }, 120_000);
+  },
+};
 
 export interface OpenOptions {
   /**

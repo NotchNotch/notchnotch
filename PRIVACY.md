@@ -6,6 +6,7 @@ NotchNotch runs entirely on your Mac. It has no account, analytics, crash report
 
 - **Preferences** (enabled extensions, display, hover and login options) and **remembered connection access** are stored in the app's preferences.
 - **Extension storage** is a JSON file per extension in `~/Library/Application Support/NotchNotch/Storage`. It is deleted when the extension is removed.
+- **Extension secrets**, such as API tokens an extension asks you for, are kept in your login Keychain, readable only by that extension. They are deleted when the extension is removed, and can be deleted from its **Access** tab.
 - **Extension logs** are kept in memory only and cleared when the app quits.
 
 ## Update checks

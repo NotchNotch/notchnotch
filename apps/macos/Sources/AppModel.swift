@@ -291,6 +291,8 @@ final class AppModel {
         guard extensionStore.isManaged(record) else { throw ProtocolError.invalid("Included extensions can be disabled but not removed.") }
         forgetAccess(record.id)
         try? FileManager.default.removeItem(at: storageURL(for: record.id))
+        let id = record.id
+        Task.detached { try? ExtensionSecretStore().deleteAll(extensionID: id) }
         installingIDs.insert(record.id)
         stopExtension(record.id)
         defer { installingIDs.remove(record.id); reloadExtensions() }

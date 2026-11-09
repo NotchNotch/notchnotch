@@ -86,7 +86,7 @@ When nothing is active, hovering over the notch shows the most useful thing to r
 
 Extensions run in JavaScriptCore, not in a browser or Node.js.
 
-- Available: React and hooks, promises, `setTimeout`, `setInterval`, `console`, [storage](storage.md), [`fetch`](network.md) to hosts you declare, and [connections](connections.md) to local apps and tools.
+- Available: React and hooks, promises, `setTimeout`, `setInterval`, `console`, [storage and secrets](storage.md), [`fetch`](network.md) to hosts you declare, and [connections](connections.md) to local apps and tools.
 - Not available: the DOM, CSS, the browser's global `fetch`, Node built-ins and native modules.
 
 ## Design guidelines

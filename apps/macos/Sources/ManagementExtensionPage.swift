@@ -14,6 +14,8 @@ struct ManagementExtensionPage: View {
     let record: InstalledExtension
     @State private var tab: Tab = .setup
     @State private var documents: [PackageDocument: String] = [:]
+    @State private var secretKeys: [String] = []
+    @State private var confirmingSecretDeletion = false
 
     private var model: AppModel { coordinator.model }
     private var status: ExtensionStatus { coordinator.status(of: record.id) }
@@ -44,6 +46,11 @@ struct ManagementExtensionPage: View {
                 return loaded
             }.value
             if tab == .about, documents.isEmpty { tab = .setup }
+        }
+        .task(id: "\(record.id)|\(tab)") {
+            guard tab == .access else { return }
+            let id = record.id
+            secretKeys = await Task.detached { (try? ExtensionSecretStore().keys(extensionID: id)) ?? [] }.value
         }
     }
 
@@ -155,6 +162,30 @@ struct ManagementExtensionPage: View {
         } footer: {
             if record.manifest.permissions.contains("process") {
                 Text("Native tools run with your account. macOS asks separately when a tool needs privacy access.")
+            }
+        }
+        if !secretKeys.isEmpty {
+            Section {
+                LabeledContent {
+                    Button("Delete…", role: .destructive) { confirmingSecretDeletion = true }.disabled(coordinator.busy)
+                } label: {
+                    Text("Keychain secrets")
+                    Text(secretKeys.joined(separator: ", "))
+                }
+            } footer: {
+                Text("Tokens and passwords this extension saved in your Keychain. Only \(record.manifest.name) can read them.")
+            }
+            .confirmationDialog("Delete \(record.manifest.name)’s secrets?", isPresented: $confirmingSecretDeletion) {
+                Button("Delete Secrets", role: .destructive) {
+                    let id = record.id
+                    Task {
+                        try? await Task.detached { try ExtensionSecretStore().deleteAll(extensionID: id) }.value
+                        secretKeys = []
+                        coordinator.notify("\(record.manifest.name)’s secrets were deleted.")
+                    }
+                }
+            } message: {
+                Text("You may need to sign in again in its Setup.")
             }
         }
         if !connections.isEmpty {

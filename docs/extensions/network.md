@@ -50,4 +50,11 @@ The response has `ok`, `status`, `url` (after redirects), `headers` with lowerca
 
 ## Tokens
 
-Don't put API keys in your code or manifest: anyone can read them in your package. Let people paste their own token in your `Settings`, and send it in a header. Storage is plain JSON, so treat stored tokens as visible to anyone with access to the Mac until secure storage arrives.
+Don't put API keys in your code or manifest: anyone can read them in your package. Let people paste their own token in your `Settings`, keep it with [`secrets`](storage.md#secrets), and send it in a header:
+
+```tsx
+const token = await secrets.get("api-token");
+const response = await fetch("https://api.github.com/notifications", {
+  headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" },
+});
+```
