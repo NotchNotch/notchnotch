@@ -6,6 +6,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-10
+
 ### Added
 - `fetch` in `@notchnotch/sdk` for HTTPS requests to hosts listed in the manifest's new `network` field. NotchNotch makes the request without cookies or cache, follows redirects only to listed hosts and drops credentials when the host changes. The install review and **Access** tab list the hosts.
 - `notchnotch dev` (and `npm run dev` in new projects) runs an extension from its project folder in the open NotchNotch app, reloads it on every save, and prints its console output in the terminal. A development copy stands in for an installed one with the same id until you press Ctrl+C.
@@ -89,7 +91,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.0...v0.3.1

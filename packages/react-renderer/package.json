@@ -1,6 +1,6 @@
 {
   "name": "@notchnotch/react-renderer",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "React renderer that turns NotchNotch extension components into native UI snapshots.",
   "license": "MIT",
   "author": "AmirHossein Sadeghi",
