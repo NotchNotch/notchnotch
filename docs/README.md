@@ -10,10 +10,11 @@
 2. [Concepts](extensions/concepts.md): activities, prompts, announcements and settings
 3. [Components](extensions/components.md): what you can put in the notch
 4. [Storage](extensions/storage.md): keep values across restarts
-5. [Connections](extensions/connections.md): talk to local apps and services
-6. [Native helpers](extensions/native-helpers.md): reach apps through native code
-7. [Manifest](extensions/manifest.md): every field of `notchnotch.json`
-8. [Publishing](extensions/publishing.md): icon, About page, store guidelines and `.notchext` files
+5. [Network](extensions/network.md): call web APIs with `fetch`
+6. [Connections](extensions/connections.md): talk to local apps and services
+7. [Native helpers](extensions/native-helpers.md): reach apps through native code
+8. [Manifest](extensions/manifest.md): every field of `notchnotch.json`
+9. [Publishing](extensions/publishing.md): icon, About page, store guidelines and `.notchext` files
 
 ## Contributing to NotchNotch
 

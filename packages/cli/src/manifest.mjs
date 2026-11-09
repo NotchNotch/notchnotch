@@ -47,10 +47,13 @@ export function validateManifest(manifest) {
   if (manifest.icon?.endsWith(".png") && !/^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}\.png$/.test(manifest.icon)) {
     throw new Error(`Unsupported manifest: ${manifest.id}: icon must be an SF Symbol name or the file name of a PNG in assets/, such as icon.png`);
   }
-  const hosts = manifest.imageHosts;
-  if (hosts !== undefined && (!Array.isArray(hosts) || hosts.length > 8 || new Set(hosts).size !== hosts.length ||
-      hosts.some((host) => typeof host !== "string" || host.length > 253 ||
-        !/^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(host)))) invalid();
+  const hostList = (hosts, maximum) => hosts === undefined || (Array.isArray(hosts) && hosts.length <= maximum &&
+    new Set(hosts).size === hosts.length && hosts.every((host) => typeof host === "string" && host.length <= 253 &&
+      /^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(host)));
+  if (!hostList(manifest.imageHosts, 8)) invalid();
+  if (!hostList(manifest.network, 16)) {
+    throw new Error(`Unsupported manifest: ${manifest.id}: network must list up to 16 lowercase DNS names, optionally starting with *.`);
+  }
   const connections = manifest.connections ?? {};
   if (!connections || typeof connections !== "object" || Array.isArray(connections) || Object.keys(connections).length > 8) invalid();
   for (const [id, value] of Object.entries(connections)) {

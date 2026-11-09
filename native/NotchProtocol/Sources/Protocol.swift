@@ -240,6 +240,8 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
     public var description: String?
     /// HTTPS hosts the host may fetch artwork from for this extension.
     public var imageHosts: [String]?
+    /// HTTPS hosts the extension may reach with `fetch`.
+    public var network: [String]?
     /// Store handle of the publisher, such as a GitHub user name.
     public var author: String?
     /// One to three entries from `ExtensionCategory.all`.
@@ -270,6 +272,12 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
             guard imageHosts.count <= ImageHost.maximumCount, Set(imageHosts).count == imageHosts.count,
                   imageHosts.allSatisfy(ImageHost.isValidPattern) else {
                 throw ProtocolError.invalid("imageHosts must list up to 8 lowercase DNS names, optionally starting with *.")
+            }
+        }
+        if let network {
+            guard network.count <= NetworkHosts.maximumCount, Set(network).count == network.count,
+                  network.allSatisfy(ImageHost.isValidPattern) else {
+                throw ProtocolError.invalid("network must list up to 16 lowercase DNS names, optionally starting with *.")
             }
         }
         try validateStoreMetadata()

@@ -6,6 +6,9 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- `fetch` in `@notchnotch/sdk` for HTTPS requests to hosts listed in the manifest's new `network` field. NotchNotch makes the request without cookies or cache, follows redirects only to listed hosts and drops credentials when the host changes. The install review and **Access** tab list the hosts.
+
 ## [0.4.0] - 2026-11-10
 
 ### Added

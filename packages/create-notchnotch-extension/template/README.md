@@ -23,4 +23,4 @@ Install it from **Settings & Extensions…**: click **+** at the bottom of the s
 - [Concepts](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/concepts.md) · [Components](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/components.md) · [Connections](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/connections.md)
 - [Publishing](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/publishing.md)
 
-Extension JavaScript has no DOM, `fetch` or Node APIs. To talk to an app or a local service, declare a connection in `notchnotch.json`.
+Extension JavaScript has no DOM or Node APIs. To call a web API, list its host in `network` in `notchnotch.json` and use `fetch` from `@notchnotch/sdk`; to talk to an app on this Mac, declare a connection.

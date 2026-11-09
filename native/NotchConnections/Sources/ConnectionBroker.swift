@@ -9,6 +9,25 @@ private final class LocalSessionDelegate: NSObject, URLSessionTaskDelegate, @unc
     }
 }
 
+/// Follows a redirect only to another declared HTTPS host, and never carries
+/// credentials to a different host. Anything else is returned to the extension.
+private final class NetworkSessionDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    let hosts: [String]
+    init(hosts: [String]) { self.hosts = hosts }
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping @Sendable (URLRequest?) -> Void) {
+        guard let url = request.url, url.scheme == "https", let host = url.host(), NetworkHosts.allows(hosts, host: host) else {
+            completionHandler(nil); return
+        }
+        var redirected = request
+        if host.lowercased() != task.originalRequest?.url?.host()?.lowercased() {
+            redirected.setValue(nil, forHTTPHeaderField: "Authorization")
+            redirected.setValue(nil, forHTTPHeaderField: "Cookie")
+        }
+        completionHandler(redirected)
+    }
+}
+
 /// What the host needs to decide whether a connection may start.
 public struct ConnectionAuthorizationRequest: Sendable, Equatable {
     public var connectionID: String
@@ -43,6 +62,9 @@ public final class ConnectionBroker {
     private let emit: (String) -> Void
     private let session: URLSession
     private let websocketSession: URLSession
+    /// Created on the first `fetch`; most extensions never use the network.
+    private var networkSession: URLSession?
+    private let networkProtocolClasses: [AnyClass]?
     /// Only grants are cached; a denial is asked again on the next explicit attempt.
     private var granted: Set<String> = []
     private var pendingDecisions: [String: Task<Bool, Never>] = [:]
@@ -51,8 +73,15 @@ public final class ConnectionBroker {
     private var operations: [String: Task<Void, Never>] = [:]
     private var stopped = false
 
-    public init(manifest: ExtensionManifest, directory: URL,
-                authorize: @escaping @MainActor (ConnectionAuthorizationRequest) async -> Bool, emit: @escaping (String) -> Void) {
+    public convenience init(manifest: ExtensionManifest, directory: URL,
+                            authorize: @escaping @MainActor (ConnectionAuthorizationRequest) async -> Bool, emit: @escaping (String) -> Void) {
+        self.init(manifest: manifest, directory: directory, networkProtocolClasses: nil, authorize: authorize, emit: emit)
+    }
+
+    /// `networkProtocolClasses` lets tests answer `fetch` without the internet.
+    init(manifest: ExtensionManifest, directory: URL, networkProtocolClasses: [AnyClass]?,
+         authorize: @escaping @MainActor (ConnectionAuthorizationRequest) async -> Bool, emit: @escaping (String) -> Void) {
+        self.networkProtocolClasses = networkProtocolClasses
         self.manifest = manifest; self.directory = directory.resolvingSymlinksInPath()
         self.authorize = authorize; self.emit = emit
         let configuration = URLSessionConfiguration.ephemeral
@@ -105,6 +134,7 @@ public final class ConnectionBroker {
         pendingDecisions.removeAll()
         session.invalidateAndCancel()
         websocketSession.invalidateAndCancel()
+        networkSession?.invalidateAndCancel()
     }
 
     /// SHA-256 over the transport, destination and, for helpers, the binary itself.
@@ -125,6 +155,10 @@ public final class ConnectionBroker {
 
     private func perform(_ command: ConnectionCommand) async throws -> JSONValue {
         try manifest.validate()
+        if command.operation == .fetch {
+            guard let request = command.fetch else { throw ProtocolError.invalid("fetch request is missing") }
+            return try await fetch(request)
+        }
         guard let definition = manifest.connections?[command.connectionID] else {
             throw ProtocolError.invalid("Connection is not declared in this extension's manifest")
         }
@@ -218,7 +252,7 @@ public final class ConnectionBroker {
             if let process = stream.process { try await process.write(data + Data([10])) }
             else if let websocket = stream.websocket { try await websocket.send(.string(String(decoding: data, as: UTF8.self))) }
             return .null
-        case .close: return .null
+        case .close, .fetch: return .null
         }
     }
 
@@ -245,6 +279,48 @@ public final class ConnectionBroker {
         guard try JSONEncoder().encode(result).count <= maximumMessageBytes - 1024 else {
             throw ProtocolError.invalid("Encoded HTTP response exceeds the message limit")
         }
+        return result
+    }
+
+    /// The person agreed to these hosts in the install review, so `fetch` asks nothing.
+    private func fetch(_ input: NetworkRequest) async throws -> JSONValue {
+        let hosts = manifest.network ?? []
+        var request = URLRequest(url: try input.validatedURL(hosts: hosts))
+        request.httpMethod = input.method
+        request.timeoutInterval = Double(input.timeoutMs ?? 15_000) / 1000
+        request.allHTTPHeaderFields = input.headers
+        request.httpBody = input.body.map { Data($0.utf8) }
+        let session = networkSession ?? {
+            let configuration = URLSessionConfiguration.ephemeral
+            configuration.httpShouldSetCookies = false
+            configuration.httpCookieStorage = nil
+            configuration.urlCache = nil
+            configuration.timeoutIntervalForResource = 30
+            configuration.httpMaximumConnectionsPerHost = 4
+            if let networkProtocolClasses { configuration.protocolClasses = networkProtocolClasses }
+            let created = URLSession(configuration: configuration, delegate: NetworkSessionDelegate(hosts: hosts), delegateQueue: nil)
+            networkSession = created
+            return created
+        }()
+        let (bytes, response) = try await session.bytes(for: request)
+        defer { bytes.task.cancel() }
+        guard let response = response as? HTTPURLResponse else { throw ProtocolError.invalid("Invalid HTTP response") }
+        let tooLarge = ProtocolError.invalid("fetch responses are limited to 192 KiB")
+        if response.expectedContentLength > maximumFetchBodyBytes { throw tooLarge }
+        var body = Data()
+        for try await byte in bytes {
+            guard body.count < maximumFetchBodyBytes else { throw tooLarge }
+            body.append(byte)
+        }
+        guard let text = String(data: body, encoding: .utf8) else { throw ProtocolError.invalid("fetch responses must be UTF-8 text") }
+        let headers = response.allHeaderFields.reduce(into: [String: JSONValue]()) { values, item in
+            values[String(describing: item.key).lowercased()] = .string(String(describing: item.value))
+        }
+        let result = JSONValue.object([
+            "status": .number(Double(response.statusCode)), "url": .string(response.url?.absoluteString ?? input.url),
+            "headers": .object(headers), "body": .string(text),
+        ])
+        guard try JSONEncoder().encode(result).count <= maximumMessageBytes - 1024 else { throw tooLarge }
         return result
     }
 

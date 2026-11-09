@@ -37,6 +37,25 @@ test("HTTP responses correlate with concurrent requests even when replies arrive
   assert.equal(commands[1].request.method, "POST");
 });
 
+test("fetch sends a host-made HTTPS request and wraps the result like a small Response", async (t) => {
+  const commands = [];
+  const { fetch } = await sdk(t, (command) => commands.push(command));
+  const pending = fetch("https://api.example.com/items", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  assert.equal(commands[0].operation, "fetch");
+  assert.equal(commands[0].connectionID, "");
+  assert.deepEqual(commands[0].fetch, { url: "https://api.example.com/items", method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  response(commands[0], { status: 201, url: "https://api.example.com/items", headers: { "content-type": "application/json" }, body: '{"id":7}' });
+  const result = await pending;
+  assert.equal(result.ok, true);
+  assert.deepEqual(await result.json(), { id: 7 });
+  const failed = fetch("https://api.example.com/missing");
+  response(commands[1], { status: 404, url: "https://api.example.com/missing", headers: {}, body: "" });
+  assert.equal((await failed).ok, false);
+  const refused = fetch("https://elsewhere.example.org/");
+  response(commands[2], null, "elsewhere.example.org is not in this extension's network hosts.");
+  await assert.rejects(refused, /network hosts/);
+});
+
 test("RPC can receive a question and return a user decision over the same declared stream", async (t) => {
   const commands = [];
   const { ConnectionStream, JSONRPCClient } = await sdk(t, (command) => {

@@ -95,15 +95,25 @@ export interface ConnectionHTTPRequest {
   body?: string;
   timeoutMs?: number;
 }
+/** An HTTPS request to a host listed in the manifest's `network`. */
+export interface NetworkRequest {
+  url: string;
+  method: ConnectionHTTPRequest["method"];
+  headers?: Record<string, string>;
+  body?: string;
+  timeoutMs?: number;
+}
 export interface ConnectionCommand {
   protocolVersion: 1;
   type: "connectionCommand";
   extensionID: string;
   requestID: string;
   connectionID: string;
-  operation: "request" | "open" | "send" | "close";
+  operation: "request" | "open" | "send" | "close" | "fetch";
   sessionID?: string;
   request?: ConnectionHTTPRequest;
+  /** For `fetch`, which uses no declared connection; `connectionID` is empty. */
+  fetch?: NetworkRequest;
   message?: JSONValue;
   /** `false` fails instead of asking the user when access was not granted before. */
   interactive?: boolean;

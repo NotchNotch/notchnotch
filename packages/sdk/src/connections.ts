@@ -25,13 +25,13 @@ globalThis.__notchnotchConnectionDispatch = (message) => {
 };
 
 function command(connectionID: string, operation: ConnectionCommand["operation"],
-                 fields: Pick<ConnectionCommand, "request" | "message" | "sessionID" | "interactive"> = {}, timeoutMs = 35_000): Promise<JSONValue> {
+                 fields: Pick<ConnectionCommand, "request" | "fetch" | "message" | "sessionID" | "interactive"> = {}, timeoutMs = 35_000): Promise<JSONValue> {
   if (pending.size >= 32) return Promise.reject(new Error("Too many pending connection operations"));
   const requestID = `connection-${++serial}`;
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       pending.delete(requestID);
-      reject(new Error(`Connection operation timed out: ${connectionID}`));
+      reject(new Error(`Connection operation timed out: ${connectionID || operation}`));
     }, timeoutMs);
     pending.set(requestID, { resolve, reject, timer });
     try {
@@ -55,6 +55,47 @@ export function localHTTP(connectionID: string) {
     async request(path: string, options: Omit<Partial<ConnectionHTTPRequest>, "path"> = {}): Promise<LocalHTTPResponse> {
       return await command(connectionID, "request", { request: { path, method: "GET", ...options } }) as unknown as LocalHTTPResponse;
     },
+  };
+}
+
+export interface FetchOptions {
+  /** `GET` by default. */
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  headers?: Record<string, string>;
+  /** UTF-8 text, up to 192 KiB. Use `JSON.stringify` for JSON. */
+  body?: string;
+  /** 1–30,000 ms; 15,000 by default. */
+  timeoutMs?: number;
+}
+
+export interface FetchResponse {
+  /** `true` for a 2xx status. */
+  ok: boolean;
+  status: number;
+  /** The final URL, after any redirect to another declared host. */
+  url: string;
+  /** Header names are lowercase. */
+  headers: Record<string, string>;
+  text(): Promise<string>;
+  json<T = unknown>(): Promise<T>;
+}
+
+/**
+ * Requests an `https` URL whose host is listed in the manifest's `network`.
+ * NotchNotch makes the request, without cookies or cache; the response body is
+ * UTF-8 text of up to 192 KiB.
+ */
+export async function fetch(url: string, options: FetchOptions = {}): Promise<FetchResponse> {
+  const { method = "GET", headers, body, timeoutMs } = options;
+  const result = await command("", "fetch", { fetch: { url, method, headers, body, timeoutMs } },
+    (timeoutMs ?? 15_000) + 5_000) as unknown as { status: number; url: string; headers: Record<string, string>; body: string };
+  return {
+    ok: result.status >= 200 && result.status < 300,
+    status: result.status,
+    url: result.url,
+    headers: result.headers,
+    text: async () => result.body,
+    json: async <T>() => JSON.parse(result.body) as T,
   };
 }
 

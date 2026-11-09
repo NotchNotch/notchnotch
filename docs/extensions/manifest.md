@@ -49,6 +49,10 @@ Optional. They describe the extension in the install review and under **Develope
 | `license` | An SPDX identifier or expression, such as `MIT` or `MIT OR Apache-2.0` |
 | `homepage`, `repository` | `https://` addresses without a user name or password |
 
+## network
+
+Up to 16 `https` hosts the extension may call with [`fetch`](network.md), such as `["api.github.com", "*.example.com"]`. A `*.` wildcard matches subdomains, not the bare domain. The install review lists them.
+
 ## connections
 
 Up to eight named local destinations. Names use lowercase letters, digits and `-`. See [Connections](connections.md) and [Native helpers](native-helpers.md).

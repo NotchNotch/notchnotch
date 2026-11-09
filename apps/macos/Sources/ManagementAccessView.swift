@@ -6,7 +6,7 @@ struct ManagementAccessView: View {
     var alwaysAllowed: [String] = []
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            if manifest.permissions.isEmpty && (manifest.imageHosts ?? []).isEmpty {
+            if manifest.permissions.isEmpty && (manifest.imageHosts ?? []).isEmpty && (manifest.network ?? []).isEmpty {
                 Label("This extension doesn’t request access to other apps.", systemImage: "checkmark.shield").foregroundStyle(.secondary)
             }
             if manifest.permissions.contains("process") {
@@ -17,6 +17,12 @@ struct ManagementAccessView: View {
             if manifest.permissions.contains("local-network") {
                 Label("Connect to local apps", systemImage: "network").font(.headline)
                 Text("Only the local destinations listed below can be contacted.").font(.callout).foregroundStyle(.secondary)
+            }
+            if let hosts = manifest.network, !hosts.isEmpty {
+                Label("Connect to the internet", systemImage: "globe").font(.headline)
+                Text("The extension can send and receive data over HTTPS, without asking again, but only with these hosts.")
+                    .font(.callout).foregroundStyle(.secondary)
+                Text(hosts.joined(separator: ", ")).font(.callout.monospaced()).textSelection(.enabled)
             }
             if let hosts = manifest.imageHosts, !hosts.isEmpty {
                 Label("Load artwork from the web", systemImage: "photo").font(.headline)
