@@ -77,6 +77,9 @@ export async function packageApp() {
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>LSUIElement</key><true/>
 <key>NSHighResolutionCapable</key><true/>
+<key>NSAppleEventsUsageDescription</key><string>Read the current song and control Spotify or Apple Music for the Music extension.</string>
+<key>NSCalendarsFullAccessUsageDescription</key><string>Read your selected calendars to show the next event and its countdown in the notch. The Calendar extension does not change your events.</string>
+<key>NSCalendarsUsageDescription</key><string>Read your selected calendars to show upcoming events in the notch.</string>
 ${updates}</dict></plist>
 `);
   // Inside out: bundled extension helpers were signed by their build modules.

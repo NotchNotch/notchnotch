@@ -45,7 +45,7 @@ With any real identity, the app, `ExtensionRunner` and bundled helpers are signe
 
 | Target | Entitlements |
 | --- | --- |
-| `NotchNotch.app` | None. Helpers are spawned as their own responsible process, so each requests privacy access with its own bundle |
+| `NotchNotch.app` | Apple Events, Calendars. TCC attributes the bundled helpers to the app that contains them |
 | `ExtensionRunner` | `cs.allow-jit` for JavaScriptCore |
 | `Sparkle.framework` | None (`Autoupdate` and `Updater.app` are signed first; its XPC services are removed because the app isn't sandboxed) |
 | `MusicAdapter.app` | Apple Events |

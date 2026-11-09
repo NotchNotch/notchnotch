@@ -2,9 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Intentionally empty. Extension helpers are spawned with responsibility
-	     disclaimed, so each helper requests privacy permissions (Automation,
-	     Calendars, ...) with its own bundle's entitlements and usage strings.
-	     Adding one here would grant nothing to helpers. -->
+	<!-- TCC attributes code nested inside an app bundle to the outermost app,
+	     even when the helper is spawned with responsibility disclaimed. The
+	     bundled Music and Calendar helpers live inside NotchNotch.app, so their
+	     Automation and Calendar requests are checked against these entitlements
+	     and the usage descriptions in the app's Info.plist. Helpers of installed
+	     extensions live outside the bundle and are their own TCC subject. -->
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
+	<key>com.apple.security.personal-information.calendars</key>
+	<true/>
 </dict>
 </plist>

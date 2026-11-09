@@ -115,7 +115,9 @@ Native tools receive a small environment (`HOME`, a fixed `PATH`, `LANG`) and ca
 
 ### Privacy permissions belong to the helper
 
-NotchNotch starts every stdio helper as its own *responsible process*. macOS therefore asks for Automation, Calendars, Contacts, Location and other privacy access on behalf of the helper, shows the helper's bundle name in the prompt, and lists it separately in **System Settings › Privacy & Security**. Access granted to one extension's helper is never available to NotchNotch or to another extension. The host app requests no privacy permissions of its own.
+NotchNotch starts every stdio helper as its own *responsible process*, so macOS asks for Automation, Calendars, Contacts, Location and other privacy access on behalf of the helper rather than NotchNotch. An installed extension lives in the extension library, outside any app bundle, so its helper is its own TCC subject: the prompt shows the helper's bundle name, the grant is listed separately in **System Settings › Privacy & Security**, and it is never available to NotchNotch or to another extension.
+
+The bundled Music and Calendar helpers are the exception. TCC attributes code inside an app bundle to the outermost app, so their requests are made as **NotchNotch**, using NotchNotch's Apple Events and Calendars entitlements and usage descriptions.
 
 To use a protected resource, ship the helper as an app bundle whose `Info.plist` has the matching usage description (`NSContactsUsageDescription`, `NSLocationUsageDescription`, `NSAppleEventsUsageDescription`, ...). Without one, macOS denies the request. `helperApp` from `@notchnotch/cli/native` builds and signs that bundle:
 

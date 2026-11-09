@@ -131,7 +131,7 @@ struct ManagementExtensionPage: View {
             ManagementAccessView(manifest: record.manifest, alwaysAllowed: remembered)
         } footer: {
             if record.manifest.permissions.contains("process") {
-                Text("Native tools run with your account. macOS asks separately when a tool needs privacy access, under the tool’s own name.")
+                Text("Native tools run with your account. macOS asks separately when a tool needs privacy access.")
             }
         }
         if !connections.isEmpty {

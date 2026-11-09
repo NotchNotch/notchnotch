@@ -8,7 +8,7 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [0.3.0] - 2026-11-09
 
-**Upgrading from 0.2.0:** install this DMG by hand once. From 0.3.0 on, NotchNotch updates itself. Music and Calendar ask for macOS access once more, now under their own names.
+**Upgrading from 0.2.0:** install this DMG by hand once. From 0.3.0 on, NotchNotch updates itself. Music and Calendar may ask for macOS access once more.
 
 ### Added
 - A welcome window on first launch, and a short greeting in the notch on every launch so it's clear NotchNotch is running.
@@ -22,8 +22,7 @@ All notable changes to NotchNotch are listed here. The format follows
 - The extension SDK packages are MIT licensed, so extensions can use any license. The app remains GPL-3.0-only.
 - Redesigned **Settings & Extensions**: General, Notch and About pages; extensions listed with live status; each extension page has a header with its on/off switch and **Setup**, **Access** and **Developer** tabs; install with **+** at the bottom of the sidebar; confirmations fade out on their own.
 - `useStoredState("count", 0)` now infers `number` and boolean values infer `boolean`, instead of their literal types.
-- Extension helpers are their own responsible process for macOS privacy permissions. Prompts name the helper, and access granted to one extension's helper can no longer be used by NotchNotch or by other extensions. Users who connected Music or Calendar are asked once more.
-- NotchNotch itself no longer has Apple Events or Calendar entitlements or usage descriptions.
+- Helpers of installed extensions are their own responsible process for macOS privacy permissions. Prompts name the helper, and access granted to one extension's helper can't be used by NotchNotch or by other extensions. The bundled Music and Calendar helpers still ask as NotchNotch, because macOS attributes code inside the app bundle to the app.
 - Remote artwork is no longer allowed by default from Spotify and Apple Music CDNs; the Music extension declares them in `imageHosts`.
 - The bundled extensions are built through the same `@notchnotch/cli` code path as third-party extensions.
 
