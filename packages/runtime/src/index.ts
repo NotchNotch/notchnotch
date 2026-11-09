@@ -1,4 +1,4 @@
-/// <reference path="./globals.d.ts" />
+/// <reference path="./globals.ts" preserve="true" />
 import type { ReactNode } from "react";
 import { createRenderer } from "@notchnotch/react-renderer";
 import type { ConnectionResponse, ConnectionEvent, UserEvent } from "@notchnotch/protocol";

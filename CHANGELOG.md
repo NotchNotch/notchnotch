@@ -6,6 +6,9 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- `@notchnotch/runtime` types now include the runtime globals (`setTimeout`, `setInterval`, `console`…). In 0.3.0 a new project created with `npm create notchnotch-extension` failed `npm run typecheck`.
+
 ## [0.3.0] - 2026-11-09
 
 **Upgrading from 0.2.0:** install this DMG by hand once. From 0.3.0 on, NotchNotch updates itself. Music and Calendar may ask for macOS access once more.

@@ -51,3 +51,27 @@ test("the template builds into an installable package", async (t) => {
     require(${JSON.stringify(path.join(out, "bundle.js"))});`], { encoding: "utf8", timeout: 10_000 });
   assert.equal(runner.stdout.trim(), '["main"]', runner.stderr);
 });
+
+test("the template typechecks against the packed npm packages", async (t) => {
+  // Install exactly what npm users get: the packed tarballs with their
+  // publishConfig, built declarations and package.json rewrites.
+  const { buildPackages } = await import("../scripts/build-packages.mjs");
+  await buildPackages();
+  const directory = await temporary(t);
+  const target = await create({ folder: path.join(directory, "typed") });
+  const modules = path.join(target, "node_modules");
+  await mkdir(path.join(modules, "@notchnotch"), { recursive: true });
+  for (const name of ["protocol", "react-renderer", "runtime", "sdk"]) {
+    const pack = spawnSync("pnpm", ["pack", "--pack-destination", directory], { cwd: path.resolve("packages", name), encoding: "utf8" });
+    assert.equal(pack.status, 0, pack.stderr);
+    const tarball = path.join(directory, `notchnotch-${name}-${JSON.parse(await readFile(path.resolve("packages", name, "package.json"), "utf8")).version}.tgz`);
+    const destination = path.join(modules, "@notchnotch", name);
+    await mkdir(destination);
+    assert.equal(spawnSync("tar", ["-xzf", tarball, "-C", destination, "--strip-components", "1"]).status, 0);
+  }
+  await symlink(path.resolve("node_modules/react"), path.join(modules, "react"));
+  await mkdir(path.join(modules, "@types"));
+  await symlink(path.resolve("node_modules/@types/react"), path.join(modules, "@types/react"));
+  const tsc = spawnSync(path.resolve("node_modules/.bin/tsc"), ["--noEmit", "-p", target], { encoding: "utf8" });
+  assert.equal(tsc.status, 0, tsc.stdout + tsc.stderr);
+});
