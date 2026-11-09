@@ -32,7 +32,29 @@ swiftBuild(root, "ExtensionRunner");
 const app = await packageApp();
 
 run("codesign", ["--verify", "--strict", "--verbose=2", app]);
+// Print what macOS will key permissions to: the designated requirement must stay
+// identical across releases for granted access to survive updates.
+for (const target of [app, path.join(app, "Contents/Helpers/ExtensionRunner"),
+  path.join(app, "Contents/Resources/extensions/music/helpers/MusicAdapter.app"),
+  path.join(app, "Contents/Resources/extensions/calendar/helpers/CalendarAdapter.app")]) {
+  run("codesign", ["--display", "--requirements", "-", "--verbose=1", target]);
+}
 run("lipo", ["-archs", path.join(app, "Contents/MacOS/NotchNotch")]);
+
+// Smoke test the signed runner: hardened runtime must still allow JavaScriptCore
+// to evaluate a bundle (JIT entitlement) and answer a liveness ping.
+{
+  const runner = path.join(app, "Contents/Helpers/ExtensionRunner");
+  const bundle = path.join(app, "Contents/Resources/extensions/calendar/bundle.js");
+  const result = spawnSync(runner, [bundle, "dev.notchnotch.calendar"], {
+    input: JSON.stringify({ protocolVersion: 1, type: "ping", id: 1 }) + "\n", timeout: 10_000, encoding: "utf8",
+  });
+  const messages = result.stdout.split("\n").filter(Boolean).map((line) => JSON.parse(line));
+  if (!messages.some((message) => message.type === "snapshot") || !messages.some((message) => message.type === "pong")) {
+    throw new Error(`Signed runner smoke test failed: ${result.stderr || result.error?.message || "no snapshot or pong"}`);
+  }
+  console.log("Signed runner smoke test passed.");
+}
 
 const staging = await mkdtemp(path.join(tmpdir(), "notchnotch-dmg-"));
 const dmg = path.join(root, "dist", `NotchNotch-${version}.dmg`);
