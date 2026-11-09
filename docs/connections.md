@@ -119,6 +119,8 @@ NotchNotch starts every stdio helper as its own *responsible process*, so macOS 
 
 The bundled Music and Calendar helpers are the exception. TCC attributes code inside an app bundle to the outermost app, so their requests are made as **NotchNotch**, using NotchNotch's Apple Events and Calendars entitlements and usage descriptions.
 
+This was verified with the same signed Calendar helper spawned both ways: inside `NotchNotch.app`, tccd used the subject `dev.notchnotch.app` and its existing grant; copied into the extension library, tccd used the helper's own identifier and reported access as not yet decided. TCC keys a grant to the helper's bundle identifier and code signature, so give every helper a unique `bundleIdentifier` (for example under your own domain) and don't reuse another extension's.
+
 To use a protected resource, ship the helper as an app bundle whose `Info.plist` has the matching usage description (`NSContactsUsageDescription`, `NSLocationUsageDescription`, `NSAppleEventsUsageDescription`, ...). Without one, macOS denies the request. `helperApp` from `@notchnotch/cli/native` builds and signs that bundle:
 
 ```js
