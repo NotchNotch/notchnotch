@@ -5,7 +5,9 @@ import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promis
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { create } from "../packages/create-notchnotch-extension/bin/create.mjs";
-import { buildExtension, checkPackage } from "../packages/cli/src/index.mjs";
+import { createHash } from "node:crypto";
+import { buildExtension, checkPackage, lintExtension } from "../packages/cli/src/index.mjs";
+import { PLACEHOLDER_ICON_SHA256 } from "../packages/cli/src/lint.mjs";
 
 async function temporary(t) {
   const directory = await mkdtemp(path.join(tmpdir(), "notchnotch-create-"));
@@ -78,4 +80,20 @@ test("the template typechecks against the packed npm packages", async (t) => {
   await symlink(path.resolve("node_modules/@types/react"), path.join(modules, "@types/react"));
   const tsc = spawnSync(path.resolve("node_modules/.bin/tsc"), ["--noEmit", "-p", target], { encoding: "utf8" });
   assert.equal(tsc.status, 0, tsc.stdout + tsc.stderr);
+});
+
+test("a new project fails lint until its placeholders are replaced", async (t) => {
+  const target = await create({ folder: path.join(await temporary(t), "lint-check"), name: "Lint Check" });
+  const icon = await readFile(path.join(target, "assets/icon.png"));
+  assert.equal(createHash("sha256").update(icon).digest("hex"), PLACEHOLDER_ICON_SHA256, "update PLACEHOLDER_ICON_SHA256 with the template icon");
+  const warnings = (await lintExtension(target)).join("\n");
+  for (const pattern of [/placeholder assets\/icon.png/, /placeholder sentence/, /com\.example\./, /author/, /README.md: replace/]) {
+    assert.match(warnings, pattern);
+  }
+  const manifestFile = path.join(target, "notchnotch.json");
+  const manifest = JSON.parse(await readFile(manifestFile, "utf8"));
+  await writeFile(manifestFile, JSON.stringify({ ...manifest, id: "dev.jane.lintcheck", author: "jane",
+    description: "Shows how lint works.", icon: "music.note" }));
+  await writeFile(path.join(target, "README.md"), "# Lint Check\n\nShows how lint works.\n");
+  assert.deepEqual(await lintExtension(target), ['icon: add your own 512×512 assets/icon.png and set "icon": "icon.png"']);
 });

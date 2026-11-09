@@ -13,6 +13,7 @@ npm install
 npm run build        # builds and checks dist/
 npm run watch        # rebuilds on change
 npm run typecheck
+npm run lint         # store guidelines: icon, title, README…
 npm run pack         # also writes <id>-<version>.notchext to share
 ```
 

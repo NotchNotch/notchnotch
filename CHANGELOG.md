@@ -13,6 +13,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 - An **About** tab on each extension's page that shows the package's `README.md` and, under **Version History**, its `CHANGELOG.md`. `notchnotch build` includes both files, and new projects start with them.
 
+- `notchnotch lint` checks store guidelines: title case, a short description, author, categories, license, your own icon, README and CHANGELOG. New projects have `npm run lint` and a placeholder icon that `lint` asks you to replace.
+
 ### Changed
 - Music, Calendar and the Focus Timer example have their own icons and a README written for the people who use them. The helpers' developer documentation moved to `ADAPTER.md`.
 

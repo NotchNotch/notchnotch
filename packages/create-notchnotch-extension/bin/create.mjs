@@ -36,7 +36,7 @@ export async function create({ folder, name, id, sdkVersion = version }) {
     scripts: {
       build: "notchnotch build . --out dist", watch: "notchnotch build . --out dist --watch",
       pack: "notchnotch build . --out dist --pack",
-      check: "notchnotch check dist", typecheck: "tsc --noEmit",
+      check: "notchnotch check dist", lint: "notchnotch lint .", typecheck: "tsc --noEmit",
     },
     dependencies: { "@notchnotch/runtime": range, "@notchnotch/sdk": range, react: "19.3.1" },
     devDependencies: { "@notchnotch/cli": range, "@types/react": "19.3.0", typescript: "5.9.3" },

@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { chmod, cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { checkPackage, validateManifest } from "../packages/cli/src/index.mjs";
+import { checkPackage, titleCaseProblem, validateManifest } from "../packages/cli/src/index.mjs";
 import { helperApp } from "../packages/cli/src/native.mjs";
 
 async function temporary(t) {
@@ -113,6 +113,16 @@ test("validateManifest keeps PNG icon names inside assets/", () => {
   }
   validateManifest({ ...base, icon: "icon.png" });
   validateManifest({ ...base, icon: "timer" });
+});
+
+test("titleCaseProblem follows the Apple Style Guide", () => {
+  for (const title of ["Focus Timer", "Music", "Search in Database", "Notes for iOS", "macOS Battery", "Built With Love", "Things to Do", "2FA Codes"]) {
+    assert.equal(titleCaseProblem(title), undefined, title);
+  }
+  assert.match(titleCaseProblem("focus timer"), /"Focus timer"/);
+  assert.match(titleCaseProblem("Hacker news"), /"Hacker News"/);
+  assert.match(titleCaseProblem("Made with care"), /"Made With care"/);
+  assert.match(titleCaseProblem("Where to"), /"Where To"/);
 });
 
 test("helperApp writes usage descriptions so the helper can ask for its own privacy access", async (t) => {

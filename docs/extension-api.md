@@ -197,7 +197,7 @@ Settings supports every component except the media components (`MusicPlayer`, `A
 
 ### Library identity
 
-A manifest can include `icon` and `description` (at most 512 characters). They appear in the management sidebar, extension page, install review, connection requests and above prompts in the notch. Omit them to use the generic extension identity.
+A manifest can include `icon` and `description` (at most 512 characters). They appear in the management sidebar, extension page, install review, connection requests and above prompts in the notch. Omit them to use the generic extension identity. `name` must contain 1–128 characters, and `version` 1–64. The extension enable switch controls whether its runner is allowed to run; it does not imply that a local app has connected. Keep connection state and recovery controls in `Settings`.
 
 `icon` is either an SF Symbol name, which the app draws on an accent tile, or the file name of your own icon in `assets/`:
 
@@ -248,4 +248,16 @@ Put a `README.md` and a `CHANGELOG.md` next to `notchnotch.json`. `notchnotch bu
 - First version.
 ```
 
-The app renders headings, paragraphs, lists, quotes, code blocks, emphasis and `https` links. Images show their alt text, and HTML is shown as plain text. Each file must be UTF-8 and at most 256 KiB; the installer and `notchnotch check` reject anything else. `name` must contain 1–128 characters, and `version` 1–64. The extension enable switch controls whether its runner is allowed to run; it does not imply that a local app has connected. Keep connection state and recovery controls in `Settings`.
+The app renders headings, paragraphs, lists, quotes, code blocks, emphasis and `https` links. Images show their alt text, and HTML is shown as plain text. Each file must be UTF-8 and at most 256 KiB; the installer and `notchnotch check` reject anything else.
+
+### Store guidelines
+
+`notchnotch lint` (or `npm run lint` in a new project) checks what a store review would ask you to fix. The app installs the extension either way.
+
+- `name` in title case: "Focus Timer", "Search in Database". Short words such as *in*, *of* and *to* stay lowercase; names like iOS keep their own case.
+- A one-sentence `description` of at most 160 characters.
+- Your own `id`, not `com.example.…`, plus `author`, `categories` and `license`.
+- Your own PNG icon, not an SF Symbol and not the template's placeholder.
+- A `README.md` and a `CHANGELOG.md`, without the template's placeholder text.
+
+A new project fails `lint` until you replace each placeholder.

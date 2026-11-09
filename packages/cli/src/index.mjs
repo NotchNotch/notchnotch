@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 import { iconFiles, validateManifest } from "./manifest.mjs";
 
 export { validateManifest } from "./manifest.mjs";
+export { lintExtension, titleCaseProblem } from "./lint.mjs";
 
 /** Markdown shown in the app: README as the About page, CHANGELOG as version history. */
 const DOCUMENTS = ["README.md", "CHANGELOG.md"];

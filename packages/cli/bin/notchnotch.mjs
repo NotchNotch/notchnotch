@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { buildExtension, checkPackage, packExtension } from "../src/index.mjs";
+import { buildExtension, checkPackage, lintExtension, packExtension } from "../src/index.mjs";
 
 const usage = `Usage:
   notchnotch build [folder] [--out <dir>] [--watch] [--pack]
@@ -9,7 +9,8 @@ const usage = `Usage:
                                     --pack also writes <id>-<version>.notchext next to it
   notchnotch pack [package] [--out <file.notchext>]
                                     Zip a built package into a .notchext people can double-click
-  notchnotch check [package]        Check a built package against the app's install rules`;
+  notchnotch check [package]        Check a built package against the app's install rules
+  notchnotch lint [folder]          Check store guidelines: icon, title, description, README…`;
 
 const { positionals, values } = parseArgs({
   allowPositionals: true,
@@ -17,7 +18,7 @@ const { positionals, values } = parseArgs({
     help: { type: "boolean", short: "h" } },
 });
 const [command, folder = "."] = positionals;
-if (values.help || !["build", "check", "pack"].includes(command)) {
+if (values.help || !["build", "check", "lint", "pack"].includes(command)) {
   console.log(usage);
   process.exit(values.help ? 0 : 1);
 }
@@ -39,6 +40,14 @@ try {
   } else if (command === "pack") {
     const file = await packExtension({ directory: folder, out: values.out });
     console.log(`Packed ${file}\nDouble-click it to open NotchNotch's install review, or share it.`);
+  } else if (command === "lint") {
+    const warnings = await lintExtension(folder);
+    for (const warning of warnings) console.error(`⚠ ${warning}`);
+    if (warnings.length) {
+      console.error(`\n${warnings.length} store guideline ${warnings.length === 1 ? "issue" : "issues"}. The app still installs this extension.`);
+      process.exit(1);
+    }
+    console.log("No store guideline issues.");
   } else {
     const problems = await checkPackage(folder);
     for (const problem of problems) console.error(`✗ ${problem}`);
