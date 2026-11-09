@@ -55,9 +55,29 @@ struct ManagementGeneralPage: View {
                     Button("Show in Finder", action: coordinator.showFolder)
                 }
             }
-            Section("About") {
+            Section {
                 LabeledContent("NotchNotch", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Development")
                 LabeledContent("Release", value: "Developer Preview")
+                if coordinator.updater.isAvailable {
+                    @Bindable var updater = coordinator.updater
+                    Toggle("Check for updates automatically", isOn: $updater.automaticallyChecks).toggleStyle(.switch)
+                    Toggle("Download and install updates automatically", isOn: $updater.automaticallyDownloads)
+                        .toggleStyle(.switch).disabled(!updater.automaticallyChecks)
+                    LabeledContent {
+                        Button("Check for Updates…", action: updater.checkForUpdates).disabled(!updater.canCheckForUpdates)
+                    } label: {
+                        Text("Software update")
+                        if let date = updater.lastChecked {
+                            Text("Last checked \(date.formatted(.relative(presentation: .named)))")
+                        }
+                    }
+                }
+            } header: {
+                Text("About")
+            } footer: {
+                Text(coordinator.updater.isAvailable
+                    ? "Updates are downloaded from GitHub Releases and verified with NotchNotch’s signing key before they install."
+                    : "Development builds don’t check for updates.")
             }
         }.formStyle(.grouped)
     }

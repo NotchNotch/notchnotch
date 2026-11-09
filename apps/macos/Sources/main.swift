@@ -8,8 +8,9 @@ final class NotchPanel: NSPanel {
 }
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     private let model = AppModel()
+    private let updater = AppUpdater()
     private var panel: NotchPanel?
     private var statusItem: NSStatusItem?
     private var eventMonitors: [Any] = []
@@ -146,6 +147,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         for (title, action, key) in [
             ("Settings & Extensions…", #selector(showManagement), ","),
+            ("Check for Updates…", #selector(checkForUpdates), ""),
             ("Show activities", #selector(showActivities), ""),
             ("Show pending question", #selector(showPrompt), ""),
             ("Preview announcement", #selector(previewAnnouncement), ""),
@@ -232,7 +234,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func showManagement() { openManagement() }
     private func openManagement(extensionID: String? = nil) {
         model.close()
-        if managementController == nil { managementController = ManagementWindowController(model: model) }
+        if managementController == nil { managementController = ManagementWindowController(model: model, updater: updater) }
         managementController?.reveal(extensionID: extensionID)
     }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -245,6 +247,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func restart() { model.reloadExtensions(force: true) }
     @objc private func disconnectExtensions() { model.disconnectExtensions() }
     @objc private func quit() { NSApp.terminate(nil) }
+    @objc private func checkForUpdates() { updater.checkForUpdates() }
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(checkForUpdates) {
+            if !updater.isAvailable { menuItem.toolTip = "Development builds don’t check for updates." }
+            return updater.canCheckForUpdates
+        }
+        return true
+    }
 
     func applicationWillTerminate(_ notification: Notification) {
         pointerTimer?.invalidate()

@@ -26,7 +26,7 @@ Requires macOS 14 or later.
 2. Open it and drag **NotchNotch** to **Applications**.
 3. Open NotchNotch. This developer preview is not notarized by Apple, so macOS blocks the first launch. Choose **Done**, then open **System Settings › Privacy & Security**, scroll to *“NotchNotch” was blocked* and choose **Open Anyway**. Confirm with your password. This is needed only once.
 
-Download releases only from this repository. If you prefer Terminal, `xattr -dr com.apple.quarantine /Applications/NotchNotch.app` removes the download quarantine instead of step 3.
+From 0.3.0 on, NotchNotch updates itself: choose **Check for Updates…** in the menu bar, or let it check daily. Updates are verified with the project's signing key before they install. Download releases only from this repository. If you prefer Terminal, `xattr -dr com.apple.quarantine /Applications/NotchNotch.app` removes the download quarantine instead of step 3.
 
 ## Development
 

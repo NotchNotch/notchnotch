@@ -4,8 +4,8 @@ import SwiftUI
 @MainActor
 final class ManagementWindowController: NSWindowController, NSWindowDelegate, NSToolbarDelegate {
     let coordinator: ManagementCoordinator
-    init(model: AppModel) {
-        coordinator = ManagementCoordinator(model: model)
+    init(model: AppModel, updater: AppUpdater) {
+        coordinator = ManagementCoordinator(model: model, updater: updater)
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 620),
                               styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
         super.init(window: window)

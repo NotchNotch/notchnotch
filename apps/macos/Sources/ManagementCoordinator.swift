@@ -5,6 +5,7 @@ import NotchExtensions
 @MainActor @Observable
 final class ManagementCoordinator {
     let model: AppModel
+    let updater: AppUpdater
     var destination: ManagementDestination = .extensions {
         didSet { if destination != oldValue { message = nil; error = nil } }
     }
@@ -25,7 +26,7 @@ final class ManagementCoordinator {
     @ObservationIgnored private var picker: NSOpenPanel?
     @ObservationIgnored private var pickerGeneration = 0
 
-    init(model: AppModel) { self.model = model }
+    init(model: AppModel, updater: AppUpdater) { self.model = model; self.updater = updater }
     var busy: Bool { choosingPackage || operating }
     var visibleExtensions: [InstalledExtension] {
         let term = query.trimmingCharacters(in: .whitespacesAndNewlines)

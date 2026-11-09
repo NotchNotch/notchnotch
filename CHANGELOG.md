@@ -7,6 +7,7 @@ All notable changes to NotchNotch are listed here. The format follows
 ## [Unreleased]
 
 ### Added
+- Automatic updates with Sparkle: **Check for Updates…** in the menu bar, and update settings in **General**. Updates are EdDSA-signed and published from GitHub Releases.
 - `@notchnotch/cli` with `notchnotch build` and `notchnotch check`, so extensions can be built and checked outside this repository with the same rules as the installer.
 - `helperApp` in `@notchnotch/cli/native` packages and signs a helper app bundle with its own privacy usage descriptions.
 - Manifest `imageHosts` to allow artwork from declared HTTPS hosts. The install review lists them.

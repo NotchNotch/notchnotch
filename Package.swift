@@ -10,6 +10,9 @@ let package = Package(
         .executable(name: "MusicAdapter", targets: ["MusicAdapter"]),
         .executable(name: "CalendarAdapter", targets: ["CalendarAdapter"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.10.1"),
+    ],
     targets: [
         .target(name: "NotchProtocol", path: "native/NotchProtocol/Sources"),
         .target(name: "NotchCore", dependencies: ["NotchProtocol"], path: "native/NotchCore/Sources"),
@@ -22,7 +25,8 @@ let package = Package(
         .target(name: "CalendarSupport", path: "extensions/calendar/helper-core"),
         .executableTarget(name: "CalendarAdapter", dependencies: ["CalendarSupport", "NotchProtocol"], path: "extensions/calendar/helper-src"),
         .testTarget(name: "CalendarSupportTests", dependencies: ["CalendarSupport"], path: "extensions/calendar/helper-tests"),
-        .executableTarget(name: "NotchNotch", dependencies: ["NotchCore", "NotchRenderer", "NotchConnections", "NotchExtensions"], path: "apps/macos/Sources"),
+        .executableTarget(name: "NotchNotch", dependencies: ["NotchCore", "NotchRenderer", "NotchConnections", "NotchExtensions",
+                                                           .product(name: "Sparkle", package: "Sparkle")], path: "apps/macos/Sources"),
         .testTarget(name: "NotchCoreTests", dependencies: ["NotchCore"], path: "native/NotchCore/Tests"),
         .testTarget(name: "NotchRuntimeTests", dependencies: ["NotchRuntime"], path: "native/NotchRuntime/Tests"),
         .testTarget(name: "NotchConnectionsTests", dependencies: ["NotchConnections"], path: "native/NotchConnections/Tests"),

@@ -1,12 +1,16 @@
 # Privacy
 
-NotchNotch runs entirely on your Mac. It has no account, analytics, crash reporting or advertising, and the app itself sends nothing to the developer or to third parties.
+NotchNotch runs entirely on your Mac. It has no account, analytics, crash reporting or advertising, and the app itself sends nothing to the developer or to third parties apart from update checks to GitHub, described below.
 
 ## What stays on your Mac
 
 - **Preferences** (enabled extensions, display, hover and login options) and **remembered connection access** are stored in the app's preferences.
 - **Extension storage** is a JSON file per extension in `~/Library/Application Support/NotchNotch/Storage`. It is deleted when the extension is removed.
 - **Extension logs** are kept in memory only and cleared when the app quits.
+
+## Update checks
+
+Release builds check for updates about once a day by downloading `appcast.xml` from GitHub (`raw.githubusercontent.com`), and download the update itself from GitHub Releases. GitHub sees your IP address and a user agent with the app and macOS versions; no system profile is sent. Turn this off in **Settings & Extensions… › General › Check for updates automatically**.
 
 ## Included extensions
 
