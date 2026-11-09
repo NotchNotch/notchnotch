@@ -9,6 +9,9 @@ name: Release
 #                                 sign with a stable identity, e.g. the self-signed one from
 #                                 scripts/create-signing-identity.sh --export, so macOS keeps
 #                                 users' permissions across updates
+#   SPARKLE_PRIVATE_KEY           sign the update archive and attach appcast.xml, so installed
+#                                 copies are offered the release once it is published
+#                                 (see .github/workflows/appcast.yml and docs/releasing.md)
 #   NOTARY_KEY_P8, NOTARY_KEY_ID, NOTARY_ISSUER_ID
 #                                 notarize as well (requires a Developer ID identity)
 
@@ -83,6 +86,7 @@ jobs:
       - name: Build release
         env:
           NOTCHNOTCH_BUILD_NUMBER: ${{ github.run_number }}
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: pnpm release
 
       - name: Create draft release
@@ -93,7 +97,9 @@ jobs:
           notes=$(awk -v v="$version" '$0 ~ "^## \\[?"v {found=1; next} found && /^## / {exit} found' CHANGELOG.md)
           install="**Install:** open the DMG and drag NotchNotch to Applications. This preview is not notarized: on first launch, open System Settings › Privacy & Security and choose **Open Anyway**."
           prerelease=$([ -n "${NOTCHNOTCH_NOTARY_PROFILE:-}" ] && echo "" || echo "--prerelease")
-          gh release create "$GITHUB_REF_NAME" "dist/NotchNotch-$version.dmg" --draft $prerelease \
+          assets=("dist/NotchNotch-$version.dmg" "dist/NotchNotch-$version.zip")
+          [ -f dist/appcast.xml ] && assets+=(dist/appcast.xml)
+          gh release create "$GITHUB_REF_NAME" "${assets[@]}" --draft $prerelease \
             --title "NotchNotch $version" --notes "${notes:-See CHANGELOG.md}
 
           $install"

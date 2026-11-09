@@ -8,16 +8,20 @@
 //                               builds can be notarized. Unset: ad hoc.
 //   NOTCHNOTCH_NOTARY_PROFILE   notarytool keychain profile; with a Developer ID identity the DMG is
 //                               notarized and stapled.
-//   NOTCHNOTCH_BUILD_NUMBER     CFBundleVersion (defaults to 1).
+//   NOTCHNOTCH_BUILD_NUMBER     CFBundleVersion (defaults to 1). Sparkle compares it between
+//                               releases, so it must increase; the release workflow uses its run number.
+//   SPARKLE_PRIVATE_KEY         EdDSA key from `node scripts/sparkle.mjs keys`; signs the update
+//                               archive and writes dist/appcast.xml. Unset: no update is published.
 process.env.NOTCHNOTCH_CONFIGURATION = "release";
 
 const { spawnSync } = await import("node:child_process");
-const { mkdtemp, readFile, rm, symlink, cp } = await import("node:fs/promises");
+const { mkdtemp, readFile, rm, symlink, cp, writeFile } = await import("node:fs/promises");
 const { tmpdir } = await import("node:os");
 const path = (await import("node:path")).default;
 const { buildExtensions, root } = await import("./build-extensions.mjs");
 const { packageApp } = await import("./package-app.mjs");
 const { codesign, developerID, signed, swiftBuild } = await import("./native.mjs");
+const sparkle = await import("./sparkle.mjs");
 
 function run(command, args) {
   console.log(`$ ${command} ${args.join(" ")}`);
@@ -36,7 +40,8 @@ run("codesign", ["--verify", "--strict", "--verbose=2", app]);
 // identical across releases for granted access to survive updates.
 for (const target of [app, path.join(app, "Contents/Helpers/ExtensionRunner"),
   path.join(app, "Contents/Resources/extensions/music/helpers/MusicAdapter.app"),
-  path.join(app, "Contents/Resources/extensions/calendar/helpers/CalendarAdapter.app")]) {
+  path.join(app, "Contents/Resources/extensions/calendar/helpers/CalendarAdapter.app"),
+  path.join(app, "Contents/Frameworks/Sparkle.framework")]) {
   run("codesign", ["--display", "--requirements", "-", "--verbose=1", target]);
 }
 run("lipo", ["-archs", path.join(app, "Contents/MacOS/NotchNotch")]);
@@ -74,5 +79,28 @@ if (profile && developerID) {
 } else {
   console.warn(`Not notarized (${signed ? "self-signed" : "ad hoc"}). On other Macs, first launch needs ` +
     "System Settings › Privacy & Security › Open Anyway.");
+}
+// Sparkle installs from a zip of the app; the DMG stays the first-install download.
+const archiveName = `NotchNotch-${version}.zip`;
+const archive = path.join(root, "dist", archiveName);
+const appcastFile = path.join(root, "dist/appcast.xml");
+await rm(archive, { force: true });
+await rm(appcastFile, { force: true });
+run("ditto", ["-c", "-k", "--sequesterRsrc", "--keepParent", app, archive]);
+const privateKey = process.env.SPARKLE_PRIVATE_KEY;
+if (privateKey) {
+  const publicKey = await sparkle.committedPublicKey();
+  if (!publicKey || sparkle.publicKeyFor(privateKey) !== publicKey) {
+    throw new Error("SPARKLE_PRIVATE_KEY does not match apps/macos/SparklePublicKey; installed copies would reject this update");
+  }
+  const { signature, length } = await sparkle.signArchive(archive, privateKey);
+  const notes = sparkle.releaseNotesHTML(await readFile(path.join(root, "CHANGELOG.md"), "utf8"), version);
+  await writeFile(appcastFile, sparkle.appcast({
+    version, build: process.env.NOTCHNOTCH_BUILD_NUMBER ?? "1", signature, length, notes,
+    url: `https://github.com/${sparkle.repository}/releases/download/v${version}/${archiveName}`,
+  }));
+  console.log(`Update ready: ${archive} and ${appcastFile}`);
+} else {
+  console.warn("SPARKLE_PRIVATE_KEY is not set: no appcast, so installed copies won't be offered this release.");
 }
 console.log(`Release ready: ${dmg}`);

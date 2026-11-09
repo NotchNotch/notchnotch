@@ -1,0 +1,49 @@
+name: Publish update feed
+
+# Installed copies read the Sparkle feed from the `appcast` branch:
+#   https://raw.githubusercontent.com/<owner>/<repo>/appcast/appcast.xml
+# It changes only when a release is published, so a draft release's download
+# link is never offered to users.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: appcast
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download the release's appcast
+        id: download
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern appcast.xml --dir "$RUNNER_TEMP"; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::$TAG has no appcast.xml (SPARKLE_PRIVATE_KEY was not set); the update feed is unchanged."
+          fi
+
+      - name: Commit the feed to the appcast branch
+        if: steps.download.outputs.found == 'true'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          REMOTE: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+        run: |
+          git init -q feed && cd feed
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch -q --depth 1 "$REMOTE" appcast; then git checkout -q -b appcast FETCH_HEAD; else git checkout -q --orphan appcast; fi
+          cp "$RUNNER_TEMP/appcast.xml" appcast.xml
+          git add appcast.xml
+          git diff --cached --quiet && { echo "Feed already up to date."; exit 0; }
+          git commit -q -m "Update feed for $TAG"
+          git push -q "$REMOTE" appcast
