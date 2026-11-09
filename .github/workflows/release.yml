@@ -30,15 +30,15 @@ jobs:
       SIGNING_P12: ${{ secrets.SIGNING_P12 }}
       NOTARY_KEY_P8: ${{ secrets.NOTARY_KEY_P8 }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Check tag matches package.json
         run: |
           version=$(node -p "require('./package.json').version")
           test "v$version" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME does not match package.json $version"; exit 1; }
 
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
