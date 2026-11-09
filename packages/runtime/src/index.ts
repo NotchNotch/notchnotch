@@ -1,3 +1,4 @@
+/// <reference path="./globals.d.ts" />
 import type { ReactNode } from "react";
 import { createRenderer } from "@notchnotch/react-renderer";
 import type { ConnectionResponse, ConnectionEvent, UserEvent } from "@notchnotch/protocol";
@@ -6,6 +7,8 @@ declare global {
   var __notchnotchExtensionID: string;
   var __notchnotchSend: (json: string) => void;
   var __notchnotchDispatch: (json: string) => void;
+  /** Installed by @notchnotch/sdk when an extension uses connections. */
+  var __notchnotchConnectionDispatch: ((message: ConnectionResponse | ConnectionEvent) => void) | undefined;
 }
 
 export function start(element: ReactNode) {

@@ -1,1 +1,44 @@
-{"name":"@notchnotch/react-renderer","version":"0.2.0","private":true,"type":"module","exports":"./src/index.ts","dependencies":{"react":"19.3.1","react-reconciler":"0.34.0","@notchnotch/protocol":"workspace:*"}}
+{
+  "name": "@notchnotch/react-renderer",
+  "version": "0.2.0",
+  "description": "React renderer that turns NotchNotch extension components into native UI snapshots.",
+  "license": "GPL-3.0-only",
+  "author": "AmirHossein Sadeghi",
+  "homepage": "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extension-api.md",
+  "bugs": "https://github.com/sadeqi-ah/notchnotch/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sadeqi-ah/notchnotch.git",
+    "directory": "packages/react-renderer"
+  },
+  "keywords": [
+    "notchnotch",
+    "macos",
+    "notch",
+    "extension"
+  ],
+  "type": "module",
+  "exports": "./src/index.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "types": "./dist/index.d.ts",
+    "access": "public",
+    "provenance": true
+  },
+  "dependencies": {
+    "react-reconciler": "0.34.0",
+    "@notchnotch/protocol": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "~19.3.1"
+  }
+}

@@ -1,1 +1,37 @@
-{"name":"@notchnotch/protocol","version":"0.2.0","private":true,"type":"module","exports":"./src/index.ts"}
+{
+  "name": "@notchnotch/protocol",
+  "version": "0.2.0",
+  "description": "Message and UI node types shared by NotchNotch and its extensions.",
+  "license": "GPL-3.0-only",
+  "author": "AmirHossein Sadeghi",
+  "homepage": "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extension-api.md",
+  "bugs": "https://github.com/sadeqi-ah/notchnotch/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sadeqi-ah/notchnotch.git",
+    "directory": "packages/protocol"
+  },
+  "keywords": [
+    "notchnotch",
+    "macos",
+    "notch",
+    "extension"
+  ],
+  "type": "module",
+  "exports": "./src/index.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "types": "./dist/index.d.ts",
+    "access": "public",
+    "provenance": true
+  }
+}

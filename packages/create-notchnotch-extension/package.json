@@ -1,0 +1,38 @@
+{
+  "name": "create-notchnotch-extension",
+  "version": "0.2.0",
+  "description": "Create a NotchNotch extension: npm create notchnotch-extension my-extension",
+  "license": "GPL-3.0-only",
+  "author": "AmirHossein Sadeghi",
+  "homepage": "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extension-api.md",
+  "bugs": "https://github.com/sadeqi-ah/notchnotch/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sadeqi-ah/notchnotch.git",
+    "directory": "packages/create-notchnotch-extension"
+  },
+  "keywords": [
+    "notchnotch",
+    "macos",
+    "notch",
+    "extension",
+    "create"
+  ],
+  "type": "module",
+  "bin": {
+    "create-notchnotch-extension": "./bin/create.mjs"
+  },
+  "exports": "./bin/create.mjs",
+  "files": [
+    "bin",
+    "template",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

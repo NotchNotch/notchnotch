@@ -1,6 +1,17 @@
 # Extension API v1 — preview
 
-An extension consists of `notchnotch.json` and `src/index.tsx`. `pnpm build:extensions` bundles it into `dist/extensions/<folder>/bundle.js`; the app runs that bundle in JavaScriptCore.
+## Create an extension
+
+```sh
+npm create notchnotch-extension@latest my-extension
+cd my-extension
+npm install
+npm run build
+```
+
+Then open **Settings & Extensions… › Extensions › Install from Folder…** and choose `my-extension/dist`. The project depends on `@notchnotch/sdk` (components and APIs), `@notchnotch/runtime` (`start`) and, for building, `@notchnotch/cli`. Nothing from this repository is needed.
+
+An extension consists of `notchnotch.json` and `src/index.tsx`. `notchnotch build` bundles it into `bundle.js`; the app runs that bundle in JavaScriptCore. Inside this repository, `pnpm build:extensions` does the same for `extensions/*`.
 
 ```json
 {
@@ -103,7 +114,7 @@ Guidelines:
 </Prompt>
 ```
 
-React hooks, promises, `setTimeout`, `setInterval`, and `console` are available. Console output appears under **Settings & Extensions… → your extension → Console** (the last 300 lines; errors are kept longest). DOM components, CSS, global `fetch`, Node built-ins and native modules are not exposed to extension JavaScript. API v1 accepts `local-network` and `process` permissions. Local networking and native tools additionally require named manifest connections and explicit session consent. The SDK and the `@notchnotch/cli` build tool are local workspace packages and are not published to npm yet.
+React hooks, promises, `setTimeout`, `setInterval`, and `console` are available. Console output appears under **Settings & Extensions… → your extension → Console** (the last 300 lines; errors are kept longest). DOM components, CSS, global `fetch`, Node built-ins and native modules are not exposed to extension JavaScript. API v1 accepts `local-network` and `process` permissions. Local networking and native tools additionally require named manifest connections and explicit session consent. The SDK packages are published to npm with the app's version; the API is a preview and may change between minor versions.
 
 ## Storage
 

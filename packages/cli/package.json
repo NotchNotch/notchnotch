@@ -1,1 +1,43 @@
-{"name":"@notchnotch/cli","version":"0.2.0","private":true,"type":"module","license":"GPL-3.0-only","bin":{"notchnotch":"./bin/notchnotch.mjs"},"exports":{".":"./src/index.mjs","./native":"./src/native.mjs"},"dependencies":{"esbuild":"0.28.2"}}
+{
+  "name": "@notchnotch/cli",
+  "version": "0.2.0",
+  "description": "Build and check NotchNotch extensions: notchnotch build, notchnotch check, and helper app packaging.",
+  "license": "GPL-3.0-only",
+  "author": "AmirHossein Sadeghi",
+  "homepage": "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extension-api.md",
+  "bugs": "https://github.com/sadeqi-ah/notchnotch/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sadeqi-ah/notchnotch.git",
+    "directory": "packages/cli"
+  },
+  "keywords": [
+    "notchnotch",
+    "macos",
+    "notch",
+    "extension"
+  ],
+  "type": "module",
+  "bin": {
+    "notchnotch": "./bin/notchnotch.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs",
+    "./native": "./src/native.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "dependencies": {
+    "esbuild": "0.28.2"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

@@ -40,3 +40,6 @@ xcuserdata/
 
 # Local design explorations
 design-drafts/
+
+# Built SDK packages (published from CI)
+packages/*/dist/

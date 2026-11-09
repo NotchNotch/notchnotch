@@ -1,1 +1,44 @@
-{"name":"@notchnotch/runtime","version":"0.2.0","private":true,"type":"module","exports":"./src/index.ts","dependencies":{"@notchnotch/react-renderer":"workspace:*","@notchnotch/protocol":"workspace:*","react":"19.3.1"}}
+{
+  "name": "@notchnotch/runtime",
+  "version": "0.2.0",
+  "description": "Starts a NotchNotch extension inside the app's JavaScriptCore runtime.",
+  "license": "GPL-3.0-only",
+  "author": "AmirHossein Sadeghi",
+  "homepage": "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extension-api.md",
+  "bugs": "https://github.com/sadeqi-ah/notchnotch/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sadeqi-ah/notchnotch.git",
+    "directory": "packages/runtime"
+  },
+  "keywords": [
+    "notchnotch",
+    "macos",
+    "notch",
+    "extension"
+  ],
+  "type": "module",
+  "exports": "./src/index.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "types": "./dist/index.d.ts",
+    "access": "public",
+    "provenance": true
+  },
+  "dependencies": {
+    "@notchnotch/react-renderer": "workspace:*",
+    "@notchnotch/protocol": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "~19.3.1"
+  }
+}

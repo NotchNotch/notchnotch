@@ -8,11 +8,13 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ### Added
 - Automatic updates with Sparkle: **Check for Updates…** in the menu bar, and update settings in **General**. Updates are EdDSA-signed and published from GitHub Releases.
+- The extension SDK on npm (`@notchnotch/sdk`, `@notchnotch/runtime`, `@notchnotch/cli`) and `npm create notchnotch-extension` to start a project outside this repository.
 - `@notchnotch/cli` with `notchnotch build` and `notchnotch check`, so extensions can be built and checked outside this repository with the same rules as the installer.
 - `helperApp` in `@notchnotch/cli/native` packages and signs a helper app bundle with its own privacy usage descriptions.
 - Manifest `imageHosts` to allow artwork from declared HTTPS hosts. The install review lists them.
 
 ### Changed
+- `useStoredState("count", 0)` now infers `number` and boolean values infer `boolean`, instead of their literal types.
 - Extension helpers are their own responsible process for macOS privacy permissions. Prompts name the helper, and access granted to one extension's helper can no longer be used by NotchNotch or by other extensions. Users who connected Music or Calendar are asked once more.
 - NotchNotch itself no longer has Apple Events or Calendar entitlements or usage descriptions.
 - Remote artwork is no longer allowed by default from Spotify and Apple Music CDNs; the Music extension declares them in `imageHosts`.

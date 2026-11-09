@@ -73,6 +73,8 @@ importers:
         specifier: 0.28.2
         version: 0.28.2
 
+  packages/create-notchnotch-extension: {}
+
   packages/protocol: {}
 
   packages/react-renderer:
@@ -81,7 +83,7 @@ importers:
         specifier: workspace:*
         version: link:../protocol
       react:
-        specifier: 19.3.1
+        specifier: ~19.3.1
         version: 19.3.1
       react-reconciler:
         specifier: 0.34.0
@@ -96,7 +98,7 @@ importers:
         specifier: workspace:*
         version: link:../react-renderer
       react:
-        specifier: 19.3.1
+        specifier: ~19.3.1
         version: 19.3.1
 
   packages/sdk:
@@ -105,7 +107,7 @@ importers:
         specifier: workspace:*
         version: link:../protocol
       react:
-        specifier: 19.3.1
+        specifier: ~19.3.1
         version: 19.3.1
 
 packages:
