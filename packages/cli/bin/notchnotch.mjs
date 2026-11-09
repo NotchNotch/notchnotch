@@ -2,11 +2,15 @@
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { buildExtension, checkPackage, lintExtension, packExtension } from "../src/index.mjs";
+import { developExtension, isAppRunning } from "../src/dev.mjs";
 
 const usage = `Usage:
   notchnotch build [folder] [--out <dir>] [--watch] [--pack]
                                     Build an installable package (default out: <folder>/dist);
                                     --pack also writes <id>-<version>.notchext next to it
+  notchnotch dev [folder] [--out <dir>]
+                                    Run the extension in NotchNotch and reload it on every change;
+                                    its console output appears here. Press Ctrl+C to stop
   notchnotch pack [package] [--out <file.notchext>]
                                     Zip a built package into a .notchext people can double-click
   notchnotch check [package]        Check a built package against the app's install rules
@@ -18,7 +22,7 @@ const { positionals, values } = parseArgs({
     help: { type: "boolean", short: "h" } },
 });
 const [command, folder = "."] = positionals;
-if (values.help || !["build", "check", "lint", "pack"].includes(command)) {
+if (values.help || !["build", "check", "dev", "lint", "pack"].includes(command)) {
   console.log(usage);
   process.exit(values.help ? 0 : 1);
 }
@@ -37,6 +41,18 @@ try {
         console.log(`Built ${out}\nInstall it from Settings & Extensions…: click + at the bottom of the sidebar.`);
       }
     }
+  } else if (command === "dev") {
+    if (process.platform !== "darwin") throw new Error("notchnotch dev needs NotchNotch running on this Mac.");
+    const session = await developExtension({
+      source: folder, destination: values.out,
+      onLog: (level, message) => (level === "error" ? console.error : console.log)(`${level === "error" ? "✗" : "›"} ${message}`),
+    });
+    console.log(`Running ${session.manifest.name} in NotchNotch from ${session.destination}.`);
+    console.log("It reloads when you save. Console output appears below. Press Ctrl+C to stop.");
+    if (!isAppRunning()) console.error("NotchNotch isn't running. Open it, and the extension loads within a second.");
+    const stop = async () => { await session.stop(); process.exit(0); };
+    process.on("SIGINT", stop);
+    process.on("SIGTERM", stop);
   } else if (command === "pack") {
     const file = await packExtension({ directory: folder, out: values.out });
     console.log(`Packed ${file}\nDouble-click it to open NotchNotch's install review, or share it.`);

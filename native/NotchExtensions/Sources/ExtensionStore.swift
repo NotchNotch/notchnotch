@@ -43,33 +43,49 @@ public struct ExtensionStore: Sendable {
     private static let maximumBundleBytes = 64 * 1024 * 1024
     public init(directory: URL) { self.directory = directory.resolvingSymlinksInPath().standardizedFileURL }
 
-    public func scan(included: URL, development: Bool = false) -> ExtensionScan {
+    /// Included extensions come first and can't be replaced. Folders that
+    /// `notchnotch dev` runs come next and quietly stand in for an installed
+    /// copy with the same identifier while they run.
+    public func scan(included: URL, development: Bool = false, developing: [DevelopmentRegistry.Entry] = []) -> ExtensionScan {
         let manager = FileManager.default
         var result = ExtensionScan()
         var ids: Set<String> = []
-        for (root, origin) in [(included, development ? ExtensionOrigin.development : .bundled), (directory, .local)] {
+
+        func add(_ folder: URL, origin: ExtensionOrigin, expectedID: String? = nil) {
+            do {
+                let package = try inspect(folder)
+                if let expectedID, package.id != expectedID {
+                    throw ProtocolError.invalid("Registered as \(expectedID), but the manifest says \(package.id).")
+                }
+                if origin == .local, folder.lastPathComponent != package.id {
+                    throw ProtocolError.invalid("Installed folders must be named after their extension identifier. Import this package through Settings & Extensions.")
+                }
+                guard ids.insert(package.id).inserted else {
+                    throw ProtocolError.invalid("Another extension already uses \(package.id). Included extensions cannot be replaced by a local package.")
+                }
+                result.extensions.append(.init(manifest: package.manifest, directory: package.directory, origin: origin))
+            } catch { result.issues[folder.path] = error.localizedDescription }
+        }
+
+        func scanRoot(_ root: URL, origin: ExtensionOrigin, skipping skipped: Set<String> = []) {
             guard manager.fileExists(atPath: root.path) else {
                 if origin != .local { result.issues[root.path] = "The included extension folder is unavailable." }
-                continue
+                return
             }
             do {
                 let folders = try manager.contentsOfDirectory(at: root, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
                     .sorted { $0.lastPathComponent < $1.lastPathComponent }
-                for folder in folders {
+                for folder in folders where !skipped.contains(folder.lastPathComponent) {
                     guard (try? folder.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else { continue }
-                    do {
-                        let package = try inspect(folder)
-                        if origin == .local, folder.lastPathComponent != package.id {
-                            throw ProtocolError.invalid("Installed folders must be named after their extension identifier. Import this package through Settings & Extensions.")
-                        }
-                        guard ids.insert(package.id).inserted else {
-                            throw ProtocolError.invalid("Another extension already uses \(package.id). Included extensions cannot be replaced by a local package.")
-                        }
-                        result.extensions.append(.init(manifest: package.manifest, directory: package.directory, origin: origin))
-                    } catch { result.issues[folder.path] = error.localizedDescription }
+                    add(folder, origin: origin)
                 }
             } catch { result.issues[root.path] = error.localizedDescription }
         }
+
+        scanRoot(included, origin: development ? .development : .bundled)
+        let before = ids
+        for entry in developing { add(entry.folder, origin: .development, expectedID: entry.id) }
+        scanRoot(directory, origin: .local, skipping: ids.subtracting(before))
         result.extensions.sort { $0.manifest.name.localizedStandardCompare($1.manifest.name) == .orderedAscending }
         return result
     }

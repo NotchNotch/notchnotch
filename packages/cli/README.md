@@ -3,6 +3,7 @@
 Builds and checks [NotchNotch](https://github.com/sadeqi-ah/notchnotch) extensions.
 
 ```sh
+notchnotch dev [folder]                          # run it in NotchNotch, reload on save, print its console
 notchnotch build [folder] [--out dist] [--watch]   # bundle src/index.tsx, copy helpers/ and assets/, run build.mjs, check
 notchnotch build [folder] --pack                 # also write <id>-<version>.notchext
 notchnotch pack <package> [--out file.notchext]  # zip a built package for double-click install

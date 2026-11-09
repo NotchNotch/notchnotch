@@ -29,7 +29,7 @@ final class AppModel {
             onLayoutChange?()
         }
     }
-    private static var supportDirectory: URL {
+    private nonisolated static var supportDirectory: URL {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
         return support.appendingPathComponent("NotchNotch")
@@ -37,6 +37,11 @@ final class AppModel {
     var extensionStore: ExtensionStore {
         ExtensionStore(directory: Self.supportDirectory.appendingPathComponent("Extensions"))
     }
+    /// Projects that `notchnotch dev` runs.
+    let developmentRegistry = DevelopmentRegistry(directory: supportDirectory.appendingPathComponent("Development"))
+    private var developmentEntries: [DevelopmentRegistry.Entry] = []
+    private var developmentTimer: Timer?
+
     /// Per-extension key-value storage written by the runner (manifest ids are validated path-safe).
     func storageURL(for id: String) -> URL {
         Self.supportDirectory.appendingPathComponent("Storage").appendingPathComponent("\(id).json")
@@ -136,11 +141,28 @@ final class AppModel {
                 MainActor.assumeIsolated { self?.reloadExtensions() }
             }
         }
+        // Cheap when nobody develops: one directory listing per second.
+        let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkDevelopment() }
+        }
+        timer.tolerance = 0.3
+        RunLoop.main.add(timer, forMode: .common)
+        developmentTimer = timer
+    }
+
+    /// Loads, reloads after a rebuild, and unloads `notchnotch dev` projects.
+    private func checkDevelopment() {
+        let entries = developmentRegistry.entries()
+        guard entries != developmentEntries || !entries.isEmpty else { return }
+        developmentEntries = entries
+        reloadExtensions()
     }
 
     func reloadExtensions(force: Bool = false, restarting: String? = nil) {
         if force { restartPolicy = RestartPolicy() }
-        let scan = extensionStore.scan(included: extensionRoot, development: ProcessInfo.processInfo.environment["NOTCHNOTCH_EXTENSIONS"] != nil)
+        developmentEntries = developmentRegistry.entries()
+        let scan = extensionStore.scan(included: extensionRoot, development: ProcessInfo.processInfo.environment["NOTCHNOTCH_EXTENSIONS"] != nil,
+                                       developing: developmentEntries)
         if installedExtensions != scan.extensions { installedExtensions = scan.extensions }
         if libraryIssues != scan.issues { libraryIssues = scan.issues }
         let candidates = scan.extensions.filter { isEnabled($0.id) && !installingIDs.contains($0.id) }
@@ -266,6 +288,9 @@ final class AppModel {
             entries.remove(at: entries.firstIndex { $0.level == .info } ?? 0)
         }
         extensionLogs[id] = entries
+        if installedExtensions.first(where: { $0.id == id })?.origin == .development {
+            developmentRegistry.appendLog(id: id, level: level == .error ? "error" : "log", message: message)
+        }
     }
     func disconnectExtension(_ id: String) { connections[id]?.resetConnections() }
     private func stopExtension(_ id: String) {
@@ -333,6 +358,7 @@ final class AppModel {
         hoverTask?.cancel()
         peekTask?.cancel()
         reloadTimer?.invalidate()
+        developmentTimer?.invalidate()
         for connection in connections.values { connection.stop() }
         connections.removeAll()
     }

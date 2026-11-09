@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { checkPackage, titleCaseProblem, validateManifest } from "../packages/cli/src/index.mjs";
 import { helperApp } from "../packages/cli/src/native.mjs";
+import { developExtension } from "../packages/cli/src/dev.mjs";
 
 async function temporary(t) {
   const directory = await mkdtemp(path.join(tmpdir(), "notchnotch-cli-"));
@@ -123,6 +124,26 @@ test("titleCaseProblem follows the Apple Style Guide", () => {
   assert.match(titleCaseProblem("Hacker news"), /"Hacker News"/);
   assert.match(titleCaseProblem("Made with care"), /"Made With care"/);
   assert.match(titleCaseProblem("Where to"), /"Where To"/);
+});
+
+test("developExtension registers the build with the app, forwards its log and unregisters on stop", async (t) => {
+  const directory = await temporary(t);
+  process.env.NOTCHNOTCH_DEVELOPMENT_DIR = path.join(directory, "Development");
+  t.after(() => { delete process.env.NOTCHNOTCH_DEVELOPMENT_DIR; });
+  const lines = [];
+  const session = await developExtension({ source: "examples/focus-timer", destination: path.join(directory, "out"),
+    logLevel: "silent", onLog: (level, message) => lines.push(`${level}:${message}`) });
+  t.after(() => session.stop());
+  const registration = path.join(directory, "Development", "dev.notchnotch.example.focus.json");
+  assert.deepEqual(JSON.parse(await readFile(registration, "utf8")), { path: path.join(directory, "out"), pid: process.pid });
+  assert.deepEqual(await checkPackage(path.join(directory, "out")), []);
+
+  await writeFile(path.join(directory, "Development", "dev.notchnotch.example.focus.log"), "log\tstarted\nerror\tfailed\n\tsecond line\n");
+  for (let i = 0; i < 40 && lines.length < 3; i++) await new Promise((resolve) => setTimeout(resolve, 50));
+  assert.deepEqual(lines, ["log:started", "error:failed", "error:second line"]);
+
+  await session.stop();
+  await assert.rejects(readFile(registration));
 });
 
 test("helperApp writes usage descriptions so the helper can ask for its own privacy access", async (t) => {

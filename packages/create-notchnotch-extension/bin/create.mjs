@@ -34,7 +34,7 @@ export async function create({ folder, name, id, sdkVersion = version }) {
   await writeFile(path.join(target, "package.json"), JSON.stringify({
     name: slug(path.basename(target)), private: true, type: "module",
     scripts: {
-      build: "notchnotch build . --out dist", watch: "notchnotch build . --out dist --watch",
+      dev: "notchnotch dev", build: "notchnotch build . --out dist", watch: "notchnotch build . --out dist --watch",
       pack: "notchnotch build . --out dist --pack",
       check: "notchnotch check dist", lint: "notchnotch lint .", typecheck: "tsc --noEmit",
     },

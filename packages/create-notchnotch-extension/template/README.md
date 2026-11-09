@@ -10,6 +10,7 @@ Describe what {{displayName}} shows in the notch and why it's useful. NotchNotch
 
 ```sh
 npm install
+npm run dev          # runs it in NotchNotch and reloads on save
 npm run build        # builds and checks dist/
 npm run watch        # rebuilds on change
 npm run typecheck
@@ -17,7 +18,7 @@ npm run lint         # store guidelines: icon, title, README…
 npm run pack         # also writes <id>-<version>.notchext to share
 ```
 
-Install it from **Settings & Extensions…**: click **+** at the bottom of the sidebar and choose `dist`, or double-click the `.notchext` from `npm run pack`. After a rebuild, install the folder again to update it.
+`npm run dev` needs NotchNotch open; press Ctrl+C to stop. To install the extension for good, click **+** at the bottom of the sidebar in **Settings & Extensions…** and choose `dist`, or double-click the `.notchext` from `npm run pack`.
 
 - [Getting started](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/getting-started.md)
 - [Concepts](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/concepts.md) · [Components](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/components.md) · [Connections](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/connections.md)

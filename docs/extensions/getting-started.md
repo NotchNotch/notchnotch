@@ -22,13 +22,17 @@ my-extension
 └── CHANGELOG.md        shown as its version history
 ```
 
-## Install it
+## Run it
 
-1. Open **Settings & Extensions…** from the menu bar.
-2. Click **+** at the bottom of the sidebar and choose the `dist` folder.
-3. Review what the extension asks for and choose **Install Extension**.
+With NotchNotch open:
 
-After you change the code, run `npm run build` and install the folder again to update it. `npm run watch` rebuilds on every save.
+```sh
+npm run dev
+```
+
+Your extension appears in NotchNotch right away, marked **Development**. Every time you save, it rebuilds and reloads, and its `console.log` output shows up in the terminal. Press **Ctrl+C** to stop; the extension goes away. If you also installed a copy with the same `id`, the development version stands in for it while `npm run dev` runs.
+
+To install it for good instead, run `npm run build`, open **Settings & Extensions…**, click **+** at the bottom of the sidebar and choose the `dist` folder.
 
 ## Your first activity
 
@@ -58,7 +62,7 @@ function Counter() {
 start(<Counter />);
 ```
 
-The compact part sits beside the camera. Hover or click the notch to open the expanded part. Logs from `console.log` appear in **Settings & Extensions… › your extension › Developer › Console**.
+The compact part sits beside the camera. Hover or click the notch to open the expanded part. Logs from `console.log` appear in the terminal running `npm run dev`, and in **Settings & Extensions… › your extension › Developer › Console**.
 
 ## Share it
 
