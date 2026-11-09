@@ -37,3 +37,6 @@ xcuserdata/
 *.dmg
 *.pkg
 
+
+# Local design explorations
+design-drafts/

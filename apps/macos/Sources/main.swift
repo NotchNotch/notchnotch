@@ -120,15 +120,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return result.handled
     }
 
-    /// Template image: a screen outline with a filled notch hanging from its top edge.
+    /// Template image of the NotchNotch logo (assets/logo.svg), 15 pt square.
     private static func menuBarImage() -> NSImage {
-        let image = NSImage(size: NSSize(width: 18, height: 14), flipped: true) { _ in
-            let screen = NSBezierPath(roundedRect: NSRect(x: 1.5, y: 1.5, width: 15, height: 11), xRadius: 2.5, yRadius: 2.5)
-            screen.lineWidth = 1.5
-            NSColor.black.setStroke(); screen.stroke()
-            let notch = NSBezierPath(roundedRect: NSRect(x: 5.5, y: 1, width: 7, height: 4.5), xRadius: 1.8, yRadius: 1.8)
-            NSColor.black.setFill(); notch.fill()
-            NSRect(x: 5.5, y: 1, width: 7, height: 2).fill()
+        let image = NSImage(size: NSSize(width: 15, height: 15), flipped: true) { rect in
+            let scale = rect.width / 100
+            let logo = NSBezierPath()
+            for shape in [[(0, 0), (0, 100), (50, 100), (50, 50)], [(50, 0), (50, 50), (100, 100), (100, 0)]] {
+                logo.move(to: NSPoint(x: CGFloat(shape[0].0) * scale, y: CGFloat(shape[0].1) * scale))
+                for point in shape.dropFirst() { logo.line(to: NSPoint(x: CGFloat(point.0) * scale, y: CGFloat(point.1) * scale)) }
+                logo.close()
+            }
+            NSColor.black.setFill(); logo.fill()
             return true
         }
         image.isTemplate = true
