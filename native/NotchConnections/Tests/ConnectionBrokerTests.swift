@@ -122,3 +122,33 @@ private func manifest(permissions: [String] = ["process"], connections: String =
     store.revoke(extensionID: "a")
     #expect(store.grantedConnections(extensionID: "a").isEmpty)
 }
+
+@Test @MainActor func helperExitStatusIsReportedAndTheChildIsReaped() async throws {
+    var messages: [[String: Any]] = []
+    let connections = #"{"tool":{"transport":"stdio","executable":"/bin/sh","arguments":["-c","read line; exit 3"]}}"#
+    let broker = ConnectionBroker(manifest: try manifest(connections: connections), directory: URL(fileURLWithPath: "/tmp"),
+                                  authorize: { _ in true }, emit: { json in
+        if let value = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any] { messages.append(value) }
+    })
+    defer { broker.stop() }
+    broker.receive(.init(extensionID: "dev.test.bridge", requestID: "open", connectionID: "tool", operation: .open, sessionID: "one"))
+    for _ in 0..<100 where !messages.contains(where: { $0["requestID"] as? String == "open" }) { try await Task.sleep(for: .milliseconds(10)) }
+    broker.receive(.init(extensionID: "dev.test.bridge", requestID: "send", connectionID: "tool", operation: .send,
+                         sessionID: "one", message: .string("go")))
+    for _ in 0..<200 where !messages.contains(where: { $0["event"] as? String == "closed" }) { try await Task.sleep(for: .milliseconds(10)) }
+    let closed = messages.first { $0["event"] as? String == "closed" }
+    #expect((closed?["error"] as? String)?.contains("Helper exited (3)") == true)
+}
+
+@Test @MainActor func helpersAreResponsibleForTheirOwnPrivacyPermissions() throws {
+    typealias Responsible = @convention(c) (pid_t) -> pid_t
+    let symbol = try #require(dlsym(UnsafeMutableRawPointer(bitPattern: -2), "responsibility_get_pid_responsible_for_pid"))
+    let responsible = unsafeBitCast(symbol, to: Responsible.self)
+    let helper = StdioConnection()
+    try helper.start(executable: URL(fileURLWithPath: "/bin/cat"), arguments: [], directory: URL(fileURLWithPath: "/tmp"),
+                     onMessage: { _ in }, onClose: { _ in })
+    defer { helper.stop() }
+    // Without the disclaim, the helper's TCC requests would be attributed to this process.
+    #expect(responsible(helper.pid) == helper.pid)
+    #expect(responsible(helper.pid) != responsible(getpid()))
+}

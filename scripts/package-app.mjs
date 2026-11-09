@@ -42,9 +42,6 @@ export async function packageApp() {
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>LSUIElement</key><true/>
 <key>NSHighResolutionCapable</key><true/>
-<key>NSAppleEventsUsageDescription</key><string>Allow extensions you choose to read and control other applications.</string>
-<key>NSCalendarsFullAccessUsageDescription</key><string>Allow the Calendar extension to read selected calendars and show upcoming events in the notch.</string>
-<key>NSCalendarsUsageDescription</key><string>Allow the Calendar extension to show upcoming events in the notch.</string>
 </dict></plist>
 `);
   // Inside out: bundled extension helpers were signed by their build modules.

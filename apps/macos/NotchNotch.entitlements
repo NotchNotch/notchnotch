@@ -2,11 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Bundled helpers run as child processes; macOS attributes their
-	     Automation and Calendar access to this responsible app. -->
-	<key>com.apple.security.automation.apple-events</key>
-	<true/>
-	<key>com.apple.security.personal-information.calendars</key>
-	<true/>
+	<!-- Intentionally empty. Extension helpers are spawned with responsibility
+	     disclaimed, so each helper requests privacy permissions (Automation,
+	     Calendars, ...) with its own bundle's entitlements and usage strings.
+	     Adding one here would grant nothing to helpers. -->
 </dict>
 </plist>
