@@ -49,6 +49,10 @@ Optional. They describe the extension in the install review and under **Develope
 | `license` | An SPDX identifier or expression, such as `MIT` or `MIT OR Apache-2.0` |
 | `homepage`, `repository` | `https://` addresses without a user name or password |
 
+## preferences
+
+Up to 16 settings NotchNotch draws in Setup and hands to your extension. See [Preferences](preferences.md).
+
 ## network
 
 Up to 16 `https` hosts the extension may call with [`fetch`](network.md), such as `["api.github.com", "*.example.com"]`. A `*.` wildcard matches subdomains, not the bare domain. The install review lists them.

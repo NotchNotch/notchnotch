@@ -96,6 +96,7 @@ struct ManagementExtensionPage: View {
         case .starting: .yellow
         case .off: .secondary
         case .needsAttention: .orange
+        case .needsSetup: .yellow
         }
     }
 
@@ -110,7 +111,16 @@ struct ManagementExtensionPage: View {
     }
 
     @ViewBuilder private var setup: some View {
-        if !model.isEnabled(record.id) {
+        if model.isEnabled(record.id), !(record.manifest.preferences ?? []).isEmpty {
+            ExtensionPreferencesForm(record: record, model: model, notify: coordinator.notify)
+                .disabled(coordinator.busy)
+        }
+        if case .needsSetup(let missing) = status {
+            Section {
+                Label("Fill in \(ListFormatter.localizedString(byJoining: missing)) to start \(record.manifest.name).", systemImage: "gearshape")
+                    .foregroundStyle(.secondary)
+            }
+        } else if !model.isEnabled(record.id) {
             Section {
                 LabeledContent("\(record.manifest.name) is off") {
                     Button("Turn On") { model.setEnabled(true, for: record.id) }.disabled(coordinator.busy)

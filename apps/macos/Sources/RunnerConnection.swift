@@ -34,10 +34,12 @@ final class RunnerConnection {
         self.directory = directory
     }
 
-    func start(executable: URL, bundle: URL, storage: URL) throws {
+    func start(executable: URL, bundle: URL, storage: URL, preferences: ExtensionPreferenceStore? = nil) throws {
         try manifest.validate()
         process.executableURL = executable
-        process.arguments = [bundle.path, manifest.id, storage.path]
+        let sendsPreferences = preferences != nil && !(manifest.preferences ?? []).isEmpty
+        // Values arrive on stdin, not in arguments: other processes can read arguments.
+        process.arguments = [bundle.path, manifest.id, storage.path] + (sendsPreferences ? ["--preferences"] : [])
         process.standardInput = input
         process.standardOutput = output
         process.standardError = errors
@@ -71,6 +73,17 @@ final class RunnerConnection {
         }
         do { try process.run() }
         catch { stop(); throw error }
+        if sendsPreferences, let preferences {
+            let manifest = manifest
+            Task { [weak self] in
+                // Reading passwords can wait for a Keychain prompt; the runner waits for this line.
+                let values = await Task.detached { preferences.values(for: manifest) }.value
+                guard let self, let data = try? JSONEncoder().encode(RunnerPreferences(values: values)) else { return }
+                self.enqueue(data + Data([10]), failure: "Could not send preferences to \(manifest.name)")
+                // A Keychain prompt doesn't count against the runner's startup time.
+                self.liveness = RunnerLiveness(startedAt: .now)
+            }
+        }
         liveness = RunnerLiveness(startedAt: .now)
         let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.checkLiveness() }

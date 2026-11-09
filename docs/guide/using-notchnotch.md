@@ -54,7 +54,7 @@ Open **Settings & Extensions…** from the menu bar, or press **⌘,** while Not
 
 Each extension has a page with these tabs:
 
-- **Setup:** what it needs from you, such as connecting an app.
+- **Setup:** what it needs from you, such as connecting an app or entering an API token. An extension marked **Needs setup** starts once you fill in its required fields and choose **Save**.
 - **About:** what it does and what changed in each version, when the extension includes them.
 - **Access:** what it can connect to, which access you chose to always allow, and the secrets it saved in your Keychain. **Forget** makes it ask again.
 - **Developer:** its console, package details and **Remove…**.

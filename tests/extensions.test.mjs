@@ -411,3 +411,28 @@ test("The runner answers pings only while JavaScript is responsive", async () =>
     assert.equal(busy.messages.some((message) => message.type === "pong"), false);
   } finally { busy.child.kill("SIGKILL"); }
 });
+
+test("a runner started with --preferences runs the extension with them, after earlier messages", async (t) => {
+  const outfile = path.join(fixtureDirectory, "preferences.js");
+  await build({
+    absWorkingDir: root,
+    stdin: { contents: `
+      import { Activity, Text, getPreferenceValues } from "@notchnotch/sdk";
+      import { start } from "@notchnotch/runtime";
+      const { greeting, loud } = getPreferenceValues();
+      start(<Activity id="hello" title={String(greeting) + (loud ? "!" : "")} initialView="expanded">
+        <Activity.Expanded><Text>{String(greeting)}</Text></Activity.Expanded>
+      </Activity>);`, loader: "tsx", resolveDir: root },
+    outfile, bundle: true, format: "iife", platform: "neutral", target: "es2022",
+    mainFields: ["module", "main"], conditions: ["default"], jsx: "automatic",
+    define: { "process.env.NODE_ENV": '"production"' },
+  });
+  const runner = launchProcess(path.join(root, ".build/debug/ExtensionRunner"), [outfile, "test.preferences", "--preferences"]);
+  t.after(() => runner.stop());
+  runner.message({ type: "ping", id: 7 });
+  runner.message({ type: "preferences", values: { greeting: "Hello", loud: true } });
+  const snapshot = await runner.wait(() => true);
+  assert.equal(snapshot.surfaces[0].title, "Hello!");
+  await runner.waitMessage((message) => message.type === "pong" && message.id === 7);
+});
+

@@ -10,6 +10,43 @@ export const categories = [
   "News", "Productivity", "Sports", "System", "Weather", "Other",
 ];
 
+const preferenceTypes = new Set(["text", "password", "toggle", "dropdown"]);
+
+/** Same rules as ExtensionPreference.validate in the app. */
+function validatePreferences(manifest) {
+  const list = manifest.preferences;
+  if (list === undefined) return;
+  const fail = (message) => { throw new Error(`Unsupported manifest: ${manifest.id}: ${message}`); };
+  if (!Array.isArray(list) || list.length > 16 || new Set(list.map((item) => item?.name)).size !== list.length) {
+    fail("preferences must list up to 16 entries with unique names");
+  }
+  const short = (value, max) => value === undefined || (typeof value === "string" && value.length <= max);
+  for (const item of list) {
+    if (!item || typeof item !== "object" || typeof item.name !== "string" || !/^[A-Za-z][A-Za-z0-9_]{0,31}$/.test(item.name)) {
+      fail("preference names use letters, digits and _, start with a letter, up to 32 characters");
+    }
+    const at = (message) => fail(`preference ${item.name}: ${message}`);
+    if (!preferenceTypes.has(item.type)) at("type is text, password, toggle or dropdown");
+    if (typeof item.title !== "string" || item.title.length < 1 || item.title.length > 64 ||
+        !short(item.description, 256) || !short(item.placeholder, 128)) at("title is 1–64 characters, description up to 256, placeholder up to 128");
+    if (item.required !== undefined && typeof item.required !== "boolean") at("required is true or false");
+    const fallback = item.default;
+    if (item.type === "text" && fallback !== undefined && !(typeof fallback === "string" && Buffer.byteLength(fallback) <= 4096)) at("default must be text");
+    if (item.type === "password" && fallback !== undefined) at("a password can't have a default");
+    if (item.type === "toggle" && item.required) at("a toggle can't be required");
+    if (item.type === "toggle" && fallback !== undefined && typeof fallback !== "boolean") at("default must be true or false");
+    if (item.type === "dropdown") {
+      const options = item.options;
+      if (!Array.isArray(options) || options.length < 1 || options.length > 32 ||
+          new Set(options.map((option) => option?.value)).size !== options.length ||
+          options.some((option) => !short(option?.value, 64) || !option.value || !short(option?.title, 64) || !option.title)) {
+        at("a dropdown needs 1–32 options with unique values and titles of up to 64 characters");
+      }
+      if (fallback !== undefined && !options.some((option) => option.value === fallback)) at("default must be one of the option values");
+    } else if (item.options !== undefined) at("only a dropdown has options");
+  }
+}
+
 function validateStoreMetadata(manifest) {
   const fail = (message) => { throw new Error(`Unsupported manifest: ${manifest.id}: ${message}`); };
   const { author, categories: listed, homepage, repository, license } = manifest;
@@ -43,6 +80,7 @@ export function validateManifest(manifest) {
       manifest.permissions.some((permission) => !allowedPermissions.has(permission))) invalid();
   if ((manifest.icon !== undefined && (typeof manifest.icon !== "string" || manifest.icon.length > 128)) ||
       (manifest.description !== undefined && (typeof manifest.description !== "string" || manifest.description.length > 512))) invalid();
+  validatePreferences(manifest);
   validateStoreMetadata(manifest);
   if (manifest.icon?.endsWith(".png") && !/^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}\.png$/.test(manifest.icon)) {
     throw new Error(`Unsupported manifest: ${manifest.id}: icon must be an SF Symbol name or the file name of a PNG in assets/, such as icon.png`);

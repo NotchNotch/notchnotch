@@ -66,6 +66,7 @@ struct StatusIndicator: View {
         case .starting: ProgressView().controlSize(.mini).help(status.title)
         case .off: Text("Off").font(.caption).foregroundStyle(.secondary)
         case .needsAttention: Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.orange).help(status.title)
+        case .needsSetup: Image(systemName: "gearshape.fill").foregroundStyle(.yellow).help(status.title)
         }
     }
 }

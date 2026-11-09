@@ -33,6 +33,6 @@ await secrets.delete("api-token");
 - Every call is asynchronous. The first time, macOS may ask to allow Keychain access, so read secrets when you need them rather than at every render.
 - People see the names of your secrets, never the values, in your extension's **Access** tab, and can delete them there. Removing the extension deletes them.
 
-A typical pattern: a `TextField` in `Settings` where people paste a token, saved with `secrets.set`, then sent in a header with [`fetch`](network.md).
+For a token people paste once, a `password` [preference](preferences.md) is simpler. Use `secrets` for values your extension gets on its own, such as a token from a sign-in flow.
 
 Requires NotchNotch 0.5 or later.

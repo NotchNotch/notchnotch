@@ -9,12 +9,13 @@
 1. [Getting started](extensions/getting-started.md): a running extension in a few minutes
 2. [Concepts](extensions/concepts.md): activities, prompts, announcements and settings
 3. [Components](extensions/components.md): what you can put in the notch
-4. [Storage](extensions/storage.md): keep values and secrets across restarts
-5. [Network](extensions/network.md): call web APIs with `fetch`
-6. [Connections](extensions/connections.md): talk to local apps and services
-7. [Native helpers](extensions/native-helpers.md): reach apps through native code
-8. [Manifest](extensions/manifest.md): every field of `notchnotch.json`
-9. [Publishing](extensions/publishing.md): icon, About page, store guidelines and `.notchext` files
+4. [Preferences](extensions/preferences.md): settings people fill in, drawn natively
+5. [Storage](extensions/storage.md): keep values and secrets across restarts
+6. [Network](extensions/network.md): call web APIs with `fetch`
+7. [Connections](extensions/connections.md): talk to local apps and services
+8. [Native helpers](extensions/native-helpers.md): reach apps through native code
+9. [Manifest](extensions/manifest.md): every field of `notchnotch.json`
+10. [Publishing](extensions/publishing.md): icon, About page, store guidelines and `.notchext` files
 
 ## Contributing to NotchNotch
 

@@ -11,6 +11,9 @@ final class AppModel {
     static let maximumLogEntries = 300
     var platform = PlatformState()
     private(set) var installedExtensions: [InstalledExtension] = []
+    /// Extensions that wait for required preferences, with the missing titles.
+    private(set) var missingPreferences: [String: [String]] = [:]
+    let preferenceStore = ExtensionPreferenceStore()
     private(set) var libraryIssues: [String: String] = [:]
     private(set) var extensionSettings: [String: UINode] = [:]
     private(set) var extensionSessionIDs: [String: UUID] = [:]
@@ -143,8 +146,18 @@ final class AppModel {
         let candidates = scan.extensions.filter { isEnabled($0.id) && !installingIDs.contains($0.id) }
         let ids = Set(candidates.map(\.id))
         for id in connections.keys.filter({ !ids.contains($0) }) { stopExtension(id) }
+        for id in missingPreferences.keys where !ids.contains(id) { missingPreferences.removeValue(forKey: id) }
         for record in candidates {
             let manifest = record.manifest
+            let missing = manifest.missingRequiredPreferences(stored: preferenceStore.summary(for: manifest))
+            if !missing.isEmpty {
+                // Starts as soon as the person fills these in under Setup.
+                if connections[manifest.id] != nil { stopExtension(manifest.id) }
+                reloads.removeValue(forKey: manifest.id)
+                if missingPreferences[manifest.id] != missing { missingPreferences[manifest.id] = missing }
+                continue
+            }
+            if missingPreferences[manifest.id] != nil { missingPreferences.removeValue(forKey: manifest.id) }
             do {
                 let bundle = record.directory.appendingPathComponent(manifest.entry)
                 let modified = try bundle.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate ?? .distantPast
@@ -182,7 +195,7 @@ final class AppModel {
                 }
                 connections[manifest.id] = connection
                 reloads[manifest.id] = revision
-                try connection.start(executable: runnerURL, bundle: bundle, storage: storageURL(for: manifest.id))
+                try connection.start(executable: runnerURL, bundle: bundle, storage: storageURL(for: manifest.id), preferences: preferenceStore)
             } catch { errors[manifest.id] = error.localizedDescription }
         }
         synchronizePeek()
@@ -287,12 +300,23 @@ final class AppModel {
         let store = extensionStore
         _ = try await Task.detached(priority: .userInitiated) { try store.install(package, replacing: replacing) }.value
     }
+    /// Saves preference changes and restarts the extension with the new values.
+    func savePreferences(_ changes: [String: JSONValue], for record: InstalledExtension) async throws {
+        let store = preferenceStore, manifest = record.manifest
+        try await Task.detached(priority: .userInitiated) { try store.save(changes, for: manifest) }.value
+        reloadExtensions(restarting: record.id)
+    }
+
     func removeExtension(_ record: InstalledExtension) async throws {
         guard extensionStore.isManaged(record) else { throw ProtocolError.invalid("Included extensions can be disabled but not removed.") }
         forgetAccess(record.id)
         try? FileManager.default.removeItem(at: storageURL(for: record.id))
         let id = record.id
-        Task.detached { try? ExtensionSecretStore().deleteAll(extensionID: id) }
+        let preferences = preferenceStore
+        Task.detached {
+            try? ExtensionSecretStore().deleteAll(extensionID: id)
+            preferences.removeAll(extensionID: id)
+        }
         installingIDs.insert(record.id)
         stopExtension(record.id)
         defer { installingIDs.remove(record.id); reloadExtensions() }

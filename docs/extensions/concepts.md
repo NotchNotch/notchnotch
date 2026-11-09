@@ -61,7 +61,7 @@ To see an announcement again while you work on it, choose **Preview announcement
 
 ## Settings
 
-Render a single `Settings` component at the root, next to your surfaces. Its content appears under **Settings & Extensions… › your extension › Setup**, even when nothing is in the notch. Use it for connecting apps, onboarding and preferences.
+For plain settings such as a token, a city or a unit, declare [preferences](preferences.md) in the manifest instead: NotchNotch draws them for you. For anything richer, render a single `Settings` component at the root, next to your surfaces. Its content appears under **Settings & Extensions… › your extension › Setup**, even when nothing is in the notch. Use it for connecting apps, onboarding and preferences.
 
 ```tsx
 start(<>

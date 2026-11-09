@@ -3,6 +3,7 @@ import type { Alignment, MediaRequest, NowPlayingState, PickerOption, Spacing, T
 export type { Alignment, PickerOption, Spacing, TextSize, Tone } from "@notchnotch/protocol";
 export * from "./connections";
 export * from "./storage";
+export * from "./preferences";
 
 type Children = { children?: ReactNode };
 /** Extension-owned setup UI displayed in the management window, outside the notch. */

@@ -218,6 +218,15 @@ public struct RunnerPong: Codable, Sendable {
     public init(extensionID: String, id: Int) { self.extensionID = extensionID; self.id = id }
 }
 
+/// The first line a runner started with `--preferences` reads, before it runs
+/// the extension, so preference values are available to top-level code.
+public struct RunnerPreferences: Codable, Sendable {
+    public var protocolVersion = 1
+    public var type = "preferences"
+    public var values: [String: JSONValue]
+    public init(values: [String: JSONValue]) { self.values = values }
+}
+
 public struct RuntimeNotice: Codable, Sendable {
     public var protocolVersion = 1
     public var type: String
@@ -242,6 +251,8 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
     public var imageHosts: [String]?
     /// HTTPS hosts the extension may reach with `fetch`.
     public var network: [String]?
+    /// Settings the app asks for and draws natively, such as an API token.
+    public var preferences: [ExtensionPreference]?
     /// Store handle of the publisher, such as a GitHub user name.
     public var author: String?
     /// One to three entries from `ExtensionCategory.all`.
@@ -279,6 +290,13 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
                   network.allSatisfy(ImageHost.isValidPattern) else {
                 throw ProtocolError.invalid("network must list up to 16 lowercase DNS names, optionally starting with *.")
             }
+        }
+        if let preferences {
+            guard preferences.count <= ExtensionPreference.maximumCount,
+                  Set(preferences.map(\.name)).count == preferences.count else {
+                throw ProtocolError.invalid("preferences must list up to 16 entries with unique names.")
+            }
+            for preference in preferences { try preference.validate() }
         }
         try validateStoreMetadata()
         if let icon, icon.hasSuffix(".png") {
@@ -319,6 +337,100 @@ extension ExtensionManifest {
             license.range(of: "^[A-Za-z0-9.+-]+( (AND|OR|WITH) [A-Za-z0-9.+-]+)*$", options: .regularExpression) == nil {
             throw ProtocolError.invalid("license must be an SPDX license identifier, such as MIT.")
         }
+    }
+}
+
+/// One setting declared in the manifest. The app stores its value, draws the
+/// field in Setup and hands the values to the extension when it starts.
+public struct ExtensionPreference: Codable, Equatable, Sendable {
+    public enum Kind: String, Codable, Sendable { case text, password, toggle, dropdown }
+    public struct Option: Codable, Equatable, Sendable {
+        public var value: String
+        public var title: String
+        public init(value: String, title: String) { self.value = value; self.title = title }
+    }
+
+    public static let maximumCount = 16
+    public static let maximumTextBytes = 4096
+
+    public var name: String
+    public var type: Kind
+    public var title: String
+    public var description: String?
+    public var placeholder: String?
+    public var required: Bool?
+    public var `default`: JSONValue?
+    public var options: [Option]?
+
+    public init(name: String, type: Kind, title: String, description: String? = nil, placeholder: String? = nil,
+                required: Bool? = nil, default value: JSONValue? = nil, options: [Option]? = nil) {
+        self.name = name; self.type = type; self.title = title; self.description = description
+        self.placeholder = placeholder; self.required = required; self.default = value; self.options = options
+    }
+
+    public var isRequired: Bool { required == true }
+
+    func validate() throws {
+        let fail = { (reason: String) in ProtocolError.invalid("Preference \(name): \(reason)") }
+        guard name.range(of: "^[A-Za-z][A-Za-z0-9_]{0,31}$", options: .regularExpression) != nil else {
+            throw ProtocolError.invalid("Preference names use letters, digits and _, start with a letter, up to 32 characters.")
+        }
+        guard (1...64).contains(title.count), (description?.count ?? 0) <= 256, (placeholder?.count ?? 0) <= 128 else {
+            throw fail("title is 1–64 characters, description up to 256, placeholder up to 128.")
+        }
+        switch type {
+        case .text:
+            if let value = self.default { guard case let .string(text) = value, text.utf8.count <= Self.maximumTextBytes else { throw fail("default must be text.") } }
+        case .password:
+            guard self.default == nil else { throw fail("a password can't have a default.") }
+        case .toggle:
+            guard !isRequired else { throw fail("a toggle can't be required.") }
+            if let value = self.default { guard case .bool = value else { throw fail("default must be true or false.") } }
+        case .dropdown:
+            guard let options, (1...32).contains(options.count), Set(options.map(\.value)).count == options.count,
+                  options.allSatisfy({ (1...64).contains($0.value.count) && (1...64).contains($0.title.count) }) else {
+                throw fail("a dropdown needs 1–32 options with unique values and titles of up to 64 characters.")
+            }
+            if let value = self.default {
+                guard case let .string(selected) = value, options.contains(where: { $0.value == selected }) else {
+                    throw fail("default must be one of the option values.")
+                }
+            }
+        }
+        if type != .dropdown, options != nil { throw fail("only a dropdown has options.") }
+    }
+
+    /// Whether `value` is acceptable for this preference.
+    public func accepts(_ value: JSONValue) -> Bool {
+        switch (type, value) {
+        case (.text, .string(let text)), (.password, .string(let text)): text.utf8.count <= Self.maximumTextBytes
+        case (.toggle, .bool): true
+        case (.dropdown, .string(let selected)): options?.contains { $0.value == selected } ?? false
+        default: false
+        }
+    }
+}
+
+extension ExtensionManifest {
+    /// Stored values with defaults filled in. Values that no longer fit their
+    /// preference, or belong to none, are dropped.
+    public func preferenceValues(stored: [String: JSONValue]) -> [String: JSONValue] {
+        var values: [String: JSONValue] = [:]
+        for preference in preferences ?? [] {
+            if let value = stored[preference.name], preference.accepts(value) { values[preference.name] = value }
+            else if let value = preference.default { values[preference.name] = value }
+        }
+        return values
+    }
+
+    /// Titles of required preferences that have no value yet.
+    public func missingRequiredPreferences(stored: [String: JSONValue]) -> [String] {
+        let values = preferenceValues(stored: stored)
+        return (preferences ?? []).filter { preference in
+            guard preference.isRequired else { return false }
+            if case let .string(text)? = values[preference.name] { return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            return values[preference.name] == nil
+        }.map(\.title)
     }
 }
 

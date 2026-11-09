@@ -45,6 +45,7 @@ final class ManagementCoordinator {
 
     func status(of id: String) -> ExtensionStatus {
         if !model.isEnabled(id) { return .off }
+        if let missing = model.missingPreferences[id] { return .needsSetup(missing) }
         if let error = model.errors[id] { return .needsAttention(error) }
         return model.hasRendered(id) ? .running : .starting
     }

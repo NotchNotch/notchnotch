@@ -15,7 +15,8 @@ public final class JavaScriptRuntime {
     private let storageURL: URL?
     public static let maximumStorageBytes = 262_144
 
-    public init(extensionID: String, storageURL: URL? = nil, send: @escaping (String) -> Void) throws {
+    public init(extensionID: String, storageURL: URL? = nil, preferences: [String: JSONValue] = [:],
+                send: @escaping (String) -> Void) throws {
         self.extensionID = extensionID
         self.send = send
         self.storageURL = storageURL
@@ -58,6 +59,8 @@ public final class JavaScriptRuntime {
         context.setObject(scheduleBlock, forKeyedSubscript: "__nativeSchedule" as NSString)
         context.setObject(cancelBlock, forKeyedSubscript: "__nativeCancel" as NSString)
         context.setObject(extensionID, forKeyedSubscript: "__notchnotchExtensionID" as NSString)
+        let preferencesJSON = (try? JSONEncoder().encode(preferences)).map { String(decoding: $0, as: UTF8.self) } ?? "{}"
+        context.setObject(preferencesJSON, forKeyedSubscript: "__nativePreferences" as NSString)
         context.evaluateScript(Self.bootstrap)
     }
 
@@ -149,6 +152,7 @@ public final class JavaScriptRuntime {
     }
 
     private static let bootstrap = #"""
+    globalThis.__notchnotchPreferences = Object.freeze(JSON.parse(__nativePreferences));
     globalThis.__notchnotchSend = (json) => __nativeSend(String(json));
     globalThis.setTimeout = (callback, delay = 0, ...args) =>
       __nativeSchedule(() => callback(...args), Number(delay) || 0, false);
