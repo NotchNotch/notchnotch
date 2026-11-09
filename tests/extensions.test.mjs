@@ -383,6 +383,11 @@ test("Extension storage persists across runner restarts", async () => {
     const picker = nodes(initial.settings).find((node) => node.type === "picker");
     runner.send(picker.props.action, "50");
     await runner.wait((message) => nodes(message.settings).some((node) => node.type === "picker" && node.props.selection === "50"));
+    // The runner writes no files; it hands storage to the app, which this test plays.
+    const saved = await runner.waitMessage((message) => message.type === "storage" && message.values.minutes === "50");
+    assert.equal(saved.extensionID, "dev.notchnotch.example.focus");
+    const { writeFile } = await import("node:fs/promises");
+    await writeFile(storage, JSON.stringify(saved.values));
   } finally { await runner.stop(); }
   runner = launch("focus-timer", "dev.notchnotch.example.focus", storage);
   try {
@@ -434,5 +439,20 @@ test("a runner started with --preferences runs the extension with them, after ea
   const snapshot = await runner.wait(() => true);
   assert.equal(snapshot.surfaces[0].title, "Hello!");
   await runner.waitMessage((message) => message.type === "pong" && message.id === 7);
+});
+
+test("the runner's sandbox blocks files, network and processes once it is entered", async (t) => {
+  const { mkdtemp, writeFile, readdir } = await import("node:fs/promises");
+  const directory = await mkdtemp(path.join(tmpdir(), "notchnotch-sandbox-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const secret = path.join(directory, "secret.txt");
+  await writeFile(secret, "secret");
+  const probe = launchProcess(path.join(root, ".build/debug/ExtensionRunner"), ["--sandbox-probe", secret, directory]);
+  const result = await probe.waitMessage((message) => "readUserFile" in message);
+  assert.deepEqual(result, {
+    readBeforeSandbox: true, readSystem: true,
+    readUserFile: false, writeFile: false, listHome: false, network: false, spawn: false,
+  });
+  assert.deepEqual(await readdir(directory), ["secret.txt"]);
 });
 

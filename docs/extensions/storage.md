@@ -11,7 +11,7 @@ storage.set("lastRun", Date.now());
 const lastRun = storage.get<number>("lastRun");
 ```
 
-- Values are JSON. Each extension has 256 KiB.
+- Values are JSON. Each extension has 255 KiB.
 - Reads are immediate. A write that would go over the limit returns `false` and changes nothing.
 - Removing the extension deletes its storage.
 

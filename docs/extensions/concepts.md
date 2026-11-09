@@ -99,7 +99,7 @@ When nothing is active, hovering over the notch shows the most useful thing to r
 
 ## What extension code can do
 
-Extensions run in JavaScriptCore, not in a browser or Node.js.
+Extensions run in JavaScriptCore, not in a browser or Node.js, in a process that macOS sandboxes: it can't read files, use the network or start programs on its own. Everything below goes through the app.
 
 - Available: React and hooks, promises, `setTimeout`, `setInterval`, `console`, [storage and secrets](storage.md), [`fetch`](network.md) to hosts you declare, [`open`](#opening-links) for links, and [connections](connections.md) to local apps and tools.
 - Not available: the DOM, CSS, the browser's global `fetch`, Node built-ins and native modules.

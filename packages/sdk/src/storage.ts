@@ -17,7 +17,7 @@ function load(): Record<string, JSONValue> {
 }
 
 /**
- * Small persistent key-value storage for this extension (JSON values, 256 KiB
+ * Small persistent key-value storage for this extension (JSON values, 255 KiB
  * in total). Survives app restarts; removed together with the extension.
  * Reads are synchronous. A write that would exceed the limit is rejected and
  * returns `false`.

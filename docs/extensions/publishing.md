@@ -68,4 +68,4 @@ If the file was downloaded, macOS's quarantine flag carries over to every unpack
 
 ## Trust
 
-Installing an extension is a trust decision. Its JavaScript can't touch files or the network, but a native helper runs with the person's account. The install review lists everything the extension asks for. Only install extensions you trust, and say plainly in your README what yours does.
+Installing an extension is a trust decision. Its JavaScript runs in a sandbox that can't touch files, the network or other programs, but a native helper runs with the person's account. The install review lists everything the extension asks for. Only install extensions you trust, and say plainly in your README what yours does.

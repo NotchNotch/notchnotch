@@ -36,7 +36,7 @@ React 19.3.1 and react-reconciler 0.34.0 are pinned together. The reconciler API
 
 ## Extension storage
 
-The host passes each runner a storage path, `~/Library/Application Support/NotchNotch/Storage/<id>.json`. The runner reads and atomically writes one JSON object there (at most 256 KiB); the app process never parses it. Removing a managed extension deletes its storage file.
+The host passes each runner a storage path, `~/Library/Application Support/NotchNotch/Storage/<id>.json`. The runner reads it once, before entering its sandbox, and keeps the object in memory. Writes go to the app as a `storage` message carrying the whole object (at most 255 KiB, leaving room for the envelope in a 256 KiB message); the app checks the extension id, size and that it is an object, then writes the file atomically. Removing a managed extension deletes its storage file.
 
 ## Transport and validation
 
@@ -48,9 +48,17 @@ The host validates identity, protocol version, revision, surface contract, node 
 
 ## Trust and omitted capabilities
 
-The app loads included examples (or the explicit development directory) plus local packages installed through its management window. Local import is for explicitly trusted code; it is not a verified public distribution system. Permission lists may contain `local-network` and `process`. JavaScriptCore has no Node globals or general filesystem/network/process primitives. Named connection declarations can request brokered loopback HTTP, WebSocket messages or fixed JSONL subprocesses after explicit session consent. This is a constrained API surface, not an OS security sandbox.
+The app loads included examples (or the explicit development directory) plus local packages installed through its management window. Local import is for explicitly trusted code; it is not a verified public distribution system. Permission lists may contain `local-network` and `process`. JavaScriptCore has no Node globals or general filesystem/network/process primitives. Named connection declarations can request brokered loopback HTTP, WebSocket messages or fixed JSONL subprocesses after explicit session consent. 
 
-Before arbitrary third-party code is supported, add an OS-enforced runner/helper sandbox, startup/liveness timeouts, global CPU/memory/message-rate limits, and verified bundle installation. A blocked or malicious runner can currently hang or flood its pipe; process separation and per-connection limits alone do not solve resource exhaustion. Do not advertise this preview as safe for untrusted plugins.
+### Runner sandbox
+
+Each runner sandboxes itself with an SBPL profile through `sandbox_init`, as Chrome does for its renderers on macOS (`native/ExtensionRunner/Sources/Sandbox.swift`). The order matters: the runner reads the bundle, its storage and its preferences, creates the JavaScriptCore context, enters the sandbox, and only then evaluates extension code. The profile denies everything by default and allows reading system frameworks, ICU and time zone data, JIT code generation, preferences reads and a few system services. The runner can't open files outside the system, reach the network or start processes; everything else goes through the app over the stdin/stdout pipes it already holds: `fetch`, connections, secrets, `open`, and storage writes.
+
+`ExtensionRunner --sandbox-probe <file> <folder>` enters the same sandbox and tries to read a file, write one, list the home folder, connect to a socket and spawn a process. The runtime tests run it and require every attempt to fail. A release runner signed with the hardened runtime and `cs.allow-jit` behaves the same.
+
+Native helpers are separate processes the app starts after consent. They are not sandboxed: a helper runs with the user's account.
+
+Still missing before arbitrary third-party code: global CPU, memory and message-rate limits per runner (liveness checks catch a busy loop, not a slow memory leak or a flood of messages), and verified bundle installation through a reviewed catalog.
 
 ### Generic connection broker
 

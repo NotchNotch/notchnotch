@@ -2,6 +2,8 @@ import Foundation
 
 public let protocolVersion = 1
 public let maximumMessageBytes = 262_144
+/// One extension's storage object; leaves room for the envelope that carries it to the app.
+public let maximumStorageBytes = maximumMessageBytes - 1024
 
 public enum SurfaceKind: String, Codable, Sendable { case activity, prompt }
 public enum Presentation: String, Codable, Sendable { case compact, expanded }

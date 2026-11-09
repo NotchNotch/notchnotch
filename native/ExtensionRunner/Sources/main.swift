@@ -7,13 +7,16 @@ final class Runner {
     let runtime: JavaScriptRuntime
     let extensionID: String
     private var input = Data()
-    init(bundle: URL, extensionID: String, storage: URL?, preferences: [String: JSONValue], pending: Data) throws {
+    init(extensionID: String, storage: URL?, preferences: [String: JSONValue], pending: Data) throws {
         self.extensionID = extensionID
         input = pending
-        runtime = try JavaScriptRuntime(extensionID: extensionID, storageURL: storage, preferences: preferences) { json in
+        // The runner writes no files: storage goes to the app, which owns the file.
+        let header = #"{"protocolVersion":1,"type":"storage","extensionID":"# + String(decoding: try JSONEncoder().encode(extensionID), as: UTF8.self)
+        runtime = try JavaScriptRuntime(extensionID: extensionID, storageURL: storage, preferences: preferences, persistStorage: { json in
+            FileHandle.standardOutput.write(Data((header + #","values":"# + json + "}\n").utf8))
+        }) { json in
             FileHandle.standardOutput.write(Data((json + "\n").utf8))
         }
-        try runtime.evaluate(String(contentsOf: bundle, encoding: .utf8), sourceURL: bundle)
     }
     func read(_ data: Data) {
         if data.isEmpty { runtime.stop(); exit(0) }
@@ -37,6 +40,10 @@ final class Runner {
         }
         guard input.count <= maximumMessageBytes else { runtime.stop(); exit(1) }
     }
+}
+
+if CommandLine.arguments.count == 4, CommandLine.arguments[1] == "--sandbox-probe" {
+    SandboxProbe.run(readable: CommandLine.arguments[2], writable: CommandLine.arguments[3])
 }
 
 let readsPreferences = CommandLine.arguments.contains("--preferences")
@@ -73,8 +80,13 @@ func readPreferences() -> (values: [String: JSONValue], rest: Data) {
 do {
     let storage = arguments.count == 4 ? URL(fileURLWithPath: arguments[3]) : nil
     let (preferences, pending) = readsPreferences ? readPreferences() : ([:], Data())
-    let runner = try Runner(bundle: URL(fileURLWithPath: arguments[1]), extensionID: arguments[2], storage: storage,
-                            preferences: preferences, pending: pending)
+    let bundle = URL(fileURLWithPath: arguments[1])
+    let source = try String(contentsOf: bundle, encoding: .utf8)
+    // Everything the runner reads from disk is read above: the bundle, storage
+    // (inside Runner) and preferences. From here on, extension code is sandboxed.
+    let runner = try Runner(extensionID: arguments[2], storage: storage, preferences: preferences, pending: pending)
+    try Sandbox.enter()
+    try runner.runtime.evaluate(source, sourceURL: bundle)
     if !pending.isEmpty { runner.processInput() }
     FileHandle.standardInput.readabilityHandler = { handle in
         let data = handle.availableData

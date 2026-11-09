@@ -23,6 +23,7 @@ final class RunnerConnection {
     private var lastStderr = ""
     private let directory: URL
     private var broker: ConnectionBroker?
+    private var storageURL: URL?
     /// Set by each click or keystroke sent to the extension; lets it open one link.
     private var activation = UserActivation()
     private let writer = DispatchQueue(label: "dev.notchnotch.runner-input", qos: .utility)
@@ -36,6 +37,7 @@ final class RunnerConnection {
 
     func start(executable: URL, bundle: URL, storage: URL, preferences: ExtensionPreferenceStore? = nil) throws {
         try manifest.validate()
+        storageURL = storage
         process.executableURL = executable
         let sendsPreferences = preferences != nil && !(manifest.preferences ?? []).isEmpty
         // Values arrive on stdin, not in arguments: other processes can read arguments.
@@ -150,6 +152,17 @@ final class RunnerConnection {
         broker?.receive(command)
     }
 
+    /// Writes the extension's storage on its behalf; the runner itself can't write files.
+    private func saveStorage(_ line: Data) throws {
+        guard let storageURL,
+              let message = try JSONSerialization.jsonObject(with: line) as? [String: Any],
+              let values = message["values"] as? [String: Any] else { throw ProtocolError.invalid("Invalid storage message") }
+        let data = try JSONSerialization.data(withJSONObject: values)
+        guard data.count <= maximumStorageBytes else { throw ProtocolError.invalid("Extension storage exceeds its limit") }
+        try FileManager.default.createDirectory(at: storageURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try data.write(to: storageURL, options: .atomic)
+    }
+
     /// Opens a link only right after the person interacted with this extension.
     private func handleOpenURL(_ command: ConnectionCommand) {
         let response: ConnectionResponse
@@ -255,6 +268,8 @@ final class RunnerConnection {
                     fail(notice.message)
                 case "log":
                     onLog(.info, try JSONDecoder().decode(RuntimeNotice.self, from: line).message)
+                case "storage":
+                    try saveStorage(line)
                 case "connectionCommand":
                     let command = try JSONDecoder().decode(ConnectionCommand.self, from: line)
                     try command.validate(expectedExtensionID: manifest.id)

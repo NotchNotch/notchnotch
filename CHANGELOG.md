@@ -6,6 +6,12 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Security
+- Extension runners are sandboxed by macOS before any extension code runs: they can't read your files, write files, use the network or start programs. Everything extensions do goes through the app. A built-in probe tests that each of these is blocked.
+
+### Changed
+- Extension storage is written by the app instead of the extension's process, and holds up to 255 KiB.
+
 ## [0.5.0] - 2026-11-10
 
 ### Added
