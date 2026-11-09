@@ -12,6 +12,6 @@
       "arguments": []
     }
   },
-  "icon": "calendar",
+  "icon": "icon.png",
   "description": "Your next event, with a live countdown and meeting controls. Connect the calendars already on your Mac."
 }

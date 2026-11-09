@@ -14,7 +14,7 @@
       "arguments": []
     }
   },
-  "icon": "music.note",
+  "icon": "icon.png",
   "description": "Your music, a glance away. Playback controls for Spotify and Apple Music.",
   "imageHosts": [
     "i.scdn.co",
