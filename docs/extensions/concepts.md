@@ -78,6 +78,21 @@ start(<>
 - Buttons in settings never open the notch.
 - Settings support every component except the media components.
 
+## Opening links
+
+`open` shows a web page in the browser, or opens an app link such as `mailto:` or a meeting link in its app.
+
+```tsx
+import { Button, open } from "@notchnotch/sdk";
+
+<Button title="Join Meeting" tone="accent" onPress={() => { void open(meeting.url); }} />
+```
+
+- It works only right after a click or key press in your extension: once per interaction, within five seconds, like a browser's pop-up rule. Opening something on its own fails.
+- Web addresses must be `http` or `https` with a host. App links need an installed app that handles them. `file:`, `data:`, `javascript:` and `x-apple…` links are refused.
+
+Requires NotchNotch 0.5 or later.
+
 ## When the notch is idle
 
 When nothing is active, hovering over the notch shows the most useful thing to resume: a pending prompt first, then the activity used most recently. An activity can offer itself as a fallback with `idlePreview`; it must have compact content. Music uses this to let people resume a paused song.
@@ -86,7 +101,7 @@ When nothing is active, hovering over the notch shows the most useful thing to r
 
 Extensions run in JavaScriptCore, not in a browser or Node.js.
 
-- Available: React and hooks, promises, `setTimeout`, `setInterval`, `console`, [storage and secrets](storage.md), [`fetch`](network.md) to hosts you declare, and [connections](connections.md) to local apps and tools.
+- Available: React and hooks, promises, `setTimeout`, `setInterval`, `console`, [storage and secrets](storage.md), [`fetch`](network.md) to hosts you declare, [`open`](#opening-links) for links, and [connections](connections.md) to local apps and tools.
 - Not available: the DOM, CSS, the browser's global `fetch`, Node built-ins and native modules.
 
 ## Design guidelines

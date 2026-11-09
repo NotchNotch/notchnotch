@@ -23,6 +23,8 @@ final class RunnerConnection {
     private var lastStderr = ""
     private let directory: URL
     private var broker: ConnectionBroker?
+    /// Set by each click or keystroke sent to the extension; lets it open one link.
+    private var activation = UserActivation()
     private let writer = DispatchQueue(label: "dev.notchnotch.runner-input", qos: .utility)
     private var queuedBytes = 0
 
@@ -79,6 +81,7 @@ final class RunnerConnection {
     }
 
     func send(action: String, value: String?) {
+        activation.grant()
         guard process.isRunning, !failed,
               let data = try? JSONEncoder().encode(UserEvent(action: action, value: value)) else { return }
         enqueue(data + Data([10]), failure: "Could not send event to \(manifest.name)")
@@ -113,6 +116,7 @@ final class RunnerConnection {
 
     private func handleConnection(_ command: ConnectionCommand) {
         if [.secretGet, .secretSet, .secretDelete].contains(command.operation) { handleSecret(command); return }
+        if command.operation == .openURL { handleOpenURL(command); return }
         if broker == nil {
             let icon = ExtensionIcon(manifest: manifest, directory: directory)
             broker = ConnectionBroker(manifest: manifest, directory: directory) { [manifest] request in
@@ -131,6 +135,26 @@ final class RunnerConnection {
             } emit: { [weak self] json in self?.sendConnectionMessage(json) }
         }
         broker?.receive(command)
+    }
+
+    /// Opens a link only right after the person interacted with this extension.
+    private func handleOpenURL(_ command: ConnectionCommand) {
+        let response: ConnectionResponse
+        do {
+            try command.validate(expectedExtensionID: manifest.id)
+            let url = try OpenURLPolicy.validate(command.url ?? "")
+            guard NSWorkspace.shared.urlForApplication(toOpen: url) != nil else {
+                throw ProtocolError.invalid("No app on this Mac opens \(url.scheme ?? "this") links.")
+            }
+            guard activation.consume() else {
+                throw ProtocolError.invalid("open works only in response to a click or key press.")
+            }
+            NSWorkspace.shared.open(url)
+            response = ConnectionResponse(requestID: command.requestID, result: .null)
+        } catch {
+            response = ConnectionResponse(requestID: command.requestID, error: String(error.localizedDescription.prefix(2048)))
+        }
+        if let data = try? JSONEncoder().encode(response) { sendConnectionMessage(String(decoding: data, as: UTF8.self)) }
     }
 
     /// Keychain calls may wait for a macOS prompt, so they run off the main thread.

@@ -109,13 +109,15 @@ export interface ConnectionCommand {
   extensionID: string;
   requestID: string;
   connectionID: string;
-  operation: "request" | "open" | "send" | "close" | "fetch" | "secretGet" | "secretSet" | "secretDelete";
+  operation: "request" | "open" | "send" | "close" | "fetch" | "secretGet" | "secretSet" | "secretDelete" | "openURL";
   sessionID?: string;
   request?: ConnectionHTTPRequest;
   /** For `fetch`, which uses no declared connection; `connectionID` is empty. */
   fetch?: NetworkRequest;
   /** For the `secret…` operations; `connectionID` is empty. */
   secret?: { key: string; value?: string };
+  /** For `openURL`; `connectionID` is empty. */
+  url?: string;
   message?: JSONValue;
   /** `false` fails instead of asking the user when access was not granted before. */
   interactive?: boolean;

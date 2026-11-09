@@ -252,7 +252,7 @@ public final class ConnectionBroker {
             if let process = stream.process { try await process.write(data + Data([10])) }
             else if let websocket = stream.websocket { try await websocket.send(.string(String(decoding: data, as: UTF8.self))) }
             return .null
-        case .close, .fetch, .secretGet, .secretSet, .secretDelete: return .null
+        case .close, .fetch, .secretGet, .secretSet, .secretDelete, .openURL: return .null
         }
     }
 

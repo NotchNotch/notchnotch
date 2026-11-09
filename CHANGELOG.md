@@ -8,6 +8,7 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ### Added
 - `fetch` in `@notchnotch/sdk` for HTTPS requests to hosts listed in the manifest's new `network` field. NotchNotch makes the request without cookies or cache, follows redirects only to listed hosts and drops credentials when the host changes. The install review and **Access** tab list the hosts.
+- `open(url)` in `@notchnotch/sdk` opens a web page or an app link, such as `mailto:` or a meeting link, right after a click or key press in the extension: once per interaction, within five seconds. Local files, scripts and system links are refused.
 - `secrets` in `@notchnotch/sdk` keeps tokens and passwords in the login Keychain, readable only by the extension that saved them. The **Access** tab lists their names and can delete them; removing the extension deletes them.
 
 ## [0.4.0] - 2026-11-10

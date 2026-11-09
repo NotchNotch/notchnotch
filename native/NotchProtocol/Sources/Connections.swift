@@ -113,6 +113,45 @@ public struct ConnectionHTTPRequest: Codable, Sendable {
     }
 }
 
+/// Which URLs an extension may open. The app also requires a recent user
+/// action and an installed app that handles the scheme.
+public enum OpenURLPolicy {
+    /// Schemes that would open local files, run code or hide what is opened.
+    static let blockedSchemes: Set<String> = ["file", "data", "javascript", "vbscript", "ftp", "applescript", "notchnotch"]
+
+    public static func validate(_ string: String) throws -> URL {
+        guard string.utf8.count <= 4096, let components = URLComponents(string: string),
+              let scheme = components.scheme?.lowercased(),
+              scheme.range(of: "^[a-z][a-z0-9+.-]{0,31}$", options: .regularExpression) != nil,
+              !blockedSchemes.contains(scheme), !scheme.hasPrefix("x-apple"),
+              components.user == nil, components.password == nil, let url = components.url else {
+            throw ProtocolError.invalid("open accepts web addresses and app links, such as https://example.com or mailto:")
+        }
+        if scheme == "http" || scheme == "https" {
+            guard let host = components.host, !host.isEmpty else { throw ProtocolError.invalid("open needs a host for web addresses") }
+        }
+        return url
+    }
+}
+
+/// A short window after a person's click or keystroke during which an extension
+/// may open one URL, like a browser's user activation.
+public struct UserActivation: Sendable {
+    public static let window: TimeInterval = 5
+    private var deadline: Date?
+
+    public init() {}
+
+    public mutating func grant(now: Date = .now) { deadline = now.addingTimeInterval(Self.window) }
+
+    /// `true` once per activation, and only within the window.
+    public mutating func consume(now: Date = .now) -> Bool {
+        guard let deadline, now <= deadline else { self.deadline = nil; return false }
+        self.deadline = nil
+        return true
+    }
+}
+
 /// A key, and for `secretSet` its value, in an extension's Keychain secrets.
 public struct SecretRequest: Codable, Sendable {
     public static let maximumValueBytes = 8192
@@ -174,9 +213,9 @@ public enum NetworkHosts {
 
 public struct ConnectionCommand: Codable, Sendable {
     public enum Operation: String, Codable, Sendable {
-        case request, open, send, close, fetch, secretGet, secretSet, secretDelete
+        case request, open, send, close, fetch, secretGet, secretSet, secretDelete, openURL
         /// Operations the app answers itself, without a declared connection.
-        public var usesConnection: Bool { ![.fetch, .secretGet, .secretSet, .secretDelete].contains(self) }
+        public var usesConnection: Bool { ![.fetch, .secretGet, .secretSet, .secretDelete, .openURL].contains(self) }
     }
     public var protocolVersion = 1
     public var type = "connectionCommand"
@@ -190,11 +229,13 @@ public struct ConnectionCommand: Codable, Sendable {
     public var fetch: NetworkRequest?
     /// For the `secret…` operations; `connectionID` is empty.
     public var secret: SecretRequest?
+    /// For `openURL`; `connectionID` is empty.
+    public var url: String?
     public var message: JSONValue?
     /// `false` fails instead of asking the user when access was not granted before.
     public var interactive: Bool?
 
-    private enum CodingKeys: String, CodingKey { case protocolVersion, type, extensionID, requestID, connectionID, operation, sessionID, request, fetch, secret, message, interactive }
+    private enum CodingKeys: String, CodingKey { case protocolVersion, type, extensionID, requestID, connectionID, operation, sessionID, request, fetch, secret, url, message, interactive }
 
     public init(from decoder: any Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -208,15 +249,16 @@ public struct ConnectionCommand: Codable, Sendable {
         request = try values.decodeIfPresent(ConnectionHTTPRequest.self, forKey: .request)
         fetch = try values.decodeIfPresent(NetworkRequest.self, forKey: .fetch)
         secret = try values.decodeIfPresent(SecretRequest.self, forKey: .secret)
+        url = try values.decodeIfPresent(String.self, forKey: .url)
         message = values.contains(.message) ? try values.decode(JSONValue.self, forKey: .message) : nil
         interactive = try values.decodeIfPresent(Bool.self, forKey: .interactive)
     }
 
     public init(extensionID: String, requestID: String, connectionID: String, operation: Operation,
                 sessionID: String? = nil, request: ConnectionHTTPRequest? = nil, fetch: NetworkRequest? = nil,
-                secret: SecretRequest? = nil, message: JSONValue? = nil, interactive: Bool? = nil) {
+                secret: SecretRequest? = nil, url: String? = nil, message: JSONValue? = nil, interactive: Bool? = nil) {
         self.extensionID = extensionID; self.requestID = requestID; self.connectionID = connectionID
-        self.operation = operation; self.sessionID = sessionID; self.request = request; self.fetch = fetch; self.secret = secret; self.message = message
+        self.operation = operation; self.sessionID = sessionID; self.request = request; self.fetch = fetch; self.secret = secret; self.url = url; self.message = message
         self.interactive = interactive
     }
 

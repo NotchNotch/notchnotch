@@ -77,6 +77,19 @@ test("secrets travel to the app without a connection and missing keys read as un
   await removed;
 });
 
+test("open asks the app to open a link and surfaces its refusal", async (t) => {
+  const commands = [];
+  const { open } = await sdk(t, (command) => commands.push(command));
+  const opened = open("https://example.com/docs");
+  assert.equal(commands[0].operation, "openURL");
+  assert.equal(commands[0].url, "https://example.com/docs");
+  response(commands[0]);
+  await opened;
+  const refused = open("https://example.com/again");
+  response(commands[1], null, "open works only in response to a click or key press.");
+  await assert.rejects(refused, /click or key press/);
+});
+
 test("RPC can receive a question and return a user decision over the same declared stream", async (t) => {
   const commands = [];
   const { ConnectionStream, JSONRPCClient } = await sdk(t, (command) => {

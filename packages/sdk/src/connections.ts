@@ -25,7 +25,7 @@ globalThis.__notchnotchConnectionDispatch = (message) => {
 };
 
 function command(connectionID: string, operation: ConnectionCommand["operation"],
-                 fields: Pick<ConnectionCommand, "request" | "fetch" | "secret" | "message" | "sessionID" | "interactive"> = {}, timeoutMs = 35_000): Promise<JSONValue> {
+                 fields: Pick<ConnectionCommand, "request" | "fetch" | "secret" | "url" | "message" | "sessionID" | "interactive"> = {}, timeoutMs = 35_000): Promise<JSONValue> {
   if (pending.size >= 32) return Promise.reject(new Error("Too many pending connection operations"));
   const requestID = `connection-${++serial}`;
   return new Promise((resolve, reject) => {
@@ -116,6 +116,15 @@ export const secrets = {
     await command("", "secretDelete", { secret: { key } }, 120_000);
   },
 };
+
+/**
+ * Opens a web address in the browser, or an app link such as `mailto:` or
+ * `zoommtg:` in its app. Works only in response to a click or key press in your
+ * extension, once per interaction, like a browser's pop-up rule.
+ */
+export async function open(url: string): Promise<void> {
+  await command("", "openURL", { url });
+}
 
 export interface OpenOptions {
   /**
