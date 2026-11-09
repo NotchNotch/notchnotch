@@ -6,8 +6,13 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-09
+
 ### Fixed
 - `@notchnotch/runtime` types now include the runtime globals (`setTimeout`, `setInterval`, `console`…). In 0.3.0 a new project created with `npm create notchnotch-extension` failed `npm run typecheck`.
+
+### Changed
+- The SDK is published to npm with Trusted Publishing when it is configured, and release workflows run on Node 24.
 
 ## [0.3.0] - 2026-11-09
 
@@ -60,6 +65,7 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/sadeqi-ah/notchnotch/releases/tag/v0.2.0
