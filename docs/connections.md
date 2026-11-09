@@ -109,9 +109,32 @@ An installed app does not have to belong to the extension developer. It does nee
 }
 ```
 
-`executable` accepts a tool name, an absolute path, or a bundle-relative `./` path with no `..` components. Named tools are resolved in `/opt/homebrew/bin`, `/usr/local/bin`, `/usr/bin`, `/bin` and `~/.local/bin`. The permission dialog displays the resolved executable and fixed arguments. Bundled executables are resolved through symlinks and must remain inside the extension directory. Build tools copy the extension's `helpers/` directory into its bundle; mark entry scripts executable and include an appropriate shebang. An optional extension-local `build.mjs` can export `async build({ root, source, destination })` to compile/package helpers before the JavaScript bundle. This is trusted development-time code, never a host API. The Music example uses it to compile and sign its adapter. Restart development after changing helper resources or Swift sources. No shell interpolation occurs. Arguments cannot be changed by extension JavaScript.
+`executable` accepts a tool name, an absolute path, or a bundle-relative `./` path with no `..` components. Named tools are resolved in `/opt/homebrew/bin`, `/usr/local/bin`, `/usr/bin`, `/bin` and `~/.local/bin`. The permission dialog displays the resolved executable and fixed arguments. Bundled executables are resolved through symlinks and must remain inside the extension directory. Build tools copy the extension's `helpers/` directory into its bundle; mark entry scripts executable and include an appropriate shebang. An optional extension-local `build.mjs` can export `async build({ root, source, destination })` to compile/package helpers before the JavaScript bundle. This is trusted development-time code, never a host API. The Music and Calendar extensions use it to compile their adapters and package them with `helperApp`. Restart development after changing helper resources or Swift sources. No shell interpolation occurs. Arguments cannot be changed by extension JavaScript.
 
 Native tools receive a small environment (`HOME`, a fixed `PATH`, `LANG`) and can use their existing login/config files. Shell API keys and other environment variables are not inherited. Bundled helpers start in the extension directory; installed tools start in the user's home directory. OS privacy or Automation permissions, where needed by an adapter, still apply.
+
+### Privacy permissions belong to the helper
+
+NotchNotch starts every stdio helper as its own *responsible process*. macOS therefore asks for Automation, Calendars, Contacts, Location and other privacy access on behalf of the helper, shows the helper's bundle name in the prompt, and lists it separately in **System Settings › Privacy & Security**. Access granted to one extension's helper is never available to NotchNotch or to another extension. The host app requests no privacy permissions of its own.
+
+To use a protected resource, ship the helper as an app bundle whose `Info.plist` has the matching usage description (`NSContactsUsageDescription`, `NSLocationUsageDescription`, `NSAppleEventsUsageDescription`, ...). Without one, macOS denies the request. `helperApp` from `@notchnotch/cli/native` builds and signs that bundle:
+
+```js
+// build.mjs
+import { helperApp } from "@notchnotch/cli/native";
+
+export async function build({ source, destination }) {
+  // Compile your helper first (swift build, cargo, go build, ...).
+  await helperApp({
+    destination, name: "ContactsAdapter", binary: `${source}/.build/release/ContactsAdapter`,
+    bundleIdentifier: "com.example.contacts.adapter", displayName: "Birthdays",
+    usageDescriptions: { NSContactsUsageDescription: "Show upcoming birthdays in the notch." },
+  });
+  // Manifest executable: ./helpers/ContactsAdapter.app/Contents/MacOS/ContactsAdapter
+}
+```
+
+Helpers are signed ad hoc unless `NOTCHNOTCH_SIGN_IDENTITY` names a signing identity. macOS ties privacy grants to the signature, so ad hoc helpers are asked again after each rebuild. With a real identity, pass `entitlements` for the hardened runtime (for example `com.apple.security.personal-information.addressbook`).
 
 **Process permission is a trust decision.** Helpers are ordinary processes running as the user, with filesystem and network access; they are not OS-sandboxed. Keep the JavaScript UI constrained, and only grant process access to trusted code. Closing a stream or unloading its extension terminates its immediate child; a helper is responsible for cleaning up any descendants it creates. Full untrusted-extension distribution still needs sandboxing, installation verification and resource enforcement.
 

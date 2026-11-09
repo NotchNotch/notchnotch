@@ -103,7 +103,7 @@ Guidelines:
 </Prompt>
 ```
 
-React hooks, promises, `setTimeout`, `setInterval`, and `console` are available. Console output appears under **Settings & Extensions… → your extension → Console** (the last 300 lines; errors are kept longest). DOM components, CSS, global `fetch`, Node built-ins and native modules are not exposed to extension JavaScript. API v1 accepts `local-network` and `process` permissions. Local networking and native tools additionally require named manifest connections and explicit session consent. The SDK is a local workspace package and is not published to npm yet.
+React hooks, promises, `setTimeout`, `setInterval`, and `console` are available. Console output appears under **Settings & Extensions… → your extension → Console** (the last 300 lines; errors are kept longest). DOM components, CSS, global `fetch`, Node built-ins and native modules are not exposed to extension JavaScript. API v1 accepts `local-network` and `process` permissions. Local networking and native tools additionally require named manifest connections and explicit session consent. The SDK and the `@notchnotch/cli` build tool are local workspace packages and are not published to npm yet.
 
 ## Storage
 
@@ -139,12 +139,12 @@ await rpc.request("music/connect", { player: "com.spotify.client" }, 120_000);
 await rpc.request("music/command", { command: "seek", value: 0.5 });
 ```
 
-These `music/*` methods are the bundled extension's protocol, not host APIs. See [the Music adapter contract](../extensions/music/README.md). The old `useNowPlaying`, `controlMedia` and `media` permission have been removed from this preview. A paused surface should use `phase="paused"` so it remains in the switcher while its compact wings stay hidden. The artwork component accepts approved HTTPS artwork CDNs and bounded JPEG/PNG data, not filesystem URLs.
+These `music/*` methods are the bundled extension's protocol, not host APIs. See [the Music adapter contract](../extensions/music/README.md). The old `useNowPlaying`, `controlMedia` and `media` permission have been removed from this preview. A paused surface should use `phase="paused"` so it remains in the switcher while its compact wings stay hidden. Artwork accepts bounded JPEG/PNG data (up to 64 KiB as a `data:` URL) or an HTTPS URL on a host listed in the manifest's `imageHosts`, for example `["i.ytimg.com", "*.mzstatic.com"]` (up to eight exact DNS names or `*.` subdomain wildcards; a wildcard does not match the bare domain). The app downloads remote artwork itself, so the hosts are shown in the install review and no host is allowed by default. The bundled Music extension declares its CDNs the same way. Filesystem URLs are never accepted.
 
 
 ## Calendar extension
 
-The bundled Calendar extension uses the same `process`/`stdio` connection API as Music. Its `CalendarAdapter.app` owns EventKit access, calendar selection and meeting links; no calendar-specific host permission or native UI component is required. It requests full EventKit access only after **Connect Calendar** (macOS has no read-only event permission), and implements reading only. The helper and responsible host bundle include the Calendar usage descriptions.
+The bundled Calendar extension uses the same `process`/`stdio` connection API as Music. Its `CalendarAdapter.app` owns EventKit access, calendar selection and meeting links; no calendar-specific host permission or native UI component is required. It requests full EventKit access only after **Connect Calendar** (macOS has no read-only event permission), and implements reading only. The helper bundle includes the Calendar usage descriptions; the host requests no Calendar access.
 
 `calendar/connect`, `calendar/getState` and `calendar/select` return authorization, selected calendars and upcoming timed events. `calendar/state` notifications refresh the React UI after store changes or a 15-second poll. `calendar/open` and `calendar/join` are explicit user actions. See [the adapter contract](../extensions/calendar/README.md) for payloads and behavior.
 
@@ -156,7 +156,7 @@ An `Activity` may set `idlePreview` to opt into the resumable fallback; it must 
 
 ## Installing a local extension
 
-Build a folder containing `notchnotch.json`, `bundle.js`, and any bundled helper/assets. Open **Settings & Extensions… → Install from Folder…** and select that built folder. The manager validates it and shows a review before copying it into the user's extension library. Keep a stable manifest id for updates, and use an id distinct from the included examples. Installed ids cannot shadow included extensions. Package limits are 512 files/folders, no symbolic links, 8 MiB for `bundle.js` and 64 MiB total. Development `build.mjs` files are never executed by the installer.
+Build a folder containing `notchnotch.json`, `bundle.js`, and any bundled helper/assets. `notchnotch build [folder] --out <dir>` (from `@notchnotch/cli`) bundles `src/index.tsx`, copies `helpers/` and `assets/`, runs an optional `build.mjs`, and then applies the same checks as the installer; `notchnotch check <dir>` runs only the checks. Open **Settings & Extensions… → Install from Folder…** and select that built folder. The manager validates it and shows a review before copying it into the user's extension library. Keep a stable manifest id for updates, and use an id distinct from the included examples. Installed ids cannot shadow included extensions. Package limits are 512 files/folders, no symbolic links, 8 MiB for `bundle.js` and 64 MiB total. Development `build.mjs` files are never executed by the installer.
 
 This preview supports explicitly trusted local packages. Installing native code is a trust decision; transport session consent does not sandbox a helper. A public marketplace is not yet implemented. Use the manager for enable/disable, restart, connection access review and disconnect actions; setup controls use the extension’s `Settings` panel; live activity controls remain in the notch.
 

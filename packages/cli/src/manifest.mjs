@@ -9,6 +9,10 @@ export function validateManifest(manifest) {
       manifest.permissions.some((permission) => !allowedPermissions.has(permission))) invalid();
   if ((manifest.icon !== undefined && (typeof manifest.icon !== "string" || manifest.icon.length > 128)) ||
       (manifest.description !== undefined && (typeof manifest.description !== "string" || manifest.description.length > 512))) invalid();
+  const hosts = manifest.imageHosts;
+  if (hosts !== undefined && (!Array.isArray(hosts) || hosts.length > 8 || new Set(hosts).size !== hosts.length ||
+      hosts.some((host) => typeof host !== "string" || host.length > 253 ||
+        !/^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(host)))) invalid();
   const connections = manifest.connections ?? {};
   if (!connections || typeof connections !== "object" || Array.isArray(connections) || Object.keys(connections).length > 8) invalid();
   for (const [id, value] of Object.entries(connections)) {

@@ -1,0 +1,1 @@
+{"name":"@notchnotch/cli","version":"0.2.0","private":true,"type":"module","license":"GPL-3.0-only","bin":{"notchnotch":"./bin/notchnotch.mjs"},"exports":{".":"./src/index.mjs","./native":"./src/native.mjs"},"dependencies":{"esbuild":"0.28.2"}}

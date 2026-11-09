@@ -29,7 +29,7 @@ With any real identity, the app, `ExtensionRunner` and bundled helpers are signe
 
 | Target | Entitlements |
 | --- | --- |
-| `NotchNotch.app` | Apple Events, Calendars (responsible process for helpers) |
+| `NotchNotch.app` | None. Helpers are spawned as their own responsible process, so each requests privacy access with its own bundle |
 | `ExtensionRunner` | `cs.allow-jit` for JavaScriptCore |
 | `MusicAdapter.app` | Apple Events |
 | `CalendarAdapter.app` | Calendars |

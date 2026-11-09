@@ -6,6 +6,17 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- `@notchnotch/cli` with `notchnotch build` and `notchnotch check`, so extensions can be built and checked outside this repository with the same rules as the installer.
+- `helperApp` in `@notchnotch/cli/native` packages and signs a helper app bundle with its own privacy usage descriptions.
+- Manifest `imageHosts` to allow artwork from declared HTTPS hosts. The install review lists them.
+
+### Changed
+- Extension helpers are their own responsible process for macOS privacy permissions. Prompts name the helper, and access granted to one extension's helper can no longer be used by NotchNotch or by other extensions. Users who connected Music or Calendar are asked once more.
+- NotchNotch itself no longer has Apple Events or Calendar entitlements or usage descriptions.
+- Remote artwork is no longer allowed by default from Spotify and Apple Music CDNs; the Music extension declares them in `imageHosts`.
+- The bundled extensions are built through the same `@notchnotch/cli` code path as third-party extensions.
+
 ## [0.2.0] - 2026-11-09
 
 ### Added

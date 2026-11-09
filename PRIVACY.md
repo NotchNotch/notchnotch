@@ -10,7 +10,7 @@ NotchNotch runs entirely on your Mac. It has no account, analytics, crash report
 
 ## Included extensions
 
-- **Music** reads the current track, artwork and playback state from Spotify or Apple Music through Apple events, after you connect a player and macOS asks for Automation permission. Artwork may be downloaded from the player's image CDN to display it.
+- **Music** reads the current track, artwork and playback state from Spotify or Apple Music through Apple events, after you connect a player and macOS asks for Automation permission. Artwork may be downloaded from the player's image CDN to display it. Extensions can only load artwork from hosts listed in their manifest, which you see before installing.
 - **Calendar** reads events from the calendars you select, after macOS asks for Calendar access. It never changes events. **Join meeting** opens the meeting link in your browser.
 
 ## Extensions you install
