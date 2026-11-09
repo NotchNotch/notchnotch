@@ -3,14 +3,14 @@
   <channel>
     <title>NotchNotch</title>
     <item>
-      <title>NotchNotch 0.3.1</title>
-      <pubDate>Mon, 09 Nov 2026 15:46:18 GMT</pubDate>
-      <sparkle:version>4</sparkle:version>
-      <sparkle:shortVersionString>0.3.1</sparkle:shortVersionString>
+      <title>NotchNotch 0.3.2</title>
+      <pubDate>Mon, 09 Nov 2026 18:36:20 GMT</pubDate>
+      <sparkle:version>5</sparkle:version>
+      <sparkle:shortVersionString>0.3.2</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <link>https://github.com/sadeqi-ah/notchnotch/releases/tag/v0.3.1</link>
-      <description><![CDATA[<h3>Fixed</h3><ul><li><code>@notchnotch/runtime</code> types now include the runtime globals (<code>setTimeout</code>, <code>setInterval</code>, <code>console</code>…). In 0.3.0 a new project created with <code>npm create notchnotch-extension</code> failed <code>npm run typecheck</code>.</li></ul><h3>Changed</h3><ul><li>The SDK is published to npm with Trusted Publishing when it is configured, and release workflows run on Node 24.</li></ul>]]></description>
-      <enclosure url="https://github.com/sadeqi-ah/notchnotch/releases/download/v0.3.1/NotchNotch-0.3.1.zip" length="5255694" type="application/octet-stream" sparkle:edSignature="Fiai3wgEALcIUx6usa7UyoUEMeNtwJIwJ/RgxcGTuOw1RI5wpW701rSYOLQSQAnn8Hdr40kQZN2W/Q+NzrGCAA=="/>
+      <link>https://github.com/sadeqi-ah/notchnotch/releases/tag/v0.3.2</link>
+      <description><![CDATA[<h3>Added</h3><ul><li><code>.notchext</code> packages: one file that opens NotchNotch's install review on double-click, or with <b>+</b>. Make one with <code>notchnotch pack</code> or <code>notchnotch build --pack</code>; new projects get <code>npm run pack</code>. The app unpacks them with its own validating extractor and keeps the download's quarantine flag on the unpacked files.</li></ul>]]></description>
+      <enclosure url="https://github.com/sadeqi-ah/notchnotch/releases/download/v0.3.2/NotchNotch-0.3.2.zip" length="5301011" type="application/octet-stream" sparkle:edSignature="kOYPftHGzvKtwsj9z6LxGy2LvZfbcfFHho2HsDt86ajQ7zCPtuz/+SzFwrNlLLdzHCLvidAcmN+KakE2v2kCAw=="/>
     </item>
   </channel>
 </rss>
