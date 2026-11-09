@@ -182,7 +182,7 @@ final class RunnerConnection {
                     liveness.pong(try JSONDecoder().decode(RunnerPong.self, from: line).id)
                 case "snapshot":
                     let snapshot = try JSONDecoder().decode(Snapshot.self, from: line)
-                    try snapshot.validate(expectedExtensionID: manifest.id)
+                    try snapshot.validate(expectedExtensionID: manifest.id, imageHosts: manifest.imageHosts ?? [])
                     onSnapshot(snapshot)
                 case "error":
                     let notice = try JSONDecoder().decode(RuntimeNotice.self, from: line)

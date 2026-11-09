@@ -116,7 +116,8 @@ public struct Snapshot: Codable, Sendable {
         self.settings = settings
     }
 
-    public func validate(expectedExtensionID: String) throws {
+    /// `imageHosts` comes from the sender's manifest and limits remote artwork.
+    public func validate(expectedExtensionID: String, imageHosts: [String] = []) throws {
         guard protocolVersion == 1, type == "snapshot", extensionID == expectedExtensionID, revision > 0,
               surfaces.count <= 16, Set(surfaces.map(\.id)).count == surfaces.count else {
             throw ProtocolError.invalid("Invalid snapshot envelope")
@@ -155,10 +156,10 @@ public struct Snapshot: Codable, Sendable {
             if [.spacer, .divider, .picker].contains(node.type), !node.children.isEmpty {
                 throw ProtocolError.invalid("Spacers, dividers and pickers cannot have children")
             }
-            if let source = node.props.source, !NowPlayingState.isArtworkSource(source) {
-                throw ProtocolError.invalid("Artwork must use an approved artwork CDN or bounded image data")
+            if let source = node.props.source, !NowPlayingState.isArtworkSource(source, imageHosts: imageHosts) {
+                throw ProtocolError.invalid("Artwork must use a host declared in the manifest's imageHosts or bounded image data")
             }
-            if let media = node.props.media { try media.validate() }
+            if let media = node.props.media { try media.validate(imageHosts: imageHosts) }
             if node.type == .player, node.props.media == nil {
                 throw ProtocolError.invalid("A music player requires now-playing state")
             }
@@ -237,6 +238,8 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
     public var connections: [String: ConnectionDefinition]?
     public var icon: String?
     public var description: String?
+    /// HTTPS hosts the host may fetch artwork from for this extension.
+    public var imageHosts: [String]?
     public func validate() throws {
         guard id.range(of: "^[a-z][a-z0-9.-]{2,79}$", options: .regularExpression) != nil,
               !name.isEmpty, name.count <= 128, !version.isEmpty, version.count <= 64,
@@ -245,6 +248,12 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
               (icon?.count ?? 0) <= 128, (description?.count ?? 0) <= 512,
               (connections?.count ?? 0) <= 8 else {
             throw ProtocolError.invalid("Invalid API v1 extension manifest or permissions")
+        }
+        if let imageHosts {
+            guard imageHosts.count <= ImageHost.maximumCount, Set(imageHosts).count == imageHosts.count,
+                  imageHosts.allSatisfy(ImageHost.isValidPattern) else {
+                throw ProtocolError.invalid("imageHosts must list up to 8 lowercase DNS names, optionally starting with *.")
+            }
         }
         for (id, definition) in connections ?? [:] {
             guard id.range(of: "^[a-z][a-z0-9-]{0,63}$", options: .regularExpression) != nil else {

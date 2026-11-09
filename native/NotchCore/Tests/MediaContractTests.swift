@@ -2,14 +2,32 @@ import Foundation
 import Testing
 import NotchProtocol
 
-@Test func onlyBoundedAlbumArtAndApprovedCDNsAreAccepted() {
-    #expect(NowPlayingState.isArtworkSource("https://i.scdn.co/image/cover"))
-    #expect(NowPlayingState.isArtworkSource("https://is1-ssl.mzstatic.com/image/cover.jpg"))
-    #expect(NowPlayingState.isArtworkSource("data:image/jpeg;base64,YWJj"))
+@Test func artworkRequiresBoundedDataOrADeclaredImageHost() {
+    let hosts = ["i.scdn.co", "*.mzstatic.com"]
+    #expect(NowPlayingState.isArtworkSource("https://i.scdn.co/image/cover", imageHosts: hosts))
+    #expect(NowPlayingState.isArtworkSource("https://is1-ssl.mzstatic.com/image/cover.jpg", imageHosts: hosts))
+    #expect(NowPlayingState.isArtworkSource("data:image/jpeg;base64,YWJj", imageHosts: []))
+    // No extension gets remote artwork without declaring the host, including the bundled CDNs.
+    #expect(!NowPlayingState.isArtworkSource("https://i.scdn.co/image/cover", imageHosts: []))
     for source in ["file:///etc/passwd", "http://i.scdn.co/image/cover", "https://i.scdn.co.attacker.example/image",
+                   "https://mzstatic.com/cover.jpg", "https://evilmzstatic.com/cover.jpg", "https://i.scdn.co:8443/cover",
                    "https://127.0.0.1/", "https://attacker.example/", "data:image/svg+xml;base64,YWJj",
                    "data:image/jpeg;base64," + String(repeating: "a", count: 65_536)] {
-        #expect(!NowPlayingState.isArtworkSource(source))
+        #expect(!NowPlayingState.isArtworkSource(source, imageHosts: hosts))
+    }
+}
+
+@Test func manifestImageHostsAreBoundedDNSPatterns() throws {
+    func manifest(_ hosts: [String]) throws -> ExtensionManifest {
+        let object: [String: Any] = ["id": "dev.example.player", "name": "Player", "version": "1", "apiVersion": 1,
+                                     "entry": "bundle.js", "permissions": [], "imageHosts": hosts]
+        return try JSONDecoder().decode(ExtensionManifest.self, from: JSONSerialization.data(withJSONObject: object))
+    }
+    try manifest(["i.ytimg.com", "*.mzstatic.com", "resources.tidal.com"]).validate()
+    for hosts in [["*.com"], ["*"], ["localhost"], ["127.0.0.1"], ["I.YTIMG.COM"], ["a.example/path"],
+                  ["https://i.ytimg.com"], ["*.*.example.com"], ["x.example.com", "x.example.com"],
+                  (0...8).map { "h\($0).example.com" }] {
+        #expect(throws: ProtocolError.self) { try manifest(hosts).validate() }
     }
 }
 

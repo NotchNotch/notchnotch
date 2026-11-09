@@ -8,6 +8,8 @@ enum MediaPlayer: String, Codable, Sendable, CaseIterable {
     case spotify = "com.spotify.client"
     case music = "com.apple.Music"
     var name: String { self == .spotify ? "Spotify" : "Apple Music" }
+    /// Must match `imageHosts` in notchnotch.json; the host rejects any other artwork URL.
+    static let imageHosts = ["i.scdn.co", "mosaic.scdn.co", "*.mzstatic.com"]
 }
 
 /// Permission dialogs have their own actor so a slow metadata read cannot queue
@@ -48,12 +50,12 @@ private actor MusicAutomation {
                 let jpg = Self.thumbnail(data) {
             source = "data:image/jpeg;base64," + jpg.base64EncodedString()
         }
-        if let value = source, !NowPlayingState.isArtworkSource(value) { source = nil }
+        if let value = source, !NowPlayingState.isArtworkSource(value, imageHosts: MediaPlayer.imageHosts) { source = nil }
         let state = NowPlayingState(id: player.rawValue + ":" + id, eventID: "pending", player: player.rawValue, playerName: player.name,
             title: title, artist: artist, album: album, artwork: source, duration: duration,
             position: position, isPlaying: playback == PlayerEvents.code("kPSP"), volume: volume,
             shuffle: shuffle, repeating: repeating, updatedAt: sampledAt)
-        try state.validate()
+        try state.validate(imageHosts: MediaPlayer.imageHosts)
         return state
     }
 

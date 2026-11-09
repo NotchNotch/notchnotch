@@ -6,7 +6,7 @@ struct ManagementAccessView: View {
     var alwaysAllowed: [String] = []
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            if manifest.permissions.isEmpty {
+            if manifest.permissions.isEmpty && (manifest.imageHosts ?? []).isEmpty {
                 Label("This extension doesn’t request access to other apps.", systemImage: "checkmark.shield").foregroundStyle(.secondary)
             }
             if manifest.permissions.contains("process") {
@@ -17,6 +17,11 @@ struct ManagementAccessView: View {
             if manifest.permissions.contains("local-network") {
                 Label("Connect to local apps", systemImage: "network").font(.headline)
                 Text("Only the local destinations listed below can be contacted.").font(.callout).foregroundStyle(.secondary)
+            }
+            if let hosts = manifest.imageHosts, !hosts.isEmpty {
+                Label("Load artwork from the web", systemImage: "photo").font(.headline)
+                Text("NotchNotch downloads images for this extension only from these hosts.").font(.callout).foregroundStyle(.secondary)
+                Text(hosts.joined(separator: ", ")).font(.callout.monospaced()).textSelection(.enabled)
             }
             ForEach((manifest.connections ?? [:]).keys.sorted(), id: \.self) { id in
                 if let connection = manifest.connections?[id] {

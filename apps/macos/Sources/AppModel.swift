@@ -155,7 +155,7 @@ final class AppModel {
                     guard let self, self.extensionSessionIDs[manifest.id] == sessionID else { return }
                     guard snapshot.revision > self.snapshotRevisions[manifest.id, default: 0] else { return }
                     do {
-                        try self.platform.apply(snapshot, expectedExtensionID: manifest.id, allowPeek: !self.isExpanded)
+                        try self.platform.apply(snapshot, expectedExtensionID: manifest.id, imageHosts: manifest.imageHosts ?? [], allowPeek: !self.isExpanded)
                         self.snapshotRevisions[manifest.id] = snapshot.revision
                         if self.extensionSettings[manifest.id] != snapshot.settings { self.extensionSettings[manifest.id] = snapshot.settings }
                     }

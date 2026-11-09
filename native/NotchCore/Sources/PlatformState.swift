@@ -64,9 +64,9 @@ public struct PlatformState: Sendable {
         return surfaces.first { $0.surface.kind == .activity && $0.surface.idlePreview == true && $0.surface.compact != nil }
     }
 
-    public mutating func apply(_ snapshot: Snapshot, expectedExtensionID: String,
+    public mutating func apply(_ snapshot: Snapshot, expectedExtensionID: String, imageHosts: [String] = [],
                                now: Date = .now, allowPeek: Bool = true) throws {
-        try snapshot.validate(expectedExtensionID: expectedExtensionID)
+        try snapshot.validate(expectedExtensionID: expectedExtensionID, imageHosts: imageHosts)
         guard snapshot.revision > revisions[snapshot.extensionID, default: 0] else { return }
         revisions[snapshot.extensionID] = snapshot.revision
         let oldIDs = Set(surfaces.filter { $0.key.extensionID == snapshot.extensionID }.map(\.key.surfaceID))

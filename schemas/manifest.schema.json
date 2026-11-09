@@ -59,6 +59,17 @@
     "description": {
       "type": "string",
       "maxLength": 512
+    },
+    "imageHosts": {
+      "description": "HTTPS hosts the app may load Artwork from. An exact DNS name or a *.subdomain wildcard (which does not match the bare domain).",
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "maxLength": 253,
+        "pattern": "^(\\*\\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$"
+      }
     }
   },
   "additionalProperties": false,

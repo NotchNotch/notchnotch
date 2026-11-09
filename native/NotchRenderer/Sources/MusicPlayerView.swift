@@ -13,7 +13,7 @@ private enum ArtworkCache {
     static var pending: [String: Task<NSImage?, Never>] = [:]
 
     static func load(_ source: String?) async -> NSImage? {
-        guard let source, NowPlayingState.isArtworkSource(source) else { return nil }
+        guard let source, NowPlayingState.isWellFormedArtworkSource(source) else { return nil }
         if let image = images.object(forKey: source as NSString) { return image }
         if let task = pending[source] { return await task.value }
         let task = Task<NSImage?, Never> {
