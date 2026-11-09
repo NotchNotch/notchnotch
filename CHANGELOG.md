@@ -6,6 +6,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-09
+
 ### Added
 - `.notchext` packages: one file that opens NotchNotch's install review on double-click, or with **+**. Make one with `notchnotch pack` or `notchnotch build --pack`; new projects get `npm run pack`. The app unpacks them with its own validating extractor and keeps the download's quarantine flag on the unpacked files.
 
@@ -68,7 +70,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/sadeqi-ah/notchnotch/releases/tag/v0.2.0
