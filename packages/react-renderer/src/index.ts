@@ -24,7 +24,7 @@ function insert(parent: Instance | Container, child: Instance, before: Instance)
 
 // Keep this adapter internal: React and react-reconciler are pinned as a pair.
 const reconciler = Reconciler({
-  rendererVersion: "0.2.0",
+  rendererVersion: "0.3.0",
   rendererPackageName: "@notchnotch/react-renderer",
   extraDevToolsConfig: null,
   supportsMutation: true,

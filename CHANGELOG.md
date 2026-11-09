@@ -6,10 +6,14 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-09
+
+**Upgrading from 0.2.0:** install this DMG by hand once. From 0.3.0 on, NotchNotch updates itself. Music and Calendar ask for macOS access once more, now under their own names.
+
 ### Added
 - A welcome window on first launch, and a short greeting in the notch on every launch so it's clear NotchNotch is running.
-- Automatic updates with Sparkle: **Check for Updates…** in the menu bar, and update settings in **General**. Updates are EdDSA-signed and published from GitHub Releases.
-- The extension SDK on npm (`@notchnotch/sdk`, `@notchnotch/runtime`, `@notchnotch/cli`) and `npm create notchnotch-extension` to start a project outside this repository.
+- Automatic updates with Sparkle: **Check for Updates…** in the menu bar, and update settings in **About**. Updates are EdDSA-signed and published from GitHub Releases.
+- The extension SDK as npm packages (`@notchnotch/sdk`, `@notchnotch/runtime`, `@notchnotch/cli`) and `npm create notchnotch-extension` to start a project outside this repository.
 - `@notchnotch/cli` with `notchnotch build` and `notchnotch check`, so extensions can be built and checked outside this repository with the same rules as the installer.
 - `helperApp` in `@notchnotch/cli/native` packages and signs a helper app bundle with its own privacy usage descriptions.
 - Manifest `imageHosts` to allow artwork from declared HTTPS hosts. The install review lists them.
@@ -54,5 +58,6 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/sadeqi-ah/notchnotch/releases/tag/v0.2.0
