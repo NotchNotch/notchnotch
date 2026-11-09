@@ -22,7 +22,9 @@ test("create writes a named project whose manifest validates", async (t) => {
   assert.equal(pkg.dependencies["@notchnotch/sdk"], "^1.2.3");
   assert.equal(pkg.devDependencies["@notchnotch/cli"], "^1.2.3");
   assert.match(await readFile(path.join(target, ".gitignore"), "utf8"), /dist/);
-  assert.doesNotMatch(await readFile(path.join(target, "src/index.tsx"), "utf8"), /\{\{/);
+  for (const file of ["src/index.tsx", "README.md", "CHANGELOG.md"]) {
+    assert.doesNotMatch(await readFile(path.join(target, file), "utf8"), /\{\{/, file);
+  }
 });
 
 test("create refuses bad identifiers, quotes in names and non-empty folders", async (t) => {
@@ -45,6 +47,8 @@ test("the template builds into an installable package", async (t) => {
   const out = path.join(target, "dist");
   await buildExtension({ source: target, destination: out, logLevel: "silent" });
   assert.deepEqual(await checkPackage(out), []);
+  assert.match(await readFile(path.join(out, "README.md"), "utf8"), /About/);
+  assert.match(await readFile(path.join(out, "CHANGELOG.md"), "utf8"), /## \[0\.1\.0\]/);
   const runner = spawnSync(process.execPath, ["-e", `
     globalThis.__notchnotchExtensionID = "com.example.templatecheck";
     globalThis.__notchnotchSend = (json) => { const m = JSON.parse(json); if (m.type === "snapshot") { console.log(JSON.stringify(m.surfaces.map(s => s.id))); process.exit(0); } };

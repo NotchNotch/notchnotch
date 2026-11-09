@@ -6,13 +6,14 @@ import NotchProtocol
 
 struct ManagementExtensionPage: View {
     enum Tab: String, CaseIterable, Identifiable {
-        case setup = "Setup", access = "Access", developer = "Developer"
+        case setup = "Setup", about = "About", access = "Access", developer = "Developer"
         var id: Self { self }
     }
 
     @Bindable var coordinator: ManagementCoordinator
     let record: InstalledExtension
     @State private var tab: Tab = .setup
+    @State private var documents: [PackageDocument: String] = [:]
 
     private var model: AppModel { coordinator.model }
     private var status: ExtensionStatus { coordinator.status(of: record.id) }
@@ -22,17 +23,39 @@ struct ManagementExtensionPage: View {
             header.padding(.horizontal, 24).padding(.top, 18).padding(.bottom, 14)
             if case .needsAttention(let message) = status { attention(message).padding(.horizontal, 24).padding(.bottom, 12) }
             Picker("Section", selection: $tab) {
-                ForEach(Tab.allCases) { Text($0.rawValue).tag($0) }
+                ForEach(tabs) { Text($0.rawValue).tag($0) }
             }
             .pickerStyle(.segmented).labelsHidden().fixedSize()
             .padding(.bottom, 4)
             Form {
                 switch tab {
                 case .setup: setup
+                case .about: about
                 case .access: access
                 case .developer: developer
                 }
             }.formStyle(.grouped)
+        }
+        .task(id: record.directory) {
+            let directory = record.directory
+            documents = await Task.detached {
+                var loaded: [PackageDocument: String] = [:]
+                for document in PackageDocument.allCases { loaded[document] = document.load(from: directory) }
+                return loaded
+            }.value
+            if tab == .about, documents.isEmpty { tab = .setup }
+        }
+    }
+
+    /// About appears only for packages that include a README or CHANGELOG.
+    private var tabs: [Tab] { Tab.allCases.filter { $0 != .about || !documents.isEmpty } }
+
+    @ViewBuilder private var about: some View {
+        if let readme = documents[.readme] {
+            Section { MarkdownView(readme) }
+        }
+        if let changelog = documents[.changelog] {
+            Section("Version History") { MarkdownView(changelog) }
         }
     }
 

@@ -81,6 +81,20 @@ test("checkPackage requires a declared PNG icon to be 512×512, dark variant inc
   assert.deepEqual(await checkPackage(directory), []);
 });
 
+test("checkPackage rejects a README or CHANGELOG that is not UTF-8 text", async (t) => {
+  const directory = await temporary(t);
+  await writeFile(path.join(directory, "notchnotch.json"), JSON.stringify({
+    id: "dev.test.docs", name: "Docs", version: "1", apiVersion: 1, entry: "bundle.js", permissions: [],
+  }));
+  await writeFile(path.join(directory, "bundle.js"), "void 0;");
+  await writeFile(path.join(directory, "README.md"), "# Docs\n\nHello.");
+  assert.deepEqual(await checkPackage(directory), []);
+  await writeFile(path.join(directory, "CHANGELOG.md"), Buffer.from([0xff, 0xfe, 0x00]));
+  assert.match((await checkPackage(directory)).join("\n"), /CHANGELOG.md must be a UTF-8 text file/);
+  await writeFile(path.join(directory, "CHANGELOG.md"), "x".repeat(256 * 1024 + 1));
+  assert.match((await checkPackage(directory)).join("\n"), /CHANGELOG.md must be/);
+});
+
 test("validateManifest accepts store metadata and rejects what the app rejects", () => {
   const base = { id: "dev.test.meta", name: "Meta", version: "1", apiVersion: 1, entry: "bundle.js", permissions: [] };
   validateManifest({ ...base, author: "jane-doe", categories: ["Media", "Productivity"], license: "MIT OR Apache-2.0",

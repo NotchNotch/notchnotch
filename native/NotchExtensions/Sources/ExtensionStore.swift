@@ -131,6 +131,7 @@ public struct ExtensionStore: Sendable {
             }
         }
         try ExtensionIcon.validate(manifest: manifest, directory: root)
+        try PackageDocument.validate(directory: root)
         return .init(manifest: manifest, directory: root, byteCount: bytes)
     }
 

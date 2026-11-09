@@ -1,6 +1,12 @@
 # {{displayName}}
 
-A [NotchNotch](https://github.com/sadeqi-ah/notchnotch) extension.
+Describe what {{displayName}} shows in the notch and why it's useful. NotchNotch shows this file as the extension's **About** page, so write it for the people who install it.
+
+## Set up
+
+1. Explain any setup step, such as connecting an app.
+
+## Development
 
 ```sh
 npm install

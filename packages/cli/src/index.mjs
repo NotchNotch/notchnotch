@@ -7,6 +7,9 @@ import { iconFiles, validateManifest } from "./manifest.mjs";
 
 export { validateManifest } from "./manifest.mjs";
 
+/** Markdown shown in the app: README as the About page, CHANGELOG as version history. */
+const DOCUMENTS = ["README.md", "CHANGELOG.md"];
+
 const isFile = (file) => stat(file).then((value) => value.isFile(), () => false);
 const isDirectory = (file) => stat(file).then((value) => value.isDirectory(), () => false);
 
@@ -19,6 +22,7 @@ export async function readManifest(source) {
 /**
  * Builds one extension folder into an installable package:
  * `notchnotch.json`, `bundle.js` (from `src/index.tsx`), `helpers/`, `assets/`,
+ * `README.md` and `CHANGELOG.md`,
  * plus whatever an optional `build.mjs` writes.
  *
  * `build.mjs` may export `async build({ source, destination, root })`. It is
@@ -42,6 +46,9 @@ export async function buildExtension({ source, destination, watch = false, root,
   const builder = path.join(source, "build.mjs");
   if (await isFile(builder)) await (await import(pathToFileURL(builder).href)).build({ source, destination, root });
   await copyFile(path.join(source, "notchnotch.json"), path.join(destination, "notchnotch.json"));
+  for (const document of DOCUMENTS) {
+    if (await isFile(path.join(source, document))) await copyFile(path.join(source, document), path.join(destination, document));
+  }
   for (const folder of ["helpers", "assets"]) {
     if (await isDirectory(path.join(source, folder))) await cp(path.join(source, folder), path.join(destination, folder), { recursive: true });
   }
@@ -105,6 +112,16 @@ export async function checkPackage(directory) {
   if (count > 512) problems.push(`The package has ${count} files and folders; the limit is 512`);
   if (bytes > 64 * 1024 * 1024) problems.push("The package exceeds 64 MiB");
   problems.push(...await checkIcon(directory, manifest));
+  for (const document of DOCUMENTS) {
+    const file = path.join(directory, document);
+    const info = await lstat(file).catch(() => null);
+    if (!info) continue;
+    let valid = info.isFile() && info.size <= 256 * 1024;
+    if (valid) {
+      try { new TextDecoder("utf-8", { fatal: true }).decode(await readFile(file)); } catch { valid = false; }
+    }
+    if (!valid) problems.push(`${document} must be a UTF-8 text file of at most 256 KiB`);
+  }
   for (const [id, connection] of Object.entries(manifest.connections ?? {})) {
     if (connection.transport !== "stdio" || !connection.executable.startsWith("./")) continue;
     const executable = path.join(directory, connection.executable);

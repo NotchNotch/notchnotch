@@ -26,7 +26,7 @@ export async function create({ folder, name, id, sdkVersion = version }) {
   await cp(template, target, { recursive: true });
   await rename(path.join(target, "gitignore"), path.join(target, ".gitignore"));
   const values = { id, displayName };
-  for (const file of ["notchnotch.json", "README.md", "src/index.tsx"]) {
+  for (const file of ["notchnotch.json", "README.md", "CHANGELOG.md", "src/index.tsx"]) {
     const location = path.join(target, file);
     await writeFile(location, (await readFile(location, "utf8")).replace(/\{\{(\w+)\}\}/g, (_, key) => values[key]));
   }

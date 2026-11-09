@@ -11,8 +11,10 @@ All notable changes to NotchNotch are listed here. The format follows
 
 - Optional manifest fields `author`, `categories`, `license`, `homepage` and `repository`, shown in the install review and under **Developer › Package**. Projects from `npm create notchnotch-extension` start with a category and the MIT license.
 
+- An **About** tab on each extension's page that shows the package's `README.md` and, under **Version History**, its `CHANGELOG.md`. `notchnotch build` includes both files, and new projects start with them.
+
 ### Changed
-- Music, Calendar and the Focus Timer example have their own icons.
+- Music, Calendar and the Focus Timer example have their own icons and a README written for the people who use them. The helpers' developer documentation moved to `ADAPTER.md`.
 
 ## [0.3.2] - 2026-11-09
 

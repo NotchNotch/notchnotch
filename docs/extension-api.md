@@ -150,14 +150,14 @@ await rpc.request("music/connect", { player: "com.spotify.client" }, 120_000);
 await rpc.request("music/command", { command: "seek", value: 0.5 });
 ```
 
-These `music/*` methods are the bundled extension's protocol, not host APIs. See [the Music adapter contract](../extensions/music/README.md). The old `useNowPlaying`, `controlMedia` and `media` permission have been removed from this preview. A paused surface should use `phase="paused"` so it remains in the switcher while its compact wings stay hidden. Artwork accepts bounded JPEG/PNG data (up to 64 KiB as a `data:` URL) or an HTTPS URL on a host listed in the manifest's `imageHosts`, for example `["i.ytimg.com", "*.mzstatic.com"]` (up to eight exact DNS names or `*.` subdomain wildcards; a wildcard does not match the bare domain). The app downloads remote artwork itself, so the hosts are shown in the install review and no host is allowed by default. The bundled Music extension declares its CDNs the same way. Filesystem URLs are never accepted.
+These `music/*` methods are the bundled extension's protocol, not host APIs. See [the Music adapter contract](../extensions/music/ADAPTER.md). The old `useNowPlaying`, `controlMedia` and `media` permission have been removed from this preview. A paused surface should use `phase="paused"` so it remains in the switcher while its compact wings stay hidden. Artwork accepts bounded JPEG/PNG data (up to 64 KiB as a `data:` URL) or an HTTPS URL on a host listed in the manifest's `imageHosts`, for example `["i.ytimg.com", "*.mzstatic.com"]` (up to eight exact DNS names or `*.` subdomain wildcards; a wildcard does not match the bare domain). The app downloads remote artwork itself, so the hosts are shown in the install review and no host is allowed by default. The bundled Music extension declares its CDNs the same way. Filesystem URLs are never accepted.
 
 
 ## Calendar extension
 
 The bundled Calendar extension uses the same `process`/`stdio` connection API as Music. Its `CalendarAdapter.app` owns EventKit access, calendar selection and meeting links; no calendar-specific host permission or native UI component is required. It requests full EventKit access only after **Connect Calendar** (macOS has no read-only event permission), and implements reading only. The helper bundle includes the Calendar usage descriptions; the host requests no Calendar access.
 
-`calendar/connect`, `calendar/getState` and `calendar/select` return authorization, selected calendars and upcoming timed events. `calendar/state` notifications refresh the React UI after store changes or a 15-second poll. `calendar/open` and `calendar/join` are explicit user actions. See [the adapter contract](../extensions/calendar/README.md) for payloads and behavior.
+`calendar/connect`, `calendar/getState` and `calendar/select` return authorization, selected calendars and upcoming timed events. `calendar/state` notifications refresh the React UI after store changes or a 15-second poll. `calendar/open` and `calendar/join` are explicit user actions. See [the adapter contract](../extensions/calendar/ADAPTER.md) for payloads and behavior.
 
 ## Idle hover selection
 
@@ -230,4 +230,22 @@ These optional fields describe the extension in the install review and under **D
 | `author` | Your store handle, such as your GitHub user name: lowercase letters, digits and hyphens, up to 39 characters |
 | `categories` | One to three of `Communication`, `Developer Tools`, `Finance`, `Fun`, `Health`, `Media`, `News`, `Productivity`, `Sports`, `System`, `Weather`, `Other` |
 | `license` | An SPDX license identifier or expression, such as `MIT` or `MIT OR Apache-2.0` |
-| `homepage`, `repository` | `https://` addresses, without a user name or password | `name` must contain 1–128 characters, and `version` 1–64. The extension enable switch controls whether its runner is allowed to run; it does not imply that a local app has connected. Keep connection state and recovery controls in `Settings`.
+| `homepage`, `repository` | `https://` addresses, without a user name or password |
+
+### About page and version history
+
+Put a `README.md` and a `CHANGELOG.md` next to `notchnotch.json`. `notchnotch build` copies them into the package, and the extension's page in Settings gets an **About** tab: the README first, then the changelog under **Version History**. Write the README for people who install the extension: what it does and how to set it up. A leading `# Title` is hidden, because the page already shows the name.
+
+```markdown
+# Weather Changelog
+
+## [1.1.0]
+
+- Show tomorrow's forecast.
+
+## [1.0.0]
+
+- First version.
+```
+
+The app renders headings, paragraphs, lists, quotes, code blocks, emphasis and `https` links. Images show their alt text, and HTML is shown as plain text. Each file must be UTF-8 and at most 256 KiB; the installer and `notchnotch check` reject anything else. `name` must contain 1–128 characters, and `version` 1–64. The extension enable switch controls whether its runner is allowed to run; it does not imply that a local app has connected. Keep connection state and recovery controls in `Settings`.
