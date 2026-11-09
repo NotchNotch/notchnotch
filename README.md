@@ -20,7 +20,13 @@ A native macOS notch hub for music, calendar events, and extensible live activit
 
 ## Install
 
-Download the latest DMG from the project's GitHub Releases, open it and drag NotchNotch to Applications. Requires macOS 14 or later.
+Requires macOS 14 or later.
+
+1. Download the latest `NotchNotch-<version>.dmg` from [Releases](https://github.com/sadeqi-ah/notchnotch/releases).
+2. Open it and drag **NotchNotch** to **Applications**.
+3. Open NotchNotch. This developer preview is not notarized by Apple, so macOS blocks the first launch. Choose **Done**, then open **System Settings › Privacy & Security**, scroll to *“NotchNotch” was blocked* and choose **Open Anyway**. Confirm with your password. This is needed only once.
+
+Download releases only from this repository. If you prefer Terminal, `xattr -dr com.apple.quarantine /Applications/NotchNotch.app` removes the download quarantine instead of step 3.
 
 ## Development
 

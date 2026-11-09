@@ -3,10 +3,11 @@
 //   pnpm release
 //
 // Environment:
-//   NOTCHNOTCH_SIGN_IDENTITY    "Developer ID Application: Name (TEAMID)". Without it the build
-//                               is ad-hoc signed: fine for testing, rejected by Gatekeeper elsewhere.
-//   NOTCHNOTCH_NOTARY_PROFILE   notarytool keychain profile (xcrun notarytool store-credentials).
-//                               When set, the DMG is notarized and stapled.
+//   NOTCHNOTCH_SIGN_IDENTITY    Signing identity (see scripts/native.mjs). A self-signed identity keeps
+//                               macOS permissions across updates; only "Developer ID Application"
+//                               builds can be notarized. Unset: ad hoc.
+//   NOTCHNOTCH_NOTARY_PROFILE   notarytool keychain profile; with a Developer ID identity the DMG is
+//                               notarized and stapled.
 //   NOTCHNOTCH_BUILD_NUMBER     CFBundleVersion (defaults to 1).
 process.env.NOTCHNOTCH_CONFIGURATION = "release";
 
@@ -16,7 +17,7 @@ const { tmpdir } = await import("node:os");
 const path = (await import("node:path")).default;
 const { buildExtensions, root } = await import("./build-extensions.mjs");
 const { packageApp } = await import("./package-app.mjs");
-const { codesign, distributionSigned, swiftBuild } = await import("./native.mjs");
+const { codesign, developerID, signed, swiftBuild } = await import("./native.mjs");
 
 function run(command, args) {
   console.log(`$ ${command} ${args.join(" ")}`);
@@ -41,16 +42,15 @@ try {
   await rm(dmg, { force: true });
   run("hdiutil", ["create", "-volname", `NotchNotch ${version}`, "-srcfolder", staging, "-ov", "-format", "UDZO", dmg]);
 } finally { await rm(staging, { recursive: true, force: true }); }
-if (distributionSigned) codesign(dmg);
+if (signed) codesign(dmg);
 
 const profile = process.env.NOTCHNOTCH_NOTARY_PROFILE;
-if (profile && distributionSigned) {
+if (profile && developerID) {
   run("xcrun", ["notarytool", "submit", dmg, "--keychain-profile", profile, "--wait"]);
   run("xcrun", ["stapler", "staple", dmg]);
   run("spctl", ["--assess", "--type", "open", "--context", "context:primary-signature", "--verbose", dmg]);
 } else {
-  console.warn(distributionSigned
-    ? "Skipping notarization: set NOTCHNOTCH_NOTARY_PROFILE."
-    : "Ad-hoc signed preview build: set NOTCHNOTCH_SIGN_IDENTITY and NOTCHNOTCH_NOTARY_PROFILE for a public release.");
+  console.warn(`Not notarized (${signed ? "self-signed" : "ad hoc"}). On other Macs, first launch needs ` +
+    "System Settings › Privacy & Security › Open Anyway.");
 }
 console.log(`Release ready: ${dmg}`);

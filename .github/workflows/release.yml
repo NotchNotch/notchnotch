@@ -1,15 +1,16 @@
 name: Release
 
 # Push a tag that matches package.json, e.g. `git tag v0.2.0 && git push origin v0.2.0`.
-# Creates a draft GitHub release with a signed and notarized DMG.
+# Creates a draft GitHub release with the DMG and the matching CHANGELOG notes.
 #
-# Required repository secrets:
-#   DEVELOPER_ID_P12             base64 of the "Developer ID Application" certificate + key (.p12)
-#   DEVELOPER_ID_P12_PASSWORD    password of that .p12
-#   DEVELOPER_ID_IDENTITY        e.g. "Developer ID Application: Your Name (TEAMID)"
-#   NOTARY_KEY_P8                base64 of an App Store Connect API key (.p8)
-#   NOTARY_KEY_ID                key id
-#   NOTARY_ISSUER_ID             issuer id
+# Every secret is optional:
+#   none                          ad-hoc signed DMG (users choose Open Anyway on first launch)
+#   SIGNING_P12, SIGNING_P12_PASSWORD, SIGNING_IDENTITY
+#                                 sign with a stable identity, e.g. the self-signed one from
+#                                 scripts/create-signing-identity.sh --export, so macOS keeps
+#                                 users' permissions across updates
+#   NOTARY_KEY_P8, NOTARY_KEY_ID, NOTARY_ISSUER_ID
+#                                 notarize as well (requires a Developer ID identity)
 
 on:
   push:
@@ -22,6 +23,9 @@ jobs:
   release:
     runs-on: macos-26
     timeout-minutes: 45
+    env:
+      SIGNING_P12: ${{ secrets.SIGNING_P12 }}
+      NOTARY_KEY_P8: ${{ secrets.NOTARY_KEY_P8 }}
     steps:
       - uses: actions/checkout@v4
 
@@ -38,39 +42,46 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
 
-      - name: Import signing certificate
+      - name: Import signing identity
+        if: env.SIGNING_P12 != ''
         env:
-          P12: ${{ secrets.DEVELOPER_ID_P12 }}
-          P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+          P12_PASSWORD: ${{ secrets.SIGNING_P12_PASSWORD }}
+          IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
         run: |
-          test -n "$P12" || { echo "DEVELOPER_ID_P12 secret is missing"; exit 1; }
           keychain="$RUNNER_TEMP/signing.keychain-db"
           password=$(openssl rand -hex 16)
           security create-keychain -p "$password" "$keychain"
           security set-keychain-settings -lut 21600 "$keychain"
           security unlock-keychain -p "$password" "$keychain"
-          echo "$P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
-          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" -P "$P12_PASSWORD" -T /usr/bin/codesign
+          echo "$SIGNING_P12" | base64 --decode > "$RUNNER_TEMP/identity.p12"
+          security import "$RUNNER_TEMP/identity.p12" -k "$keychain" -P "$P12_PASSWORD" -T /usr/bin/codesign
+          rm "$RUNNER_TEMP/identity.p12"
           security set-key-partition-list -S apple-tool:,apple: -s -k "$password" "$keychain"
           security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
-          rm "$RUNNER_TEMP/certificate.p12"
+          # A self-signed certificate must be trusted for code signing before codesign accepts it.
+          if [[ "$IDENTITY" != "Developer ID Application"* ]]; then
+            security find-certificate -c "$IDENTITY" -p "$keychain" > "$RUNNER_TEMP/identity.pem"
+            sudo security add-trusted-cert -d -r trustRoot -p codeSign -k "$keychain" "$RUNNER_TEMP/identity.pem"
+          fi
+          security find-identity -v -p codesigning "$keychain"
+          echo "NOTCHNOTCH_SIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+          echo "NOTCHNOTCH_SIGN_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
 
       - name: Store notarization credentials
+        if: env.SIGNING_P12 != '' && env.NOTARY_KEY_P8 != ''
         env:
-          KEY_P8: ${{ secrets.NOTARY_KEY_P8 }}
           KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
           ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
         run: |
-          echo "$KEY_P8" | base64 --decode > "$RUNNER_TEMP/notary.p8"
+          echo "$NOTARY_KEY_P8" | base64 --decode > "$RUNNER_TEMP/notary.p8"
           xcrun notarytool store-credentials notchnotch-notary \
             --key "$RUNNER_TEMP/notary.p8" --key-id "$KEY_ID" --issuer "$ISSUER_ID" \
             --keychain "$RUNNER_TEMP/signing.keychain-db"
           rm "$RUNNER_TEMP/notary.p8"
+          echo "NOTCHNOTCH_NOTARY_PROFILE=notchnotch-notary" >> "$GITHUB_ENV"
 
-      - name: Build, sign and notarize
+      - name: Build release
         env:
-          NOTCHNOTCH_SIGN_IDENTITY: ${{ secrets.DEVELOPER_ID_IDENTITY }}
-          NOTCHNOTCH_NOTARY_PROFILE: notchnotch-notary
           NOTCHNOTCH_BUILD_NUMBER: ${{ github.run_number }}
         run: pnpm release
 
@@ -80,9 +91,13 @@ jobs:
         run: |
           version=$(node -p "require('./package.json').version")
           notes=$(awk -v v="$version" '$0 ~ "^## \\[?"v {found=1; next} found && /^## / {exit} found' CHANGELOG.md)
-          gh release create "$GITHUB_REF_NAME" "dist/NotchNotch-$version.dmg" \
-            --draft --title "NotchNotch $version" --notes "${notes:-See CHANGELOG.md}"
+          install="**Install:** open the DMG and drag NotchNotch to Applications. This preview is not notarized: on first launch, open System Settings › Privacy & Security and choose **Open Anyway**."
+          prerelease=$([ -n "${NOTCHNOTCH_NOTARY_PROFILE:-}" ] && echo "" || echo "--prerelease")
+          gh release create "$GITHUB_REF_NAME" "dist/NotchNotch-$version.dmg" --draft $prerelease \
+            --title "NotchNotch $version" --notes "${notes:-See CHANGELOG.md}
+
+          $install"
 
       - name: Remove signing keychain
-        if: always()
+        if: always() && env.SIGNING_P12 != ''
         run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
