@@ -6,13 +6,12 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-10
+
 ### Added
 - Extensions can use their own icon: set `icon` to the name of a 512×512 PNG in `assets/`, such as `"icon.png"`, with an optional `icon@dark.png` for dark backgrounds. It appears in Settings, the install review, connection requests and above prompts in the notch. `notchnotch check` and the installer validate it. SF Symbol names keep working.
-
 - Optional manifest fields `author`, `categories`, `license`, `homepage` and `repository`, shown in the install review and under **Developer › Package**. Projects from `npm create notchnotch-extension` start with a category and the MIT license.
-
 - An **About** tab on each extension's page that shows the package's `README.md` and, under **Version History**, its `CHANGELOG.md`. `notchnotch build` includes both files, and new projects start with them.
-
 - `notchnotch lint` checks store guidelines: title case, a short description, author, categories, license, your own icon, README and CHANGELOG. New projects have `npm run lint` and a placeholder icon that `lint` asks you to replace.
 
 ### Changed
@@ -83,7 +82,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.2.0...v0.3.0

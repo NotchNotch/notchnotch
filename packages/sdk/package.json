@@ -1,6 +1,6 @@
 {
   "name": "@notchnotch/sdk",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "React components and APIs for building NotchNotch extensions: activities, prompts, settings, storage and app connections.",
   "license": "MIT",
   "author": "AmirHossein Sadeghi",
