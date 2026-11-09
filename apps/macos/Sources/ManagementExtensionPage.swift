@@ -5,129 +5,190 @@ import NotchRenderer
 import NotchProtocol
 
 struct ManagementExtensionPage: View {
+    enum Tab: String, CaseIterable, Identifiable {
+        case setup = "Setup", access = "Access", developer = "Developer"
+        var id: Self { self }
+    }
+
     @Bindable var coordinator: ManagementCoordinator
     let record: InstalledExtension
-    @State private var showAccess = false
-    @State private var showPackage = false
-    @State private var showConsole = false
+    @State private var tab: Tab = .setup
+
+    private var model: AppModel { coordinator.model }
+    private var status: ExtensionStatus { coordinator.status(of: record.id) }
 
     var body: some View {
+        VStack(spacing: 0) {
+            header.padding(.horizontal, 24).padding(.top, 18).padding(.bottom, 14)
+            if case .needsAttention(let message) = status { attention(message).padding(.horizontal, 24).padding(.bottom, 12) }
+            Picker("Section", selection: $tab) {
+                ForEach(Tab.allCases) { Text($0.rawValue).tag($0) }
+            }
+            .pickerStyle(.segmented).labelsHidden().fixedSize()
+            .padding(.bottom, 4)
+            Form {
+                switch tab {
+                case .setup: setup
+                case .access: access
+                case .developer: developer
+                }
+            }.formStyle(.grouped)
+        }
+    }
+
+    private var header: some View {
         @Bindable var model = coordinator.model
-        Form {
+        return HStack(alignment: .center, spacing: 14) {
+            ExtensionIdentityView(manifest: record.manifest, size: 48)
+                .saturation(model.isEnabled(record.id) ? 1 : 0)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(record.manifest.name).font(.title2).bold().lineLimit(1)
+                Text(record.manifest.description ?? "Version \(record.manifest.version)")
+                    .font(.callout).foregroundStyle(.secondary).lineLimit(2)
+                HStack(spacing: 6) {
+                    Circle().fill(statusColor).frame(width: 7, height: 7).accessibilityHidden(true)
+                    Text(status.title)
+                    Text("·").foregroundStyle(.tertiary)
+                    Text("\(record.manifest.version) · \(record.origin.rawValue)").foregroundStyle(.secondary)
+                }.font(.caption)
+            }
+            Spacer(minLength: 12)
+            Toggle("Enabled", isOn: $model[enabledFor: record.id])
+                .toggleStyle(.switch).labelsHidden().controlSize(.large)
+                .help(model.isEnabled(record.id) ? "Turn off \(record.manifest.name)" : "Turn on \(record.manifest.name)")
+                .disabled(coordinator.busy)
+        }
+    }
+
+    private var statusColor: Color {
+        switch status {
+        case .running: .green
+        case .starting: .yellow
+        case .off: .secondary
+        case .needsAttention: .orange
+        }
+    }
+
+    private func attention(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange).accessibilityHidden(true)
+            Text(message).font(.callout).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).lineLimit(4)
+            Button("Restart") { model.restartExtension(record.id) }.disabled(coordinator.busy)
+        }
+        .padding(10)
+        .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    @ViewBuilder private var setup: some View {
+        if !model.isEnabled(record.id) {
             Section {
-                Toggle(isOn: $model[enabledFor: record.id]) {
-                    Label {
-                        Text("Enable \(record.manifest.name)")
-                    } icon: {
-                        ExtensionIdentityView(manifest: record.manifest)
-                    }
-                }.toggleStyle(.switch).disabled(coordinator.busy)
+                LabeledContent("\(record.manifest.name) is off") {
+                    Button("Turn On") { model.setEnabled(true, for: record.id) }.disabled(coordinator.busy)
+                }
             } footer: {
-                Text(coordinator.model.isEnabled(record.id)
-                    ? record.manifest.description ?? "This extension can show activities in your notch."
-                    : "This extension’s activities and app connections are stopped.")
+                Text("While it’s off, its activities are hidden and its app connections are closed.")
             }
-            if let error = coordinator.model.errors[record.id] {
+        } else if let tree = model.extensionSettings[record.id] {
+            ForEach(SettingsBlock.blocks(for: tree)) { block in
                 Section {
-                    Label("This extension needs attention", systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
-                    Text(error).textSelection(.enabled)
-                    HStack {
-                        Spacer()
-                        Button("Try Restarting") { coordinator.model.restartExtension(record.id) }
-                            .disabled(!coordinator.model.isEnabled(record.id) || coordinator.busy)
+                    ForEach(block.nodes) { node in
+                        SettingsNodeView(node: node) { action, value in
+                            model.sendSettings(extensionID: record.id, action: action, value: value)
+                        }
                     }
+                } header: {
+                    if let title = block.title { Text(title) }
+                } footer: {
+                    if let footer = block.footer { Text(footer) }
                 }
             }
-            if coordinator.model.isEnabled(record.id) {
-                if let tree = coordinator.model.extensionSettings[record.id] {
-                    ForEach(SettingsBlock.blocks(for: tree)) { block in
-                        Section {
-                            ForEach(block.nodes) { node in
-                                SettingsNodeView(node: node) { action, value in
-                                    coordinator.model.sendSettings(extensionID: record.id, action: action, value: value)
-                                }
-                            }
-                        } header: {
-                            Text(block.title ?? "Setup")
-                        } footer: {
-                            if let footer = block.footer { Text(footer) }
-                        }
-                    }
-                    .id(coordinator.model.extensionSessionIDs[record.id])
-                    .disabled(coordinator.busy)
-                } else if !coordinator.model.hasRendered(record.id), coordinator.model.errors[record.id] == nil {
-                    Section {
-                        HStack {
-                            ProgressView().controlSize(.small)
-                            Text("Starting extension…").foregroundStyle(.secondary)
-                        }
-                    }
-                } else if coordinator.model.errors[record.id] == nil {
-                    Section {
-                        if coordinator.model.canRevealActivity(record.id) {
-                            LabeledContent("Activity") {
-                                Button("Open in Notch") { coordinator.model.revealActivity(record.id) }
-                            }
-                        } else {
-                            LabeledContent("Status", value: "Ready")
-                        }
-                    } footer: {
-                        Text("No additional setup is required. Activities appear in the notch when you need them.")
-                    }
-                }
-            }
+            .id(model.extensionSessionIDs[record.id])
+            .disabled(coordinator.busy)
+        } else if status == .starting {
             Section {
-                DisclosureGroup("App Access", isExpanded: $showAccess) {
-                    ManagementAccessView(manifest: record.manifest,
-                                         alwaysAllowed: coordinator.model.alwaysAllowedConnections(record.id))
+                HStack {
+                    ProgressView().controlSize(.small)
+                    Text("Starting \(record.manifest.name)…").foregroundStyle(.secondary)
                 }
-                DisclosureGroup(isExpanded: $showConsole) {
-                    ExtensionLogView(entries: coordinator.model.extensionLogs[record.id] ?? []) {
-                        coordinator.model.clearLogs(record.id)
-                    }
+            }
+        } else if status == .running {
+            Section {
+                if model.canRevealActivity(record.id) {
+                    LabeledContent("Activity") { Button("Show in Notch") { model.revealActivity(record.id) } }
+                } else {
+                    LabeledContent("Setup", value: "Nothing to set up")
+                }
+            } footer: {
+                Text("Its activities appear in the notch when there’s something to show.")
+            }
+        }
+    }
+
+    @ViewBuilder private var access: some View {
+        let connections = record.manifest.connections ?? [:]
+        let remembered = model.alwaysAllowedConnections(record.id)
+        Section {
+            ManagementAccessView(manifest: record.manifest, alwaysAllowed: remembered)
+        } footer: {
+            if record.manifest.permissions.contains("process") {
+                Text("Native tools run with your account. macOS asks separately when a tool needs privacy access, under the tool’s own name.")
+            }
+        }
+        if !connections.isEmpty {
+            Section {
+                LabeledContent {
+                    Button("Disconnect") {
+                        model.disconnectExtension(record.id)
+                        coordinator.notify("\(record.manifest.name) disconnected.")
+                    }.disabled(!model.isEnabled(record.id) || coordinator.busy)
                 } label: {
-                    LabeledContent("Console") {
-                        if let count = coordinator.model.extensionLogs[record.id]?.count, count > 0 {
-                            Text("\(count)").monospacedDigit().foregroundStyle(.secondary)
-                        }
-                    }
+                    Text("Open connections")
+                    Text("Closes them now. The extension can ask to connect again.")
                 }
-                DisclosureGroup("Package Details", isExpanded: $showPackage) {
-                    LabeledContent("Version", value: record.manifest.version)
-                    LabeledContent("Source", value: record.origin.rawValue)
-                    LabeledContent("Identifier", value: record.id).textSelection(.enabled)
-                    Text(record.directory.path).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
-                    HStack {
-                        Spacer()
-                        Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([record.directory]) }
-                    }
-                }
-            }
-            Section("Maintenance") {
-                LabeledContent("Extension") {
-                    Button("Restart") { coordinator.model.restartExtension(record.id) }
-                        .disabled(!coordinator.model.isEnabled(record.id) || coordinator.busy)
-                }
-                if !(record.manifest.connections ?? [:]).isEmpty {
-                    LabeledContent("App connections") {
-                        Button("Disconnect") { coordinator.model.disconnectExtension(record.id) }
-                            .disabled(!coordinator.model.isEnabled(record.id) || coordinator.busy)
-                    }
-                }
-                if !coordinator.model.alwaysAllowedConnections(record.id).isEmpty {
-                    LabeledContent("Saved access") {
-                        Button("Forget App Access") { coordinator.model.forgetAccess(record.id) }
-                            .disabled(coordinator.busy)
-                    }
-                }
-                if coordinator.model.extensionStore.isManaged(record) {
-                    LabeledContent("Installed package") {
-                        Button("Remove Extension…", role: .destructive) { coordinator.requestRemoval(record) }
-                            .disabled(coordinator.busy)
+                if !remembered.isEmpty {
+                    LabeledContent {
+                        Button("Forget") {
+                            model.forgetAccess(record.id)
+                            coordinator.notify("\(record.manifest.name) will ask again before connecting.")
+                        }.disabled(coordinator.busy)
+                    } label: {
+                        Text("Always Allow")
+                        Text("Remembered for \(remembered.sorted().joined(separator: ", ")).")
                     }
                 }
             }
-        }.formStyle(.grouped)
+        }
+    }
+
+    @ViewBuilder private var developer: some View {
+        Section {
+            ExtensionLogView(entries: model.extensionLogs[record.id] ?? []) { model.clearLogs(record.id) }
+        } header: {
+            Text("Console")
+        }
+        Section("Package") {
+            LabeledContent("Identifier", value: record.id).textSelection(.enabled)
+            LabeledContent("Version", value: record.manifest.version)
+            LabeledContent("Source", value: record.origin.rawValue)
+            LabeledContent {
+                Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([record.directory]) }
+            } label: {
+                Text("Location")
+                Text(record.directory.path).textSelection(.enabled)
+            }
+        }
+        Section {
+            LabeledContent("Extension") {
+                Button("Restart") { model.restartExtension(record.id) }
+                    .disabled(!model.isEnabled(record.id) || coordinator.busy)
+            }
+            if model.extensionStore.isManaged(record) {
+                LabeledContent("Installed package") {
+                    Button("Remove…", role: .destructive) { coordinator.requestRemoval(record) }
+                        .disabled(coordinator.busy)
+                }
+            }
+        }
     }
 }
 

@@ -9,7 +9,7 @@ npm install
 npm run build
 ```
 
-Then open **Settings & Extensions… › Extensions › Install from Folder…** and choose `my-extension/dist`. The project depends on `@notchnotch/sdk` (components and APIs), `@notchnotch/runtime` (`start`) and, for building, `@notchnotch/cli`. Nothing from this repository is needed.
+Then open **Settings & Extensions…**, click **+** at the bottom of the sidebar and choose `my-extension/dist`. The project depends on `@notchnotch/sdk` (components and APIs), `@notchnotch/runtime` (`start`) and, for building, `@notchnotch/cli`. Nothing from this repository is needed.
 
 An extension consists of `notchnotch.json` and `src/index.tsx`. `notchnotch build` bundles it into `bundle.js`; the app runs that bundle in JavaScriptCore. Inside this repository, `pnpm build:extensions` does the same for `extensions/*`.
 
@@ -167,7 +167,7 @@ An `Activity` may set `idlePreview` to opt into the resumable fallback; it must 
 
 ## Installing a local extension
 
-Build a folder containing `notchnotch.json`, `bundle.js`, and any bundled helper/assets. `notchnotch build [folder] --out <dir>` (from `@notchnotch/cli`) bundles `src/index.tsx`, copies `helpers/` and `assets/`, runs an optional `build.mjs`, and then applies the same checks as the installer; `notchnotch check <dir>` runs only the checks. Open **Settings & Extensions… → Install from Folder…** and select that built folder. The manager validates it and shows a review before copying it into the user's extension library. Keep a stable manifest id for updates, and use an id distinct from the included examples. Installed ids cannot shadow included extensions. Package limits are 512 files/folders, no symbolic links, 8 MiB for `bundle.js` and 64 MiB total. Development `build.mjs` files are never executed by the installer.
+Build a folder containing `notchnotch.json`, `bundle.js`, and any bundled helper/assets. `notchnotch build [folder] --out <dir>` (from `@notchnotch/cli`) bundles `src/index.tsx`, copies `helpers/` and `assets/`, runs an optional `build.mjs`, and then applies the same checks as the installer; `notchnotch check <dir>` runs only the checks. In **Settings & Extensions…**, click **+** at the bottom of the sidebar and select that built folder. The manager validates it and shows a review before copying it into the user's extension library. Keep a stable manifest id for updates, and use an id distinct from the included examples. Installed ids cannot shadow included extensions. Package limits are 512 files/folders, no symbolic links, 8 MiB for `bundle.js` and 64 MiB total. Development `build.mjs` files are never executed by the installer.
 
 This preview supports explicitly trusted local packages. Installing native code is a trust decision; transport session consent does not sandbox a helper. A public marketplace is not yet implemented. Use the manager for enable/disable, restart, connection access review and disconnect actions; setup controls use the extension’s `Settings` panel; live activity controls remain in the notch.
 

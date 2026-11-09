@@ -6,20 +6,22 @@ import NotchExtensions
 final class ManagementCoordinator {
     let model: AppModel
     let updater: AppUpdater
-    var destination: ManagementDestination = .extensions {
-        didSet { if destination != oldValue { message = nil; error = nil } }
+    var destination: ManagementDestination = .general {
+        didSet { if destination != oldValue { error = nil } }
     }
     var query = "" {
         didSet {
             if case .extensionDetails(let id) = destination, !visibleExtensions.contains(where: { $0.id == id }) {
-                destination = .extensions
+                destination = .general
             }
         }
     }
     var sheet: ManagementSheet?
     var sheetError: String?
+    /// Errors stay until dismissed; messages fade out on their own.
     var error: String?
-    var message: String?
+    private(set) var message: String?
+    @ObservationIgnored private var messageGeneration = 0
     private(set) var choosingPackage = false
     private(set) var operating = false
     @ObservationIgnored weak var window: NSWindow?
@@ -34,19 +36,37 @@ final class ManagementCoordinator {
     }
     var enabledCount: Int { model.installedExtensions.filter { model.isEnabled($0.id) }.count }
 
+    func status(of id: String) -> ExtensionStatus {
+        if !model.isEnabled(id) { return .off }
+        if let error = model.errors[id] { return .needsAttention(error) }
+        return model.hasRendered(id) ? .running : .starting
+    }
+
+    func notify(_ text: String) {
+        messageGeneration += 1
+        let generation = messageGeneration
+        message = text
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(4))
+            if generation == messageGeneration { message = nil }
+        }
+    }
+    func dismissMessage() { messageGeneration += 1; message = nil }
+
     func selectExtension(_ id: String) {
         guard model.installedExtensions.contains(where: { $0.id == id }) else { return }
         query = ""
         destination = .extensionDetails(id)
     }
     func reconcileSelection() {
-        if case .extensionDetails(let id) = destination, !model.installedExtensions.contains(where: { $0.id == id }) { destination = .extensions }
+        if case .extensionDetails(let id) = destination, !model.installedExtensions.contains(where: { $0.id == id }) { destination = .general }
+        if destination == .libraryIssues, model.libraryIssues.isEmpty { destination = .general }
     }
     func choosePackage() {
         guard !busy, sheet == nil, let window else { return }
         choosingPackage = true
         error = nil
-        message = nil
+        dismissMessage()
         pickerGeneration += 1
         let generation = pickerGeneration
         let panel = NSOpenPanel()
@@ -80,7 +100,7 @@ final class ManagementCoordinator {
                 try await model.installExtension(package)
                 sheet = nil
                 selectExtension(package.id)
-                message = "\(package.manifest.name) \(updating ? "updated" : "installed")."
+                notify("\(package.manifest.name) \(updating ? "updated" : "installed").")
             } catch { sheetError = error.localizedDescription }
         }
     }
@@ -98,8 +118,8 @@ final class ManagementCoordinator {
             do {
                 try await model.removeExtension(record)
                 sheet = nil
-                destination = .extensions
-                message = "\(record.manifest.name) moved to Trash."
+                destination = .general
+                notify("\(record.manifest.name) moved to Trash.")
             } catch { sheetError = error.localizedDescription }
         }
     }

@@ -18,8 +18,40 @@ struct ManagementGeneralPage: View {
                 if let error = model.launchAtLoginError {
                     Text(error).foregroundStyle(.red).font(.callout)
                 }
+            } header: {
+                Text("Startup")
             }
             .onAppear { model.refreshLaunchAtLogin() }
+            Section {
+                LabeledContent("Installed extensions") {
+                    Button("Show in Finder", action: coordinator.showFolder)
+                }
+                LabeledContent("All extensions") {
+                    Button("Restart") {
+                        coordinator.model.reloadExtensions(force: true)
+                        coordinator.notify("Extensions restarted.")
+                    }.disabled(coordinator.busy)
+                }
+                LabeledContent("App connections") {
+                    Button("Disconnect All") {
+                        coordinator.model.disconnectExtensions()
+                        coordinator.notify("App connections closed.")
+                    }.disabled(coordinator.busy)
+                }
+            } header: {
+                Text("Extensions")
+            } footer: {
+                Text("Disconnecting closes every local service and native helper. Each extension reconnects from its Setup tab.")
+            }
+        }.formStyle(.grouped)
+    }
+}
+
+struct ManagementNotchPage: View {
+    @Bindable var coordinator: ManagementCoordinator
+    var body: some View {
+        @Bindable var model = coordinator.model
+        Form {
             Section {
                 Picker("Show on", selection: $model.preferredDisplayID) {
                     Text("Automatic").tag(String?.none)
@@ -30,34 +62,42 @@ struct ManagementGeneralPage: View {
                         Text("Disconnected display").tag(Optional(id))
                     }
                 }
+            } header: {
+                Text("Display")
             } footer: {
                 Text("Automatic uses the built-in display with a camera housing, or the main display. A disconnected choice falls back to Automatic until it returns.")
             }
             Section {
                 Toggle("Expand on hover", isOn: $model.expandOnHover).toggleStyle(.switch)
-            } footer: {
-                Text("Keep the pointer over the notch to preview an activity. Clicking always opens it.")
-            }
-            Section {
-                LabeledContent("Local services and native helpers") {
-                    Button("Disconnect All") {
-                        coordinator.model.disconnectExtensions()
-                        coordinator.message = "App connections closed. Reconnect from an extension’s setup page."
-                    }.disabled(coordinator.busy)
-                }
             } header: {
-                Text("App Connections")
+                Text("Interaction")
             } footer: {
-                Text("Reconnect from each extension’s setup page.")
+                Text("Keep the pointer over the notch to preview an activity. Clicking always opens it. Scroll sideways to switch between activities.")
             }
-            Section("Extension Library") {
-                LabeledContent("Installed on this Mac") {
-                    Button("Show in Finder", action: coordinator.showFolder)
-                }
+        }.formStyle(.grouped)
+    }
+}
+
+struct ManagementAboutPage: View {
+    @Bindable var coordinator: ManagementCoordinator
+    private var version: String {
+        let info = Bundle.main.infoDictionary ?? [:]
+        guard let short = info["CFBundleShortVersionString"] as? String else { return "Development build" }
+        return "Version \(short) (\(info["CFBundleVersion"] as? String ?? "1"))"
+    }
+    var body: some View {
+        Form {
+            Section {
+                HStack(spacing: 16) {
+                    Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 64, height: 64).accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("NotchNotch").font(.title2).bold()
+                        Text(version).foregroundStyle(.secondary).textSelection(.enabled)
+                        Text("Developer Preview").font(.callout).foregroundStyle(.secondary)
+                    }
+                }.padding(.vertical, 6)
             }
             Section {
-                LabeledContent("NotchNotch", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Development")
-                LabeledContent("Release", value: "Developer Preview")
                 if coordinator.updater.isAvailable {
                     @Bindable var updater = coordinator.updater
                     Toggle("Check for updates automatically", isOn: $updater.automaticallyChecks).toggleStyle(.switch)
@@ -71,13 +111,48 @@ struct ManagementGeneralPage: View {
                             Text("Last checked \(date.formatted(.relative(presentation: .named)))")
                         }
                     }
+                } else {
+                    LabeledContent("Software update", value: "Off in development builds")
                 }
             } header: {
-                Text("About")
+                Text("Updates")
             } footer: {
-                Text(coordinator.updater.isAvailable
-                    ? "Updates are downloaded from GitHub Releases and verified with NotchNotch’s signing key before they install."
-                    : "Development builds don’t check for updates.")
+                if coordinator.updater.isAvailable {
+                    Text("Updates come from GitHub Releases and are verified with NotchNotch’s signing key before they install.")
+                }
+            }
+            Section("Resources") {
+                link("Release notes", "https://github.com/sadeqi-ah/notchnotch/blob/main/CHANGELOG.md")
+                link("Build an extension", "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extension-api.md")
+                link("Privacy", "https://github.com/sadeqi-ah/notchnotch/blob/main/PRIVACY.md")
+                link("Report an issue", "https://github.com/sadeqi-ah/notchnotch/issues")
+            }
+            Section {
+                Text("Copyright © 2026 AmirHossein Sadeghi. Licensed under the GNU GPL v3.0.")
+                    .font(.callout).foregroundStyle(.secondary)
+            }
+        }.formStyle(.grouped)
+    }
+    private func link(_ title: String, _ url: String) -> some View {
+        LabeledContent(title) { Link("Open", destination: URL(string: url)!) }
+    }
+}
+
+struct ManagementLibraryIssuesPage: View {
+    @Bindable var coordinator: ManagementCoordinator
+    var body: some View {
+        Form {
+            Section {
+                ForEach(coordinator.model.libraryIssues.keys.sorted(), id: \.self) { path in
+                    LabeledContent {
+                        Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) }
+                    } label: {
+                        Text(URL(fileURLWithPath: path).lastPathComponent)
+                        Text(coordinator.model.libraryIssues[path] ?? "").textSelection(.enabled)
+                    }
+                }
+            } footer: {
+                Text("These folders in the extension library aren’t valid extensions. Fix or remove them, then reopen this window.")
             }
         }.formStyle(.grouped)
     }

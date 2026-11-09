@@ -10,7 +10,7 @@ NotchNotch runs entirely on your Mac. It has no account, analytics, crash report
 
 ## Update checks
 
-Release builds check for updates about once a day by downloading `appcast.xml` from GitHub (`raw.githubusercontent.com`), and download the update itself from GitHub Releases. GitHub sees your IP address and a user agent with the app and macOS versions; no system profile is sent. Turn this off in **Settings & Extensions… › General › Check for updates automatically**.
+Release builds check for updates about once a day by downloading `appcast.xml` from GitHub (`raw.githubusercontent.com`), and download the update itself from GitHub Releases. GitHub sees your IP address and a user agent with the app and macOS versions; no system profile is sent. Turn this off in **Settings & Extensions… › About › Check for updates automatically**.
 
 ## Included extensions
 

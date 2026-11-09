@@ -60,7 +60,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const target = await create({ folder: folder || "my-extension", name, id });
     const relative = path.relative(process.cwd(), target);
     const shown = !relative ? "." : relative.startsWith("..") ? target : relative;
-    console.log(`\nCreated ${shown}\n\n  cd ${shown}\n  npm install\n  npm run build\n\nThen open NotchNotch › Settings & Extensions… › Install from Folder… and choose ${shown}/dist.`);
+    console.log(`\nCreated ${shown}\n\n  cd ${shown}\n  npm install\n  npm run build\n\nThen open NotchNotch › Settings & Extensions…, click + at the bottom of the sidebar and choose ${shown}/dist.`);
   } catch (error) {
     console.error(error.message);
     process.exit(1);

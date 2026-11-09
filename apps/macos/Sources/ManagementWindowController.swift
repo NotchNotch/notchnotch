@@ -10,6 +10,7 @@ final class ManagementWindowController: NSWindowController, NSWindowDelegate, NS
                               styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
         super.init(window: window)
         window.title = "NotchNotch"
+        window.subtitle = "General"
         window.contentMinSize = NSSize(width: 690, height: 500)
         window.isReleasedWhenClosed = false
         window.tabbingMode = .disallowed

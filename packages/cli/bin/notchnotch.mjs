@@ -24,7 +24,7 @@ try {
       const problems = await checkPackage(out);
       for (const problem of problems) console.error(`✗ ${problem}`);
       if (problems.length) process.exit(1);
-      console.log(`Built ${out}\nInstall it from Settings & Extensions… → Install from Folder…`);
+      console.log(`Built ${out}\nInstall it from Settings & Extensions…: click + at the bottom of the sidebar.`);
     }
   } else {
     const problems = await checkPackage(folder);
