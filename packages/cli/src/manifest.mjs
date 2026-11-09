@@ -4,6 +4,34 @@ export function iconFiles(manifest) {
   return { light: manifest.icon, dark: `${manifest.icon.slice(0, -4)}@dark.png` };
 }
 
+/** Categories an extension can list in its manifest, in display order. Keep in step with ExtensionCategory in the app. */
+export const categories = [
+  "Communication", "Developer Tools", "Finance", "Fun", "Health", "Media",
+  "News", "Productivity", "Sports", "System", "Weather", "Other",
+];
+
+function validateStoreMetadata(manifest) {
+  const fail = (message) => { throw new Error(`Unsupported manifest: ${manifest.id}: ${message}`); };
+  const { author, categories: listed, homepage, repository, license } = manifest;
+  if (author !== undefined && (typeof author !== "string" || !/^[a-z0-9]([a-z0-9-]{0,37}[a-z0-9])?$/.test(author))) {
+    fail("author must be a store handle: lowercase letters, digits and hyphens, up to 39 characters");
+  }
+  if (listed !== undefined && (!Array.isArray(listed) || listed.length < 1 || listed.length > 3 ||
+      new Set(listed).size !== listed.length || listed.some((category) => !categories.includes(category)))) {
+    fail(`categories must list one to three of: ${categories.join(", ")}`);
+  }
+  for (const [field, value] of [["homepage", homepage], ["repository", repository]]) {
+    if (value === undefined) continue;
+    let url;
+    try { url = typeof value === "string" && value.length <= 2048 ? new URL(value) : null; } catch { url = null; }
+    if (!url || url.protocol !== "https:" || !url.hostname || url.username || url.password) fail(`${field} must be an https:// address`);
+  }
+  if (license !== undefined && (typeof license !== "string" || license.length > 64 ||
+      !/^[A-Za-z0-9.+-]+( (AND|OR|WITH) [A-Za-z0-9.+-]+)*$/.test(license))) {
+    fail("license must be an SPDX license identifier, such as MIT");
+  }
+}
+
 const allowedPermissions = new Set(["local-network", "process"]);
 
 export function validateManifest(manifest) {
@@ -15,6 +43,7 @@ export function validateManifest(manifest) {
       manifest.permissions.some((permission) => !allowedPermissions.has(permission))) invalid();
   if ((manifest.icon !== undefined && (typeof manifest.icon !== "string" || manifest.icon.length > 128)) ||
       (manifest.description !== undefined && (typeof manifest.description !== "string" || manifest.description.length > 512))) invalid();
+  validateStoreMetadata(manifest);
   if (manifest.icon?.endsWith(".png") && !/^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}\.png$/.test(manifest.icon)) {
     throw new Error(`Unsupported manifest: ${manifest.id}: icon must be an SF Symbol name or the file name of a PNG in assets/, such as icon.png`);
   }

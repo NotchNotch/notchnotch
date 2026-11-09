@@ -13,5 +13,9 @@
     }
   },
   "icon": "icon.png",
-  "description": "Your next event, with a live countdown and meeting controls. Connect the calendars already on your Mac."
+  "description": "Your next event, with a live countdown and meeting controls. Connect the calendars already on your Mac.",
+  "author": "sadeqi-ah",
+  "categories": ["Productivity"],
+  "license": "GPL-3.0-only",
+  "repository": "https://github.com/sadeqi-ah/notchnotch/tree/main/extensions/calendar"
 }

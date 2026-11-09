@@ -240,6 +240,14 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
     public var description: String?
     /// HTTPS hosts the host may fetch artwork from for this extension.
     public var imageHosts: [String]?
+    /// Store handle of the publisher, such as a GitHub user name.
+    public var author: String?
+    /// One to three entries from `ExtensionCategory.all`.
+    public var categories: [String]?
+    public var homepage: String?
+    public var repository: String?
+    /// An SPDX license expression, such as `MIT`.
+    public var license: String?
 
     /// An `icon` ending in `.png` names a file in the package's `assets/`
     /// folder; `name@dark.png` beside it is the optional dark variant. Any
@@ -264,6 +272,7 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
                 throw ProtocolError.invalid("imageHosts must list up to 8 lowercase DNS names, optionally starting with *.")
             }
         }
+        try validateStoreMetadata()
         if let icon, icon.hasSuffix(".png") {
             guard icon.range(of: "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}\\.png$", options: .regularExpression) != nil else {
                 throw ProtocolError.invalid("icon must be an SF Symbol name or the file name of a PNG in assets/, such as icon.png.")
@@ -276,6 +285,41 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
             try definition.validate(permissions: permissions)
         }
     }
+}
+
+extension ExtensionManifest {
+    /// Optional fields that describe the extension for people browsing or
+    /// installing it. They never grant anything.
+    func validateStoreMetadata() throws {
+        if let author, author.range(of: "^[a-z0-9]([a-z0-9-]{0,37}[a-z0-9])?$", options: .regularExpression) == nil {
+            throw ProtocolError.invalid("author must be a store handle: lowercase letters, digits and hyphens, up to 39 characters.")
+        }
+        if let categories {
+            guard (1...3).contains(categories.count), Set(categories).count == categories.count,
+                  categories.allSatisfy(ExtensionCategory.all.contains) else {
+                throw ProtocolError.invalid("categories must list one to three of: \(ExtensionCategory.all.joined(separator: ", ")).")
+            }
+        }
+        for (field, value) in [("homepage", homepage), ("repository", repository)] {
+            guard let value else { continue }
+            guard value.count <= 2048, let url = URLComponents(string: value), url.scheme == "https",
+                  !(url.host ?? "").isEmpty, url.user == nil, url.password == nil else {
+                throw ProtocolError.invalid("\(field) must be an https:// address.")
+            }
+        }
+        if let license, license.count > 64 ||
+            license.range(of: "^[A-Za-z0-9.+-]+( (AND|OR|WITH) [A-Za-z0-9.+-]+)*$", options: .regularExpression) == nil {
+            throw ProtocolError.invalid("license must be an SPDX license identifier, such as MIT.")
+        }
+    }
+}
+
+/// Categories an extension can list in its manifest, in display order.
+public enum ExtensionCategory {
+    public static let all = [
+        "Communication", "Developer Tools", "Finance", "Fun", "Health", "Media",
+        "News", "Productivity", "Sports", "System", "Weather", "Other",
+    ]
 }
 
 public enum ProtocolError: Error, LocalizedError, Sendable {

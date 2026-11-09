@@ -6,5 +6,9 @@
   "entry": "bundle.js",
   "permissions": [],
   "icon": "icon.png",
-  "description": "Example extension: a focus timer that asks before starting a break."
+  "description": "Example extension: a focus timer that asks before starting a break.",
+  "author": "sadeqi-ah",
+  "categories": ["Productivity"],
+  "license": "GPL-3.0-only",
+  "repository": "https://github.com/sadeqi-ah/notchnotch/tree/main/examples/focus-timer"
 }

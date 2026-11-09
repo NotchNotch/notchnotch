@@ -53,6 +53,9 @@ struct ManagementReviewSheet: View {
                 Text("This replaces version \(old.manifest.version). Your enabled/disabled preference is kept.").font(.callout).foregroundStyle(.secondary)
             }
             if let description = package.manifest.description { Text(description) }
+            if ExtensionAboutRows.hasContent(package.manifest) {
+                VStack(alignment: .leading, spacing: 6) { ExtensionAboutRows(manifest: package.manifest) }.font(.callout)
+            }
             Text(package.id).font(.callout.monospaced()).foregroundStyle(.secondary).textSelection(.enabled)
             ManagementAccessView(manifest: package.manifest)
             if package.manifest.permissions.contains("process") {

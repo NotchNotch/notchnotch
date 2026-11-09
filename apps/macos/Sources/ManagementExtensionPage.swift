@@ -170,6 +170,7 @@ struct ManagementExtensionPage: View {
             LabeledContent("Identifier", value: record.id).textSelection(.enabled)
             LabeledContent("Version", value: record.manifest.version)
             LabeledContent("Source", value: record.origin.rawValue)
+            ExtensionAboutRows(manifest: record.manifest)
             LabeledContent {
                 Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([record.directory]) }
             } label: {

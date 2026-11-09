@@ -209,4 +209,25 @@ A manifest can include `icon` and `description` (at most 512 characters). They a
 - `assets/icon@dark.png` (optional): the same icon for dark backgrounds. The notch is always dark, so it uses this variant when you provide one, as does Settings in dark mode.
 - The file name may contain letters, digits, `.`, `_` and `-`, and must end in `.png`. Folders are not allowed.
 
-`notchnotch check` and the installer reject a missing or wrongly sized icon. NotchNotch 0.3 and earlier show the generic icon for PNG icons. `name` must contain 1–128 characters, and `version` 1–64. The extension enable switch controls whether its runner is allowed to run; it does not imply that a local app has connected. Keep connection state and recovery controls in `Settings`.
+`notchnotch check` and the installer reject a missing or wrongly sized icon. NotchNotch 0.3 and earlier show the generic icon for PNG icons.
+
+### Author, categories and links
+
+These optional fields describe the extension in the install review and under **Developer › Package** on its page. They grant nothing.
+
+```json
+{
+  "author": "your-handle",
+  "categories": ["Productivity"],
+  "license": "MIT",
+  "homepage": "https://example.com/your-extension",
+  "repository": "https://example.com/you/your-extension"
+}
+```
+
+| Field | Rules |
+| --- | --- |
+| `author` | Your store handle, such as your GitHub user name: lowercase letters, digits and hyphens, up to 39 characters |
+| `categories` | One to three of `Communication`, `Developer Tools`, `Finance`, `Fun`, `Health`, `Media`, `News`, `Productivity`, `Sports`, `System`, `Weather`, `Other` |
+| `license` | An SPDX license identifier or expression, such as `MIT` or `MIT OR Apache-2.0` |
+| `homepage`, `repository` | `https://` addresses, without a user name or password | `name` must contain 1–128 characters, and `version` 1–64. The extension enable switch controls whether its runner is allowed to run; it does not imply that a local app has connected. Keep connection state and recovery controls in `Settings`.

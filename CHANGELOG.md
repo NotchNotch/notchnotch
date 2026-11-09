@@ -9,6 +9,8 @@ All notable changes to NotchNotch are listed here. The format follows
 ### Added
 - Extensions can use their own icon: set `icon` to the name of a 512×512 PNG in `assets/`, such as `"icon.png"`, with an optional `icon@dark.png` for dark backgrounds. It appears in Settings, the install review, connection requests and above prompts in the notch. `notchnotch check` and the installer validate it. SF Symbol names keep working.
 
+- Optional manifest fields `author`, `categories`, `license`, `homepage` and `repository`, shown in the install review and under **Developer › Package**. Projects from `npm create notchnotch-extension` start with a category and the MIT license.
+
 ### Changed
 - Music, Calendar and the Focus Timer example have their own icons.
 
