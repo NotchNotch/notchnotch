@@ -87,7 +87,7 @@ public struct ExtensionCatalog: Codable, Equatable, Sendable {
         decoder.dateDecodingStrategy = .iso8601
         let catalog: ExtensionCatalog
         do { catalog = try decoder.decode(ExtensionCatalog.self, from: data) } catch {
-            throw Failure.invalid("it isn’t a catalog")
+            throw Failure.invalid(Self.describe(error))
         }
         try catalog.validate()
         guard catalog.expires > now else { throw Failure.expired(catalog.expires) }
@@ -95,6 +95,26 @@ public struct ExtensionCatalog: Codable, Equatable, Sendable {
             throw Failure.rolledBack(sequence: catalog.sequence, last: lastSequence)
         }
         return catalog
+    }
+
+    /// Names the field a decoding error is about, so a bad catalog is quick to fix.
+    private static func describe(_ error: any Error) -> String {
+        switch error as? DecodingError {
+        case .keyNotFound(let key, let context)?:
+            return "\(path(context.codingPath + [key])) is missing"
+        case .typeMismatch(_, let context)?, .valueNotFound(_, let context)?, .dataCorrupted(let context)?:
+            return context.codingPath.isEmpty ? "it isn’t a catalog" : "\(path(context.codingPath)) has the wrong type or value"
+        default:
+            return "it isn’t a catalog"
+        }
+    }
+
+    /// `extensions[2].package.sha256`, for error messages.
+    private static func path(_ keys: [any CodingKey]) -> String {
+        keys.reduce("") { result, key in
+            if let index = key.intValue { return result + "[\(index)]" }
+            return result.isEmpty ? key.stringValue : result + "." + key.stringValue
+        }
     }
 
     /// Loads a base64 Ed25519 public key, as committed beside the app.

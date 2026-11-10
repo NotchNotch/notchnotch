@@ -88,6 +88,8 @@ private func failure(_ body: () throws -> Any) -> ExtensionCatalog.Failure? {
     let future = Data(#"{"format":2,"sequence":1,"generated":"2026-11-10T00:00:00Z","expires":"2026-12-10T00:00:00Z","extensions":[]}"#.utf8)
     #expect(failure { try verify(future) } == .invalid("format 2 isn’t supported; update NotchNotch"))
     #expect(failure { try verify(Data("[]".utf8)) } == .invalid("it isn’t a catalog"))
+    let missing = Data(#"{"format":1,"sequence":1,"generated":"2026-11-10T00:00:00Z","expires":"2026-12-10T00:00:00Z","extensions":[{"handle":"a/b"}]}"#.utf8)
+    #expect(failure { try verify(missing) } == .invalid("extensions[0].manifest is missing"))
 }
 
 @Test func versionsCompareByNumberNotText() throws {
