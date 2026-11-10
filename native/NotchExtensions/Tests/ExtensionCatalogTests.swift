@@ -74,6 +74,7 @@ private func failure(_ body: () throws -> Any) -> ExtensionCatalog.Failure? {
         (entry(author: "sara"), "author"),
         (entry(sha256: "ABC"), "hash"),
         (entry(extra: #","icon":"http://example.com/icon.png""#), "https"),
+        (entry(extra: #","readme":"http://example.com/README.md""#), "https"),
         (entry(extra: #","screenshots":["https://a.example/1","https://a.example/2","https://a.example/3","https://a.example/4","https://a.example/5","https://a.example/6","https://a.example/7"]"#), "screenshots"),
         (entry(extra: #","minimumAppVersion":"next""#), "minimumAppVersion"),
         (entry(id: "Bad ID"), "manifest"),

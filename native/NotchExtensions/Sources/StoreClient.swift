@@ -80,6 +80,13 @@ public actor StoreClient {
         return file
     }
 
+    /// A README or CHANGELOG for the Store page: UTF-8, at most 256 KiB.
+    public func document(_ url: URL) async throws -> String {
+        let data = try await fetch(url, limit: PackageDocument.maximumBytes)
+        guard let text = String(data: data, encoding: .utf8) else { throw ExtensionCatalog.Failure.invalid("the document isn’t UTF-8 text") }
+        return text
+    }
+
     /// GETs `url`, refusing anything but HTTPS 200 and stopping past `limit` bytes.
     private func fetch(_ url: URL, limit: Int) async throws -> Data {
         guard ExtensionCatalog.isAllowedLink(url) else { throw ExtensionCatalog.Failure.invalid("every link must be https") }

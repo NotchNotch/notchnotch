@@ -107,3 +107,15 @@ private struct Fixture {
     StoreStub.set("https://\(fixture.host)/focus.notchext", 200, Data(repeating: 0, count: 200_000))
     await #expect(throws: StoreClient.Failure.tooLarge) { try await client.download(entry) }
 }
+
+@Test func documentsAreBoundedUTF8Text() async throws {
+    let fixture = Fixture()
+    let client = fixture.client()
+    let url = URL(string: "https://\(fixture.host)/README.md")!
+    StoreStub.set(url.absoluteString, 200, Data("# Focus\n\nStay on task.".utf8))
+    #expect(try await client.document(url) == "# Focus\n\nStay on task.")
+    StoreStub.set(url.absoluteString, 200, Data([0xFF, 0xFE, 0x00]))
+    await #expect(throws: ExtensionCatalog.Failure.invalid("the document isn’t UTF-8 text")) { try await client.document(url) }
+    StoreStub.set(url.absoluteString, 200, Data(repeating: 0x61, count: PackageDocument.maximumBytes + 1))
+    await #expect(throws: StoreClient.Failure.tooLarge) { try await client.document(url) }
+}

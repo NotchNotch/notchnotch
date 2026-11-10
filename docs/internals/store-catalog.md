@@ -62,6 +62,8 @@ uploaded byte for byte. Nothing re-serializes it.
       "icon": "https://…/icon.png",
       "iconDark": "https://…/icon@dark.png",
       "screenshots": ["https://…/1.png"],
+      "readme": "https://…/README.md",
+      "changelog": "https://…/CHANGELOG.md",
       "minimumAppVersion": "0.7.0",
       "published": "2026-11-09T18:20:00Z"
     }
@@ -75,7 +77,9 @@ uploaded byte for byte. Nothing re-serializes it.
 - `manifest` is the whole `notchnotch.json` of that version, validated like an
   installed one. The Store shows its permissions before downloading, and after
   extracting the app requires the package's manifest to equal it.
-- Every link is `https`. Up to 6 screenshots.
+- Every link is `https`. Up to 6 screenshots. `readme` and `changelog` are the
+  version's documents, pinned to the commit it was built from; the Store page
+  shows them and reads at most 256 KiB of UTF-8 from each.
 - A format the app doesn't know is rejected with "update NotchNotch".
 
 ## Why a signature isn't enough

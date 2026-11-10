@@ -139,6 +139,8 @@ struct StoreActionButton: View {
 struct StoreEntryPage: View {
     @Bindable var coordinator: ManagementCoordinator
     let entry: ExtensionCatalog.Entry
+    @State private var readme: String?
+    @State private var changelog: String?
     private var installed: InstalledExtension? { coordinator.model.installedExtensions.first { $0.id == entry.id } }
 
     var body: some View {
@@ -171,8 +173,14 @@ struct StoreEntryPage: View {
                     }.scrollIndicators(.hidden)
                 }
                 if let description = entry.manifest.description { Text(description) }
+                if let readme { MarkdownView(readme) }
                 Divider()
                 ExtensionPermissionsView(manifest: entry.manifest, previous: installed?.manifest)
+                if let changelog {
+                    Divider()
+                    Text("Version History").font(.title3).bold()
+                    MarkdownView(changelog)
+                }
                 if ExtensionAboutRows.hasContent(entry.manifest) {
                     Divider()
                     VStack(alignment: .leading, spacing: 6) { ExtensionAboutRows(manifest: entry.manifest) }.font(.callout)
@@ -180,6 +188,16 @@ struct StoreEntryPage: View {
                 Text(entry.id).font(.callout.monospaced()).foregroundStyle(.secondary).textSelection(.enabled)
             }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
         }
+        .task { await loadDocuments() }
+    }
+
+    /// Fetched when the page opens. A missing or unreadable document is left
+    /// out quietly: the page is still useful without it.
+    private func loadDocuments() async {
+        guard let client = coordinator.model.store.client else { return }
+        async let readme = entry.readme.asyncMap { try? await client.document($0) }
+        async let changelog = entry.changelog.asyncMap { try? await client.document($0) }
+        (self.readme, self.changelog) = await (readme ?? nil, changelog ?? nil)
     }
 
     private var details: String {
@@ -204,5 +222,12 @@ struct StoreIcon: View {
             let symbol = entry.manifest.icon.flatMap { $0.hasSuffix(".png") ? nil : $0 } ?? ExtensionIcon.fallbackSymbol
             ExtensionIdentityView(icon: .symbol(symbol), size: size)
         }
+    }
+}
+
+private extension Optional {
+    func asyncMap<T>(_ transform: (Wrapped) async -> T) async -> T? {
+        guard let self else { return nil }
+        return await transform(self)
     }
 }
