@@ -6,8 +6,11 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-10
+
 ### Added
 - **Store** in Settings & Extensions: browse, search and filter reviewed extensions, see screenshots, the README, the version history and what each can do, and install with **Get**. Every download is checked against the signed catalog and goes through the usual install review. Extensions from the Store show a badge and an **Updates** section when a new version is out.
+- The Store opens with 11 extensions: Focus Timer, Weather, World Clock, Countdown, Break Reminder, GitHub Notifications, Hacker News, Service Status, Crypto Prices, Word of the Day and Moon Phase.
 - `notchnotch publish` submits an extension to the Store: it runs the Store's checks, copies the source to a fork of the extensions repository and opens or updates a pull request, using the GitHub CLI's sign-in.
 - `notchnotch://extensions/<author>/<name>` links open an extension's Store page, for Install buttons on the web. A link never installs anything by itself.
 - Extensions from the Store update automatically when the new version asks for nothing new. An update that wants another website, program, app connection, picture host or setting waits in the Store for review. Turn it off in General.
@@ -109,7 +112,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.2...v0.4.0

@@ -1,6 +1,6 @@
 {
   "name": "create-notchnotch-extension",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Create a NotchNotch extension: npm create notchnotch-extension my-extension",
   "license": "MIT",
   "author": "AmirHossein Sadeghi",
