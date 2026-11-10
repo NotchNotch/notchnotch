@@ -19,7 +19,9 @@ final class AppModel {
     private(set) var extensionSettings: [String: UINode] = [:]
     private(set) var extensionSessionIDs: [String: UUID] = [:]
     private(set) var extensionLogs: [String: [ExtensionLogEntry]] = [:]
-    private var snapshotRevisions: [String: Int] = [:]
+    /// Changes with every snapshot, so nothing observes it; `renderedIDs` changes once.
+    @ObservationIgnored private var snapshotRevisions: [String: Int] = [:]
+    private var renderedIDs: Set<String> = []
     private var disabledExtensionIDs = Set(UserDefaults.standard.stringArray(forKey: "disabledExtensionIDs") ?? [])
     private var installingIDs: Set<String> = []
     var expandOnHover: Bool = UserDefaults.standard.object(forKey: "expandOnHover") as? Bool ?? true {
@@ -41,7 +43,6 @@ final class AppModel {
     /// Projects that `notchnotch dev` runs.
     let developmentRegistry = DevelopmentRegistry(directory: supportDirectory.appendingPathComponent("Development"))
     private var developmentEntries: [DevelopmentRegistry.Entry] = []
-    private var developmentTimer: Timer?
 
     let store = StoreModel(directory: supportDirectory.appendingPathComponent("Store"))
     /// Extension id → Store handle, for extensions installed from the Store.
@@ -169,6 +170,7 @@ final class AppModel {
     private(set) var greeting: String?
     @ObservationIgnored private var greetingTask: Task<Void, Never>?
     private var connections: [String: RunnerConnection] = [:]
+    @ObservationIgnored private var livenessTimer: Timer?
     private var reloads: [String: String] = [:]
     private var reloadTimer: Timer?
     private var restartPolicy = RestartPolicy()
@@ -210,13 +212,18 @@ final class AppModel {
                 MainActor.assumeIsolated { self?.reloadExtensions() }
             }
         }
-        // Cheap when nobody develops: one directory listing per second.
-        let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.checkDevelopment() }
+        // One wakeup a second, however many extensions run: it checks every
+        // runner and looks for `notchnotch dev` projects (one directory listing).
+        // Each wakeup of the main thread costs far more than this work.
+        let liveness = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.connections.values.forEach { $0.checkLiveness() }
+                self?.checkDevelopment()
+            }
         }
-        timer.tolerance = 0.3
-        RunLoop.main.add(timer, forMode: .common)
-        developmentTimer = timer
+        liveness.tolerance = 0.5
+        RunLoop.main.add(liveness, forMode: .common)
+        livenessTimer = liveness
         // Store updates: shortly after launch, then every six hours.
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(20))
@@ -295,16 +302,23 @@ final class AppModel {
                     guard let self, self.extensionSessionIDs[manifest.id] == sessionID else { return }
                     guard snapshot.revision > self.snapshotRevisions[manifest.id, default: 0] else { return }
                     let promptsBefore = Set(self.platform.surfaces.filter { $0.surface.kind == .prompt }.map(\.key))
+                    var changed = false
                     do {
-                        try self.platform.apply(snapshot, expectedExtensionID: manifest.id, imageHosts: manifest.imageHosts ?? [], allowPeek: !self.isExpanded)
+                        // Apply to a copy and keep it only if the notch would look different:
+                        // writing `platform` redraws the whole notch.
+                        var next = self.platform
+                        try next.apply(snapshot, expectedExtensionID: manifest.id, imageHosts: manifest.imageHosts ?? [], allowPeek: !self.isExpanded)
+                        if !next.presentsSame(as: self.platform) { self.platform = next; changed = true }
                         self.snapshotRevisions[manifest.id] = snapshot.revision
+                        if !self.renderedIDs.contains(manifest.id) { self.renderedIDs.insert(manifest.id) }
                         if self.extensionSettings[manifest.id] != snapshot.settings { self.extensionSettings[manifest.id] = snapshot.settings }
                     }
-                    catch { self.errors[manifest.id] = error.localizedDescription }
+                    catch { self.errors[manifest.id] = error.localizedDescription; changed = true }
                     // A new question is only drawn in the notch; say it for VoiceOver too.
                     for prompt in self.platform.surfaces where prompt.surface.kind == .prompt && !promptsBefore.contains(prompt.key) {
                         NotchAccessibility.announce("\(manifest.name) asks: \(prompt.surface.title). Open NotchNotch to answer.")
                     }
+                    guard changed else { return }
                     self.synchronizePeek()
                     self.onLayoutChange?()
                 } onFailure: { [weak self] message in
@@ -332,7 +346,7 @@ final class AppModel {
 
     func isEnabled(_ id: String) -> Bool { !disabledExtensionIDs.contains(id) }
     func isRunning(_ id: String) -> Bool { connections[id] != nil && errors[id] == nil }
-    func hasRendered(_ id: String) -> Bool { snapshotRevisions[id] != nil }
+    func hasRendered(_ id: String) -> Bool { renderedIDs.contains(id) }
     subscript(enabledFor id: String) -> Bool {
         get { isEnabled(id) }
         set { setEnabled(newValue, for: id) }
@@ -407,6 +421,7 @@ final class AppModel {
         errors.removeValue(forKey: id)
         extensionSettings.removeValue(forKey: id)
         snapshotRevisions.removeValue(forKey: id)
+        renderedIDs.remove(id)
     }
     func reviewInstall(_ folder: URL) async throws -> ExtensionPackage {
         let store = extensionStore
@@ -465,8 +480,8 @@ final class AppModel {
         hoverTask?.cancel()
         peekTask?.cancel()
         reloadTimer?.invalidate()
-        developmentTimer?.invalidate()
         storeUpdateTimer?.invalidate()
+        livenessTimer?.invalidate()
         for connection in connections.values { connection.stop() }
         connections.removeAll()
     }

@@ -383,3 +383,19 @@ private func idleActivity(id: String = "music", eligible: Bool = false) -> Surfa
         try Snapshot(extensionID: "timer", revision: 1, surfaces: [expandedOnly]).validate(expectedExtensionID: "timer")
     }
 }
+
+@Test func aSnapshotThatChangesNothingVisiblePresentsTheSame() throws {
+    var state = PlatformState()
+    try state.apply(.init(extensionID: "timer", revision: 1, surfaces: [activity()]), expectedExtensionID: "timer")
+    // A ticking Settings page: new revision, same surfaces.
+    var next = state
+    try next.apply(.init(extensionID: "timer", revision: 2, surfaces: [activity()],
+                         settings: .init(id: "settings", type: .text, props: .init(text: "12:01"))), expectedExtensionID: "timer")
+    #expect(next.presentsSame(as: state))
+    // A changed activity does present differently.
+    var changed = state
+    var ticking = activity()
+    ticking.compact = .init(leading: [], trailing: [.init(id: "time", type: .text, props: .init(text: "24:59"))])
+    try changed.apply(.init(extensionID: "timer", revision: 3, surfaces: [ticking]), expectedExtensionID: "timer")
+    #expect(!changed.presentsSame(as: state))
+}

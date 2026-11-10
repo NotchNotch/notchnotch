@@ -13,6 +13,7 @@ All notable changes to NotchNotch are listed here. The format follows
 - The notch follows Increase Contrast: text, separators and fills get stronger. A test checks that every text color meets WCAG AA (4.5:1) in both modes.
 
 ### Changed
+- NotchNotch uses much less CPU while idle with many extensions: 0.4% instead of 2.6% with 13 installed. Every extension used to wake the app once a second; now one check covers them all. Snapshots that change nothing on screen no longer redraw the notch.
 - Secondary-level text in the notch, such as section titles and footers, is brighter so it meets WCAG AA.
 - The SDK requires a `label` on icon-only buttons. TypeScript reports the ones that are missing.
 

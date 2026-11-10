@@ -23,6 +23,7 @@
 - [Architecture](internals/architecture.md): how the app, runners and connections work
 - [Releasing](internals/releasing.md): builds, signing and updates
 - [Store catalog](internals/store-catalog.md): the signed list of reviewed extensions
+- [Performance budget](internals/performance.md): idle limits and how to measure them
 - [Decisions](internals/decisions/0001-native-extension-platform.md)
 
 Also: [Changelog](../CHANGELOG.md) · [Privacy](../PRIVACY.md) · [Security](../SECURITY.md)

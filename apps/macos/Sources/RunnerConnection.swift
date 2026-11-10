@@ -19,7 +19,6 @@ final class RunnerConnection {
     private let onFailure: (String) -> Void
     private let onLog: (ExtensionLogEntry.Level, String) -> Void
     private var liveness = RunnerLiveness(startedAt: .now)
-    private var livenessTimer: Timer?
     private var lastStderr = ""
     private let directory: URL
     private var broker: ConnectionBroker?
@@ -89,12 +88,6 @@ final class RunnerConnection {
         }
         liveness = RunnerLiveness(startedAt: .now)
         resources = RunnerResources()
-        let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.checkLiveness() }
-        }
-        timer.tolerance = 0.5
-        RunLoop.main.add(timer, forMode: .common)
-        livenessTimer = timer
     }
 
     func send(action: String, value: String?) {
@@ -104,7 +97,9 @@ final class RunnerConnection {
         enqueue(data + Data([10]), failure: "Could not send event to \(manifest.name)")
     }
 
-    private func checkLiveness() {
+    /// Called about once a second by the app for every runner from one shared
+    /// timer: a timer per runner woke the main thread once per runner each second.
+    func checkLiveness() {
         guard !stopping, !failed else { return }
         switch liveness.tick(now: .now) {
         case .none: break
@@ -124,8 +119,6 @@ final class RunnerConnection {
     }
 
     func stop() {
-        livenessTimer?.invalidate()
-        livenessTimer = nil
         stopping = true
         resetConnections()
         output.fileHandleForReading.readabilityHandler = nil

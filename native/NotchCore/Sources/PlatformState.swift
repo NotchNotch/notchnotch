@@ -8,7 +8,7 @@ public struct SurfaceKey: Hashable, Sendable, Identifiable {
     public init(extensionID: String, surfaceID: String) { self.extensionID = extensionID; self.surfaceID = surfaceID }
 }
 
-public struct HostedSurface: Identifiable, Sendable {
+public struct HostedSurface: Identifiable, Equatable, Sendable {
     public let key: SurfaceKey
     public var surface: Surface
     public var id: SurfaceKey { key }
@@ -34,6 +34,17 @@ public struct PlatformState: Sendable {
     private var recentActivities: [SurfaceKey] = []
 
     public init() {}
+
+    /// Whether `other` would draw the same notch. Revisions are left out: they
+    /// change with every snapshot, while most snapshots change nothing visible
+    /// (a ticking Settings page, a re-render with the same tree). The app
+    /// compares before storing so those cost no redraw.
+    public func presentsSame(as other: PlatformState) -> Bool {
+        surfaces == other.surfaces && selection == other.selection && isExpanded == other.isExpanded &&
+            activePeek == other.activePeek && compactSelection == other.compactSelection &&
+            consumedPeeks == other.consumedPeeks && recentActivities == other.recentActivities
+    }
+
     public var presentation: NotchPresentation {
         if isExpanded { return .expanded }
         if activePeek != nil { return .peek }
