@@ -38,6 +38,19 @@ Write the README for the people who install the extension: what it does and how 
 
 NotchNotch shows headings, paragraphs, lists, quotes, code blocks, emphasis and `https` links. Images show their alt text, and HTML appears as plain text.
 
+## Screenshots
+
+The Store shows up to six screenshots per extension, 2000 × 1250 PNGs in `metadata/`, all on the same wallpaper. Let NotchNotch draw them:
+
+```sh
+npm run dev                  # in one terminal
+npx notchnotch screenshot    # in another, once your activity is showing
+```
+
+NotchNotch draws each activity and prompt your extension currently shows, expanded in the notch, and writes `metadata/1.png`, `metadata/2.png`… replacing earlier ones. It renders them itself, so it needs no Screen Recording permission and every extension's screenshots look alike. Set up the state you want to show first: start a timer, pick a city, fill in a token.
+
+**Capture** under **Store screenshots** in an extension's **Developer** tab does the same, saving to a folder on your Desktop when the extension isn't running from `notchnotch dev`.
+
 ## Store guidelines
 
 `npm run lint` (`notchnotch lint`) checks what a store review would ask you to fix. NotchNotch installs the extension either way.
@@ -47,6 +60,7 @@ NotchNotch shows headings, paragraphs, lists, quotes, code blocks, emphasis and 
 - Your own `id`, not `com.example.…`, plus `author`, `categories` and `license`.
 - Your own PNG icon, not an SF Symbol and not the template's placeholder.
 - A `README.md` and a `CHANGELOG.md`, without the template's placeholder text.
+- Screenshots in `metadata/`, if any, are 2000 × 1250 PNGs, at most six.
 
 A new project fails `lint` until you replace each placeholder.
 

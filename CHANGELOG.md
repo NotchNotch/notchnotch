@@ -7,6 +7,7 @@ All notable changes to NotchNotch are listed here. The format follows
 ## [Unreleased]
 
 ### Added
+- `notchnotch screenshot` and **Capture** in an extension's Developer tab draw Store screenshots: each activity expanded in the notch on a standard wallpaper, at 2000 × 1250, without Screen Recording permission. `notchnotch lint` checks the size of screenshots in `metadata/`.
 - VoiceOver reads the notch's announcements and new questions from extensions aloud, so they're no longer only visible.
 - Extensions can give a `label` to a `Symbol`, `Button`, `Progress` or `TextField` for VoiceOver. Symbols without one are skipped as decorative; icon-only buttons from older extensions get a name made from their symbol instead of the symbol's code name.
 - The notch follows Increase Contrast: text, separators and fills get stronger. A test checks that every text color meets WCAG AA (4.5:1) in both modes.

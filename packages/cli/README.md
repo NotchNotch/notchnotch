@@ -9,6 +9,7 @@ notchnotch build [folder] --pack                 # also write <id>-<version>.not
 notchnotch pack <package> [--out file.notchext]  # zip a built package for double-click install
 notchnotch check <package>                       # the app's install checks only
 notchnotch lint [folder]                         # store guidelines: icon, title, description, README…
+notchnotch screenshot [folder]                   # Store screenshots of the running extension into metadata/
 notchnotch publish [folder] [--dry-run]          # open or update a Store pull request (needs gh auth login)
 ```
 

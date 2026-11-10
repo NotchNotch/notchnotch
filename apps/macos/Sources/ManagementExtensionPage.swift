@@ -243,6 +243,20 @@ struct ManagementExtensionPage: View {
             }
         }
         Section {
+            LabeledContent {
+                Button("Capture") {
+                    do {
+                        let files = try model.captureScreenshots(record)
+                        NSWorkspace.shared.activateFileViewerSelecting(files)
+                        coordinator.notify("Saved \(files.count) screenshot\(files.count == 1 ? "" : "s") to \(files[0].deletingLastPathComponent().lastPathComponent).")
+                    } catch { coordinator.error = error.localizedDescription }
+                }.disabled(!model.isEnabled(record.id))
+            } label: {
+                Text("Store screenshots")
+                Text("Draws each of its activities in the notch at 2000 × 1250, as the Store shows them.")
+            }
+        }
+        Section {
             LabeledContent("Extension") {
                 Button("Restart") { model.restartExtension(record.id) }
                     .disabled(!model.isEnabled(record.id) || coordinator.busy)

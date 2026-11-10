@@ -2,7 +2,7 @@
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { buildExtension, checkPackage, lintExtension, packExtension } from "../src/index.mjs";
-import { developExtension, isAppRunning } from "../src/dev.mjs";
+import { captureScreenshots, developExtension, isAppRunning } from "../src/dev.mjs";
 import { publishExtension } from "../src/publish.mjs";
 
 const usage = `Usage:
@@ -12,6 +12,8 @@ const usage = `Usage:
   notchnotch dev [folder] [--out <dir>]
                                     Run the extension in NotchNotch and reload it on every change;
                                     its console output appears here. Press Ctrl+C to stop
+  notchnotch screenshot [folder]    Draw the running extension's activities at 2000×1250 into metadata/
+                                    for the Store (while notchnotch dev runs it)
   notchnotch pack [package] [--out <file.notchext>]
                                     Zip a built package into a .notchext people can double-click
   notchnotch check [package]        Check a built package against the app's install rules
@@ -26,7 +28,7 @@ const { positionals, values } = parseArgs({
     help: { type: "boolean", short: "h" } },
 });
 const [command, folder = "."] = positionals;
-if (values.help || !["build", "check", "dev", "lint", "pack", "publish"].includes(command)) {
+if (values.help || !["build", "check", "dev", "lint", "pack", "publish", "screenshot"].includes(command)) {
   console.log(usage);
   process.exit(values.help ? 0 : 1);
 }
@@ -60,6 +62,9 @@ try {
   } else if (command === "pack") {
     const file = await packExtension({ directory: folder, out: values.out });
     console.log(`Packed ${file}\nDouble-click it to open NotchNotch's install review, or share it.`);
+  } else if (command === "screenshot") {
+    const files = await captureScreenshots({ source: folder });
+    console.log(`Saved ${files.length} screenshot${files.length === 1 ? "" : "s"}:\n${files.map((file) => `  ${path.relative(process.cwd(), file)}`).join("\n")}`);
   } else if (command === "publish") {
     await publishExtension({ source: folder, dryRun: values["dry-run"] });
   } else if (command === "lint") {

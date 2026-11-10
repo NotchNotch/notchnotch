@@ -136,7 +136,7 @@ test("developExtension registers the build with the app, forwards its log and un
     logLevel: "silent", onLog: (level, message) => lines.push(`${level}:${message}`) });
   t.after(() => session.stop());
   const registration = path.join(directory, "Development", "dev.notchnotch.example.focus.json");
-  assert.deepEqual(JSON.parse(await readFile(registration, "utf8")), { path: path.join(directory, "out"), pid: process.pid });
+  assert.deepEqual(JSON.parse(await readFile(registration, "utf8")), { path: path.join(directory, "out"), pid: process.pid, source: path.resolve("examples/focus-timer") });
   assert.deepEqual(await checkPackage(path.join(directory, "out")), []);
 
   await writeFile(path.join(directory, "Development", "dev.notchnotch.example.focus.log"), "log\tstarted\nerror\tfailed\n\tsecond line\n");
@@ -247,4 +247,23 @@ test("notchnotch publish plans the Store folder and copies only source", async (
   assert.match(problems, /isn't a valid Store address/);
   assert.match(problems, /custom build\.mjs/);
   assert.match(problems, /native helpers/);
+});
+
+test("notchnotch lint checks Store screenshots in metadata/", async (t) => {
+  const { lintExtension } = await import("../packages/cli/src/lint.mjs");
+  const folder = path.join(await temporary(t), "shots");
+  await cp("examples/focus-timer", folder, { recursive: true, filter: (file) => !file.includes("node_modules") });
+  await mkdir(path.join(folder, "metadata"));
+  const png = (width, height) => {
+    const data = Buffer.alloc(33);
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(data);
+    data.write("IHDR", 12, "latin1"); data.writeUInt32BE(width, 16); data.writeUInt32BE(height, 20);
+    return data;
+  };
+  await writeFile(path.join(folder, "metadata/1.png"), png(2000, 1250));
+  assert.ok(!(await lintExtension(folder)).some((warning) => warning.startsWith("metadata/")));
+  await writeFile(path.join(folder, "metadata/2.png"), png(1920, 1080));
+  await writeFile(path.join(folder, "metadata/3.jpg"), "not a png");
+  const warnings = (await lintExtension(folder)).filter((warning) => warning.startsWith("metadata/"));
+  assert.deepEqual(warnings.map((warning) => warning.split(":")[0]), ["metadata/2.png", "metadata/3.jpg"]);
 });

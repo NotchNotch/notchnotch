@@ -230,8 +230,29 @@ final class AppModel {
         storeUpdateTimer = storeTimer
     }
 
+    /// Where Store screenshots of `record` go: its project's `metadata/` when
+    /// `notchnotch dev` runs it, otherwise a folder on the Desktop.
+    func screenshotFolder(for record: InstalledExtension) -> URL {
+        if let source = developmentEntries.first(where: { $0.id == record.id })?.source {
+            return source.appendingPathComponent("metadata", isDirectory: true)
+        }
+        let desktop = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first ?? FileManager.default.homeDirectoryForCurrentUser
+        return desktop.appendingPathComponent("\(record.manifest.name) Screenshots", isDirectory: true)
+    }
+    func captureScreenshots(_ record: InstalledExtension) throws -> [URL] {
+        try StoreScreenshot.capture(platform.surfaces, record: record, into: screenshotFolder(for: record))
+    }
+
     /// Loads, reloads after a rebuild, and unloads `notchnotch dev` projects.
     private func checkDevelopment() {
+        for id in developmentRegistry.screenshotRequests() {
+            guard let record = installedExtensions.first(where: { $0.id == id && $0.origin == .development }) else {
+                developmentRegistry.finishScreenshots(id: id, files: [], error: "\(id) isn’t running in NotchNotch. Run notchnotch dev first.")
+                continue
+            }
+            do { developmentRegistry.finishScreenshots(id: id, files: try captureScreenshots(record), error: nil) }
+            catch { developmentRegistry.finishScreenshots(id: id, files: [], error: error.localizedDescription) }
+        }
         let entries = developmentRegistry.entries()
         guard entries != developmentEntries || !entries.isEmpty else { return }
         developmentEntries = entries

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { iconFiles } from "./manifest.mjs";
 
@@ -49,6 +49,17 @@ export async function lintExtension(directory) {
   if (readme === undefined) warn("README.md: add one that explains what the extension does and how to set it up");
   else if (readme.includes("Describe what") && readme.includes("Explain any setup step")) warn("README.md: replace the template's placeholder text");
   if (await read(path.join(directory, "CHANGELOG.md")) === undefined) warn("CHANGELOG.md: add one with a section for each version");
+
+  // Store screenshots: what `notchnotch screenshot` writes.
+  const shots = (await readdir(path.join(directory, "metadata")).catch(() => [])).filter((name) => !name.startsWith("."));
+  if (shots.length > 6) warn(`metadata/: the Store shows up to 6 screenshots; remove ${shots.length - 6}`);
+  for (const name of shots) {
+    const data = await readFile(path.join(directory, "metadata", name)).catch(() => undefined);
+    const png = data && data.length > 24 && data.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    if (!png || data.readUInt32BE(16) !== 2000 || data.readUInt32BE(20) !== 1250) {
+      warn(`metadata/${name}: screenshots must be 2000×1250 PNGs; make them with notchnotch screenshot`);
+    }
+  }
 
   return warnings;
 }

@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdir, open, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, open, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 import { buildExtension, checkPackage, readManifest } from "./index.mjs";
@@ -30,7 +30,7 @@ export async function developExtension({ source, destination, onLog = () => {}, 
   const registration = path.join(directory, `${manifest.id}.json`);
   const log = path.join(directory, `${manifest.id}.log`);
   await writeFile(log, "");
-  await writeFile(registration, JSON.stringify({ path: destination, pid: process.pid }));
+  await writeFile(registration, JSON.stringify({ path: destination, pid: process.pid, source }));
 
   // Follow the log the app appends to.
   let offset = 0;
@@ -78,4 +78,33 @@ export async function developExtension({ source, destination, onLog = () => {}, 
 /** Whether a NotchNotch app is running on this Mac. */
 export function isAppRunning() {
   return spawnSync("/usr/bin/pgrep", ["-x", "NotchNotch"]).status === 0;
+}
+
+/**
+ * Asks the running NotchNotch to draw Store screenshots of an extension that
+ * `notchnotch dev` is running, into the project's `metadata/`. Returns the files.
+ */
+export async function captureScreenshots({ source, timeout = 15_000 }) {
+  const manifest = await readManifest(path.resolve(source));
+  const directory = developmentDirectory();
+  if (!(await stat(path.join(directory, `${manifest.id}.json`)).then(() => true, () => false))) {
+    throw new Error(`${manifest.name} isn't running. Start it with notchnotch dev in another terminal, then capture.`);
+  }
+  const request = path.join(directory, `${manifest.id}.screenshot`);
+  const result = path.join(directory, `${manifest.id}.screenshot-result`);
+  await rm(result, { force: true });
+  await writeFile(request, "");
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const text = await readFile(result, "utf8").catch(() => null);
+    if (text) {
+      await rm(result, { force: true });
+      const { files, error } = JSON.parse(text);
+      if (error) throw new Error(error);
+      return files;
+    }
+    await new Promise((done) => setTimeout(done, 200));
+  }
+  await rm(request, { force: true });
+  throw new Error(isAppRunning() ? "NotchNotch didn't answer. Update it to 0.8 or later." : "NotchNotch isn't running.");
 }

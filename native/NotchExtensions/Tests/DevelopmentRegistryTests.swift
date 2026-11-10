@@ -60,3 +60,22 @@ private func register(_ registry: DevelopmentRegistry, id: String, folder: URL, 
     #expect(scan.issues.keys.contains { $0.hasSuffix("renamed/dist") })
     #expect(!scan.issues.keys.contains { $0.contains("installed") })
 }
+
+@Test func screenshotRequestsAreAnsweredWithTheirFiles() throws {
+    let root = FileManager.default.temporaryDirectory.appendingPathComponent("notchnotch-dev-" + UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: root) }
+    let registry = DevelopmentRegistry(directory: root.appendingPathComponent("Development"))
+    try package(at: root.appendingPathComponent("built"), id: "dev.test.shot")
+    try FileManager.default.createDirectory(at: registry.directory, withIntermediateDirectories: true)
+    try JSONSerialization.data(withJSONObject: ["path": root.appendingPathComponent("built").path, "pid": getpid(), "source": root.path])
+        .write(to: registry.directory.appendingPathComponent("dev.test.shot.json"))
+    #expect(registry.entries().first?.source == root.standardizedFileURL)
+
+    #expect(registry.screenshotRequests().isEmpty)
+    try Data().write(to: registry.directory.appendingPathComponent("dev.test.shot.screenshot"))
+    #expect(registry.screenshotRequests() == ["dev.test.shot"])
+    registry.finishScreenshots(id: "dev.test.shot", files: [root.appendingPathComponent("metadata/1.png")], error: nil)
+    #expect(registry.screenshotRequests().isEmpty)
+    let result = try JSONSerialization.jsonObject(with: Data(contentsOf: registry.directory.appendingPathComponent("dev.test.shot.screenshot-result"))) as? [String: Any]
+    #expect(result?["files"] as? [String] == [root.appendingPathComponent("metadata/1.png").path])
+}

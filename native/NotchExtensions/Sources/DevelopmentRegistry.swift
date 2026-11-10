@@ -13,11 +13,14 @@ public struct DevelopmentRegistry: Sendable {
     public struct Entry: Equatable, Sendable {
         public let id: String
         public let folder: URL
+        /// The project folder, where Store screenshots go. Older CLIs don't send it.
+        public var source: URL? = nil
     }
 
     private struct Registration: Decodable {
         let path: String
         let pid: Int32
+        let source: String?
     }
 
     /// Registrations whose CLI is still running and whose folder exists.
@@ -30,8 +33,25 @@ public struct DevelopmentRegistry: Sendable {
             let folder = URL(fileURLWithPath: registration.path).standardizedFileURL
             var isDirectory: ObjCBool = false
             guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isDirectory), isDirectory.boolValue else { return nil }
-            return Entry(id: file.deletingPathExtension().lastPathComponent, folder: folder)
+            return Entry(id: file.deletingPathExtension().lastPathComponent, folder: folder,
+                         source: registration.source.map { URL(fileURLWithPath: $0).standardizedFileURL })
         }
+    }
+
+    /// Ids for which `notchnotch screenshot` asked for Store screenshots.
+    public func screenshotRequests() -> [String] {
+        let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
+        return files.filter { $0.pathExtension == "screenshot" }.map { $0.deletingPathExtension().lastPathComponent }.sorted()
+    }
+
+    /// Answers a request: the files written, or why there are none.
+    public func finishScreenshots(id: String, files: [URL], error: String?) {
+        struct Result: Encodable { let files: [String]; let error: String? }
+        let result = Result(files: files.map(\.path), error: error)
+        if let data = try? JSONEncoder().encode(result) {
+            try? data.write(to: directory.appendingPathComponent("\(id).screenshot-result"), options: .atomic)
+        }
+        try? FileManager.default.removeItem(at: directory.appendingPathComponent("\(id).screenshot"))
     }
 
     /// Appends one line to the extension's development log, if it has one.
