@@ -11,6 +11,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 - NotchNotch stops an extension that uses more than 400 MB of memory, keeps the processor busy for 30 seconds, or sends more than 30 messages a second after a short burst, and says which limit it hit.
 
+- The install review lists what an extension can do beyond its sandbox in plain words, riskiest first: programs, websites, local apps, pictures and settings. In an update, anything new since the installed version is marked **New**.
+
 ### Changed
 - Extension storage is written by the app instead of the extension's process, and holds up to 255 KiB.
 

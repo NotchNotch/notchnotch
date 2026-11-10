@@ -49,19 +49,18 @@ struct ManagementReviewSheet: View {
     @ViewBuilder private var details: some View {
         switch item {
         case .install(let package):
-            if let old = coordinator.model.installedExtensions.first(where: { $0.id == package.id }) {
-                Text("This replaces version \(old.manifest.version). Your enabled/disabled preference is kept.").font(.callout).foregroundStyle(.secondary)
+            let old = coordinator.model.installedExtensions.first(where: { $0.id == package.id })
+            if let old {
+                Text("This replaces version \(old.manifest.version). Its settings and data are kept.").font(.callout).foregroundStyle(.secondary)
             }
             if let description = package.manifest.description { Text(description) }
             if ExtensionAboutRows.hasContent(package.manifest) {
                 VStack(alignment: .leading, spacing: 6) { ExtensionAboutRows(manifest: package.manifest) }.font(.callout)
             }
             Text(package.id).font(.callout.monospaced()).foregroundStyle(.secondary).textSelection(.enabled)
-            ManagementAccessView(manifest: package.manifest)
-            if package.manifest.permissions.contains("process") {
-                Text("Native tools can access files and network with your account. Install only extensions you trust.").font(.callout).foregroundStyle(.secondary)
-            }
-            Text("App access is requested separately. Installation never runs a build script.").font(.callout).foregroundStyle(.secondary)
+            Divider()
+            ExtensionPermissionsView(manifest: package.manifest, previous: old?.manifest)
+            Text("Install only extensions you trust.").font(.callout).foregroundStyle(.secondary)
         case .remove(let record):
             Text("\(record.manifest.name)’s activities will close and its app connections will stop. You can recover its folder from Trash or install it again later.")
                 .foregroundStyle(.secondary)

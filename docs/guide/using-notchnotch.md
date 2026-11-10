@@ -63,7 +63,7 @@ Use the switch at the top of the page to turn an extension off. Its activities d
 
 ### Install an extension
 
-Double-click a `.notchext` file, or click **+** at the bottom of the sidebar and choose one. NotchNotch shows what the extension is, who made it and what it asks for before anything is installed.
+Double-click a `.notchext` file, or click **+** at the bottom of the sidebar and choose one. Before anything is installed, NotchNotch shows what the extension is, who made it, and what it can do beyond its sandbox, riskiest first. When you update an extension, anything it couldn't do before is marked **New**: look twice at those.
 
 Only install extensions you trust. An extension's own code can't reach your files or the network, but one that runs a native helper can do anything your account can. The review says when that is the case.
 

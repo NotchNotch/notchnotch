@@ -68,4 +68,6 @@ If the file was downloaded, macOS's quarantine flag carries over to every unpack
 
 ## Trust
 
+The install review lists what your extension can do beyond its sandbox, riskiest first: programs it runs, websites it exchanges data with, apps on the Mac it talks to, websites it shows pictures from, and settings it asks for. In an update, anything the installed version didn't have is marked **New**, so ask only for what you need, and say in your changelog why a new permission is there.
+
 Installing an extension is a trust decision. Its JavaScript runs in a sandbox that can't touch files, the network or other programs, but a native helper runs with the person's account. The install review lists everything the extension asks for. Only install extensions you trust, and say plainly in your README what yours does.
