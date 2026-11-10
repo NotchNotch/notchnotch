@@ -18,7 +18,7 @@ struct SettingsActionButton: View {
             if let title = node.props.text, !title.isEmpty {
                 Label(title, systemImage: symbol)
             } else {
-                Image(systemName: symbol).accessibilityLabel(symbol)
+                Image(systemName: symbol).accessibilityLabel(NotchButton.label(for: node)).help(NotchButton.label(for: node))
             }
         } else { Text(node.props.text ?? "") }
     }

@@ -114,3 +114,4 @@ NotchNotch stops an extension that uses more than 400 MB of memory, keeps the pr
 - Keep compact content to a symbol and a few characters.
 - In settings, prefer a `ListItem` with a `Toggle` over a pair of on and off buttons.
 - Write titles in title case and messages in plain sentences.
+- Give icon-only buttons and meaningful symbols a `label`, and never show state by color alone. See [Accessibility](components.md#accessibility).

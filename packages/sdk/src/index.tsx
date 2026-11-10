@@ -63,16 +63,21 @@ export function Divider() { return createElement("divider", null); }
 export function Text({ children, tone = "primary", size = "body" }: Children & { tone?: Tone; size?: TextSize }) {
   return createElement("text", { tone, size }, children);
 }
-/** SF Symbol. `size` follows the text scale so icons line up with adjacent text. */
-export function Symbol({ name, tone = "primary", size = "body" }: { name: string; tone?: Tone; size?: TextSize }) {
-  return createElement("symbol", { name, tone, size });
+/**
+ * SF Symbol. `size` follows the text scale so icons line up with adjacent text.
+ * Symbols are decorative and VoiceOver skips them; give one a `label` when it
+ * carries meaning no text beside it does, such as a status.
+ */
+export function Symbol({ name, tone = "primary", size = "body", label }: { name: string; tone?: Tone; size?: TextSize; label?: string }) {
+  return createElement("symbol", { name, tone, size, label });
 }
 /** Short status label, e.g. a count or "Live". */
 export function Badge({ children, tone = "secondary" }: Children & { tone?: Tone }) {
   return createElement("badge", { tone }, children);
 }
-export function Progress({ value, tone = "accent" }: { value: number; tone?: Tone }) {
-  return createElement("progress", { value, tone });
+/** `label` says what is progressing, such as "Focus session"; VoiceOver reads it with the percentage. */
+export function Progress({ value, tone = "accent", label }: { value: number; tone?: Tone; label?: string }) {
+  return createElement("progress", { value, tone, label });
 }
 
 type ButtonProps = {
@@ -80,14 +85,18 @@ type ButtonProps = {
   /** `accent` is the single primary action; `danger` is destructive. */
   tone?: Tone;
   disabled?: boolean;
-} & ({ title: string; icon?: string } | { title?: undefined; icon: string });
-/** Capsule button with a title, an SF Symbol `icon`, or both. Icon-only buttons are labeled by the symbol name. */
-export function Button({ title, icon, onPress, tone = "secondary", disabled = false }: ButtonProps) {
-  return createElement("button", { text: title ?? "", name: icon, onPress, tone, disabled });
+} & ({ title: string; icon?: string; label?: string } | { title?: undefined; icon: string; label: string });
+/**
+ * Capsule button with a title, an SF Symbol `icon`, or both. An icon-only
+ * button needs a `label`, which VoiceOver reads and the tooltip shows.
+ */
+export function Button({ title, icon, label, onPress, tone = "secondary", disabled = false }: ButtonProps) {
+  return createElement("button", { text: title ?? "", name: icon, label, onPress, tone, disabled });
 }
-export function TextField({ value, onChange, placeholder, disabled = false }: {
-  value: string; onChange: (value: string) => void; placeholder: string; disabled?: boolean;
-}) { return createElement("textField", { text: value, onChange, placeholder, disabled }); }
+/** `label` names the field for VoiceOver; without one it reads the placeholder. */
+export function TextField({ value, onChange, placeholder, label, disabled = false }: {
+  value: string; onChange: (value: string) => void; placeholder: string; label?: string; disabled?: boolean;
+}) { return createElement("textField", { text: value, onChange, placeholder, label, disabled }); }
 /** On/off switch. Controlled: render the new `value` after `onChange`. */
 export function Toggle({ label, value, onChange, disabled = false }: {
   label?: string; value: boolean; onChange: (value: boolean) => void; disabled?: boolean;

@@ -20,7 +20,7 @@ struct StorePage: View {
                 }.labelsHidden().fixedSize()
                 Button { Task { await store.refresh() } } label: {
                     Image(systemName: "arrow.clockwise")
-                }.help("Check the Store again").disabled(store.phase == .loading)
+                }.help("Check the Store again").accessibilityLabel("Check the Store again").disabled(store.phase == .loading)
             }.padding(12)
             Divider()
             content
@@ -217,7 +217,7 @@ struct StoreIcon: View {
                 image.resizable().interpolation(.high).aspectRatio(contentMode: .fit)
             } placeholder: {
                 RoundedRectangle(cornerRadius: size * 0.2).fill(.quaternary)
-            }.frame(width: size, height: size)
+            }.frame(width: size, height: size).accessibilityHidden(true)
         } else {
             let symbol = entry.manifest.icon.flatMap { $0.hasSuffix(".png") ? nil : $0 } ?? ExtensionIcon.fallbackSymbol
             ExtensionIdentityView(icon: .symbol(symbol), size: size)

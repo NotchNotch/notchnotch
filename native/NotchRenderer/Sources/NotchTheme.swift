@@ -1,5 +1,6 @@
 import SwiftUI
 import NotchProtocol
+import NotchCore
 
 /// Design tokens for everything drawn inside the notch. The notch is always a
 /// black surface, so colors are expressed as white opacities plus a few
@@ -7,17 +8,19 @@ import NotchProtocol
 /// the host owns the actual metrics.
 public enum NotchTheme {
     // MARK: Color
+    static var inks: AccessibilityRules.Inks { NotchAccessibility.increasesContrast ? .increased : .standard }
     public enum Ink {
-        public static let primary = Color.white.opacity(0.94)
-        public static let secondary = Color.white.opacity(0.58)
-        public static let tertiary = Color.white.opacity(0.36)
-        public static let separator = Color.white.opacity(0.12)
-        public static let fill = Color.white.opacity(0.07)
-        public static let fillStrong = Color.white.opacity(0.12)
+        public static var primary: Color { .white.opacity(inks.primary) }
+        public static var secondary: Color { .white.opacity(inks.secondary) }
+        public static var tertiary: Color { .white.opacity(inks.tertiary) }
+        public static var separator: Color { .white.opacity(inks.separator) }
+        public static var fill: Color { .white.opacity(inks.fill) }
+        public static var fillStrong: Color { .white.opacity(inks.fillStrong) }
     }
-    public static let success = Color(red: 0.48, green: 0.85, blue: 0.62)
-    public static let warning = Color(red: 1.0, green: 0.74, blue: 0.38)
-    public static let danger = Color(red: 1.0, green: 0.45, blue: 0.43)
+    public static let success = rgb(AccessibilityRules.success)
+    public static let warning = rgb(AccessibilityRules.warning)
+    public static let danger = rgb(AccessibilityRules.danger)
+    private static func rgb(_ value: (Double, Double, Double)) -> Color { Color(red: value.0, green: value.1, blue: value.2) }
 
     public static func color(_ tone: Tone?) -> Color {
         switch tone {

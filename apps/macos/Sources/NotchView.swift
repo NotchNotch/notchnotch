@@ -146,7 +146,7 @@ struct NotchView: View {
         .foregroundStyle(.black)
         .padding(.horizontal, 5).frame(height: 14)
         .background(.white, in: Capsule())
-        .transition(.scale.combined(with: .opacity))
+        .transition(reduceMotion ? .opacity : .scale.combined(with: .opacity))
         .accessibilityLabel(model.platform.pendingCount == 1 ? "A question is waiting"
                             : "\(model.platform.pendingCount) questions are waiting")
     }

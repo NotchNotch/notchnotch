@@ -83,7 +83,7 @@ function FocusTimer() {
         <Progress value={Math.min(1, Math.max(0, 1 - remaining / total))} tone={phase === "break" ? "success" : "accent"} />
         <Divider />
         <Actions>
-          <Button icon="stop.fill" tone="danger" onPress={stop} />
+          <Button icon="stop.fill" label="Stop" tone="danger" onPress={stop} />
           <Button title={paused ? "Resume" : "Pause"} icon={paused ? "play.fill" : "pause.fill"} tone="accent"
             onPress={() => setPaused((value) => !value)} />
         </Actions>

@@ -2,6 +2,7 @@ import AppKit
 import ServiceManagement
 import Observation
 import NotchCore
+import NotchRenderer
 import NotchProtocol
 import NotchExtensions
 import NotchConnections
@@ -272,12 +273,17 @@ final class AppModel {
                 let connection = RunnerConnection(manifest: manifest, directory: record.directory) { [weak self] snapshot in
                     guard let self, self.extensionSessionIDs[manifest.id] == sessionID else { return }
                     guard snapshot.revision > self.snapshotRevisions[manifest.id, default: 0] else { return }
+                    let promptsBefore = Set(self.platform.surfaces.filter { $0.surface.kind == .prompt }.map(\.key))
                     do {
                         try self.platform.apply(snapshot, expectedExtensionID: manifest.id, imageHosts: manifest.imageHosts ?? [], allowPeek: !self.isExpanded)
                         self.snapshotRevisions[manifest.id] = snapshot.revision
                         if self.extensionSettings[manifest.id] != snapshot.settings { self.extensionSettings[manifest.id] = snapshot.settings }
                     }
                     catch { self.errors[manifest.id] = error.localizedDescription }
+                    // A new question is only drawn in the notch; say it for VoiceOver too.
+                    for prompt in self.platform.surfaces where prompt.surface.kind == .prompt && !promptsBefore.contains(prompt.key) {
+                        NotchAccessibility.announce("\(manifest.name) asks: \(prompt.surface.title). Open NotchNotch to answer.")
+                    }
                     self.synchronizePeek()
                     self.onLayoutChange?()
                 } onFailure: { [weak self] message in
@@ -450,6 +456,7 @@ final class AppModel {
         greetingTask?.cancel()
         greeting = text
         lastPeekText = text
+        NotchAccessibility.announce(text)
         onLayoutChange?()
         greetingTask = Task { [weak self] in
             do { try await Task.sleep(for: .seconds(seconds)) } catch { return }
@@ -545,6 +552,7 @@ final class AppModel {
         peekTask?.cancel()
         scheduledPeek = platform.activePeek
         guard let peek = platform.activePeek else { return }
+        if let surface = platform.peeking?.surface, let text = surface.peek?.text { NotchAccessibility.announce(text) }
         hoverTask?.cancel()
         hover.reset()
         peekTask = Task { [weak self] in

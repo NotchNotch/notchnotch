@@ -10,6 +10,7 @@ struct SettingsTextField: View {
         TextField(node.props.placeholder ?? "", text: $text)
             .textFieldStyle(.roundedBorder).focused($editing)
             .disabled(node.props.disabled ?? false)
+            .accessibilityLabel(node.props.label ?? node.props.placeholder ?? "Text")
             .onAppear { text = node.props.text ?? "" }
             .onChange(of: node.props.text) { _, value in
                 if !editing, text != value { text = value ?? "" }

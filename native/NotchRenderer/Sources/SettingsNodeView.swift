@@ -34,8 +34,10 @@ public struct SettingsNodeView: View {
                 .foregroundStyle(Self.color(node.props.tone)).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
         case .symbol:
             Image(systemName: node.props.name ?? "circle").foregroundStyle(Self.color(node.props.tone))
+                .accessibilityLabel(node.props.label ?? "")
+                .accessibilityHidden(node.props.label?.isEmpty ?? true)
         case .progress:
-            ProgressView(value: node.props.value ?? 0)
+            ProgressView(value: node.props.value ?? 0).accessibilityLabel(node.props.label ?? "Progress")
         case .button:
             SettingsActionButton(node: node, onEvent: onEvent)
         case .textField:

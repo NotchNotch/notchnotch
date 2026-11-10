@@ -6,6 +6,18 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- VoiceOver reads the notch's announcements and new questions from extensions aloud, so they're no longer only visible.
+- Extensions can give a `label` to a `Symbol`, `Button`, `Progress` or `TextField` for VoiceOver. Symbols without one are skipped as decorative; icon-only buttons from older extensions get a name made from their symbol instead of the symbol's code name.
+- The notch follows Increase Contrast: text, separators and fills get stronger. A test checks that every text color meets WCAG AA (4.5:1) in both modes.
+
+### Changed
+- Secondary-level text in the notch, such as section titles and footers, is brighter so it meets WCAG AA.
+- The SDK requires a `label` on icon-only buttons. TypeScript reports the ones that are missing.
+
+### Fixed
+- The waiting-question badge no longer scales in when Reduce Motion is on.
+
 ## [0.7.0] - 2026-11-10
 
 ### Added

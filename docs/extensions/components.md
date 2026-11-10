@@ -7,9 +7,9 @@ Import components from `@notchnotch/sdk`. NotchNotch draws them natively and con
 | Component | Props |
 | --- | --- |
 | `Text` | text or number children, `tone`, `size` |
-| `Symbol` | SF Symbol `name`, `tone`, `size` (follows the text sizes) |
+| `Symbol` | SF Symbol `name`, `tone`, `size` (follows the text sizes), `label` when it carries meaning |
 | `Badge` | short text children, `tone` |
-| `Progress` | `value` from 0 to 1, `tone` |
+| `Progress` | `value` from 0 to 1, `tone`, `label` |
 
 Text sizes: `caption`, `body`, `headline`, `title`, `timer`.
 
@@ -19,8 +19,8 @@ Tones: `primary`, `secondary`, `accent`, `success`, `warning`, `danger`.
 
 | Component | Props |
 | --- | --- |
-| `Button` | `title` and/or SF Symbol `icon`, `onPress`, `tone`, `disabled` |
-| `TextField` | `value`, `onChange`, `placeholder`, `disabled` |
+| `Button` | `title` and/or SF Symbol `icon`, `onPress`, `tone`, `disabled`. An icon-only button needs a `label` |
+| `TextField` | `value`, `onChange`, `placeholder`, `label`, `disabled` |
 | `Toggle` | `value`, `onChange(boolean)`, `label`, `disabled` |
 | `Picker` | `options` (1–32 `{ value, label }`), `value`, `onChange`, `label`. Segmented in the notch, a menu in Settings |
 | `Actions` | buttons, aligned to the trailing edge. Put the `accent` action last |
@@ -43,6 +43,22 @@ Fields, toggles and pickers are controlled: keep their value in React state.
 | `Divider` | a separator line |
 | `Section` | `title`, `footer`, `spacing`, children |
 | `ListItem` | `title`, `subtitle`, SF Symbol `icon`, `tone`, optional `onPress`, trailing children |
+
+## Accessibility
+
+NotchNotch draws every component natively, so VoiceOver, Increase Contrast and Reduce Motion work without extra code. A few things only you know:
+
+```tsx
+<Button icon="arrow.clockwise" label="Refresh" onPress={refresh} />
+<Symbol name="xmark.octagon.fill" tone="danger" label="Major outage" />
+<Progress value={done} label="Focus session" />
+<TextField value={city} onChange={setCity} placeholder="London" label="City" />
+```
+
+- **Icon-only buttons need a `label`.** TypeScript requires it. VoiceOver reads it and the pointer shows it as a tooltip.
+- **Symbols are skipped by VoiceOver** unless you give them a `label`. Add one when the symbol says something its neighbors don't, such as a status shown only by color and icon.
+- **Don't rely on color alone.** Pair a `danger` or `success` tone with words, a symbol with a `label`, or a `Badge`.
+- Announcements (`Activity.Peek`) and new prompts are read aloud by VoiceOver, so write their text as a full sentence.
 
 ## Media
 

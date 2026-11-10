@@ -293,6 +293,10 @@
             "placeholder": {
               "type": "string"
             },
+            "label": {
+              "type": "string",
+              "maxLength": 256
+            },
             "disabled": {
               "type": "boolean"
             },

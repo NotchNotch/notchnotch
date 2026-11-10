@@ -101,7 +101,7 @@ export function createRenderer(extensionID: string, send: (snapshot: Snapshot) =
   function serialize(node: Instance, registry: typeof actions): UINode {
     if (!nodeTypes.has(node.type)) throw new Error(`Unsupported component: ${node.type}`);
     const props: UINode["props"] = {};
-    for (const key of ["text", "name", "tone", "size", "value", "placeholder", "disabled", "source", "media", "detail", "spacing", "align", "options", "selection"] as const) {
+    for (const key of ["text", "name", "tone", "size", "value", "placeholder", "disabled", "source", "media", "detail", "spacing", "align", "options", "selection", "label"] as const) {
       if (node.props[key] !== undefined) Object.assign(props, { [key]: node.props[key] });
     }
     if (textNodes.has(node.type)) props.text = plainText(node);

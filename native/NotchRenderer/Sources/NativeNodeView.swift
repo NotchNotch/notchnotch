@@ -1,4 +1,5 @@
 import SwiftUI
+import NotchCore
 import NotchProtocol
 
 /// Renders an extension UI tree inside the notch using `NotchTheme` tokens.
@@ -10,6 +11,9 @@ public struct NativeNodeView: View {
     public init(node: UINode, compact: Bool = false, cameraHeight: CGFloat = 32, onEvent: @escaping (String, String?) -> Void) {
         self.node = node; self.compact = compact; self.cameraHeight = cameraHeight; self.onEvent = onEvent
     }
+
+    /// Read so the tree redraws when Increase Contrast changes; the inks follow it.
+    @Environment(\.colorSchemeContrast) private var contrast
 
     public var body: some View {
         content.foregroundStyle(NotchTheme.color(node.props.tone))
@@ -38,9 +42,11 @@ public struct NativeNodeView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityLabel(node.props.text ?? "")
         case .symbol:
+            // Decorative unless the extension says what it means.
             Image(systemName: node.props.name ?? "circle")
                 .font(.system(size: NotchTheme.symbolSize(node.props.size, compact: compact), weight: .medium))
-                .accessibilityHidden(true)
+                .accessibilityLabel(node.props.label ?? "")
+                .accessibilityHidden(node.props.label?.isEmpty ?? true)
         case .progress:
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
@@ -50,7 +56,7 @@ public struct NativeNodeView: View {
                 }
             }.frame(height: 4)
                 .accessibilityElement()
-                .accessibilityLabel("Progress")
+                .accessibilityLabel(node.props.label ?? "Progress")
                 .accessibilityValue("\(Int((node.props.value ?? 0) * 100)) percent")
         case .button:
             NotchButton(node: node, onEvent: onEvent)
@@ -120,7 +126,7 @@ struct NotchPressStyle: ButtonStyle {
 
 /// Accent is the single prominent action; danger is destructive; everything
 /// else is a quiet filled capsule. An optional SF Symbol leads the title.
-private struct NotchButton: View {
+struct NotchButton: View {
     let node: UINode
     let onEvent: (String, String?) -> Void
     private var foreground: Color {
@@ -160,7 +166,14 @@ private struct NotchButton: View {
         .buttonStyle(NotchPressStyle())
         .disabled(node.props.disabled ?? false)
         .opacity(node.props.disabled == true ? 0.4 : 1)
-        .accessibilityLabel(title.isEmpty ? (node.props.name ?? "Button") : title)
+        .accessibilityLabel(Self.label(for: node))
+        .help(title.isEmpty ? Self.label(for: node) : "")
+    }
+    /// The extension's `label`, the title, or a name made from the symbol for older extensions.
+    static func label(for node: UINode) -> String {
+        if let label = node.props.label, !label.isEmpty { return label }
+        if let title = node.props.text, !title.isEmpty { return title }
+        return AccessibilityRules.spokenName(forSymbol: node.props.name ?? "Button")
     }
 }
 
@@ -317,6 +330,7 @@ private struct NativeTextField: View {
             .overlay(RoundedRectangle(cornerRadius: NotchTheme.controlRadius)
                 .strokeBorder(isEditing ? NotchTheme.Ink.tertiary : NotchTheme.Ink.separator, lineWidth: 0.5))
             .disabled(node.props.disabled ?? false)
+            .accessibilityLabel(node.props.label ?? node.props.placeholder ?? "Text")
             .onAppear { text = node.props.text ?? "" }
             .onChange(of: node.props.text) { _, value in
                 // A runner acknowledgement can arrive several keystrokes behind.

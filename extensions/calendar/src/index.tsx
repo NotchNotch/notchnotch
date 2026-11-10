@@ -133,7 +133,7 @@ function Calendar() {
         <ListItem icon="calendar" title="Calendar" subtitle={accessDetail}>
           <Button title={authorized ? "Refresh" : "Connect"} tone={authorized ? "secondary" : "accent"} disabled={busy}
             onPress={() => { void request(authorized ? "calendar/getState" : "calendar/connect"); }} />
-          <Button icon="arrow.up.forward.app" disabled={busy} onPress={() => { void request("calendar/open"); }} />
+          <Button icon="arrow.up.forward.app" label="Open Calendar" disabled={busy} onPress={() => { void request("calendar/open"); }} />
         </ListItem>
         {problem ? <Text tone="danger">{problem.slice(0, 1024)}</Text> : null}
       </Section>

@@ -48,16 +48,18 @@ public struct NodeProps: Codable, Equatable, Sendable {
     /// Picker choices; `selection` holds the chosen value.
     public var options: [PickerOption]?
     public var selection: String?
+    /// What VoiceOver says for a symbol, an icon-only button, a progress bar or a field.
+    public var label: String?
 
     public init(text: String? = nil, name: String? = nil, tone: Tone? = nil, size: TextSize? = nil,
                 value: Double? = nil, action: String? = nil, placeholder: String? = nil, disabled: Bool? = nil,
                 source: String? = nil, media: NowPlayingState? = nil, detail: String? = nil,
                 spacing: Spacing? = nil, align: LayoutAlignment? = nil,
-                options: [PickerOption]? = nil, selection: String? = nil) {
+                options: [PickerOption]? = nil, selection: String? = nil, label: String? = nil) {
         self.text = text; self.name = name; self.tone = tone; self.size = size
         self.value = value; self.action = action; self.placeholder = placeholder; self.disabled = disabled
         self.source = source; self.media = media; self.detail = detail; self.spacing = spacing; self.align = align
-        self.options = options; self.selection = selection
+        self.options = options; self.selection = selection; self.label = label
     }
 }
 
@@ -133,7 +135,8 @@ public struct Snapshot: Codable, Sendable {
                   (node.props.text?.count ?? 0) <= 4096,
                   (node.props.detail?.count ?? 0) <= 4096,
                   (node.props.name?.count ?? 0) <= 128,
-                  (node.props.action?.count ?? 0) <= 128 else {
+                  (node.props.action?.count ?? 0) <= 128,
+                  (node.props.label?.count ?? 0) <= 256 else {
                 throw ProtocolError.invalid("Invalid or oversized UI tree")
             }
             if compact && node.type.isInteractive {

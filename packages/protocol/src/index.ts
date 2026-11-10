@@ -26,6 +26,8 @@ export interface UINode {
     align?: Alignment;
     options?: PickerOption[];
     selection?: string;
+    /** What VoiceOver says for a symbol, an icon-only button, a progress bar or a field. */
+    label?: string;
   };
   children: UINode[];
 }
