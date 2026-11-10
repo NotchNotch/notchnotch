@@ -50,6 +50,34 @@ NotchNotch shows headings, paragraphs, lists, quotes, code blocks, emphasis and 
 
 A new project fails `lint` until you replace each placeholder.
 
+## Publish to the Store
+
+The Store lists extensions reviewed in
+[sadeqi-ah/notchnotch-extensions](https://github.com/sadeqi-ah/notchnotch-extensions).
+To submit yours, install the [GitHub CLI](https://cli.github.com), sign in once
+with `gh auth login`, then from your extension's folder:
+
+```sh
+npx notchnotch publish --dry-run   # see what would be submitted
+npx notchnotch publish
+```
+
+`publish` runs `lint` and the install checks, copies your source (never
+`node_modules/`, `dist/` or `.notchext` files) into
+`extensions/<author>/<name>/` on a fork of the repository, and opens a pull
+request. `<author>` is the manifest's `author`, your GitHub user name, and
+`<name>` is `package.json`'s `name`. Run it again after changes to update the
+same pull request.
+
+CI checks the pull request, and a maintainer reviews it against the
+[review guidelines](https://github.com/sadeqi-ah/notchnotch-extensions#what-review-looks-at).
+Once merged, it's in the Store within minutes. To publish an update, raise
+`version`, add a `CHANGELOG.md` entry and run `publish` again; people who got it
+from the Store receive it automatically unless it asks for anything new.
+
+The Store doesn't accept a custom `build.mjs` or native helpers yet; share
+those extensions as a `.notchext` file instead.
+
 ## Share a .notchext file
 
 ```sh

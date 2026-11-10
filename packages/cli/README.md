@@ -9,6 +9,7 @@ notchnotch build [folder] --pack                 # also write <id>-<version>.not
 notchnotch pack <package> [--out file.notchext]  # zip a built package for double-click install
 notchnotch check <package>                       # the app's install checks only
 notchnotch lint [folder]                         # store guidelines: icon, title, description, README…
+notchnotch publish [folder] [--dry-run]          # open or update a Store pull request (needs gh auth login)
 ```
 
 `@notchnotch/cli/native` exports `helperApp()` to package a native helper as an app bundle with its own privacy usage descriptions, and `codesign()`. See [Native helpers](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/native-helpers.md).

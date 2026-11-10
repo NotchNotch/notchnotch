@@ -7,6 +7,7 @@ import path from "node:path";
 import { checkPackage, titleCaseProblem, validateManifest } from "../packages/cli/src/index.mjs";
 import { helperApp } from "../packages/cli/src/native.mjs";
 import { developExtension } from "../packages/cli/src/dev.mjs";
+import { publishPlan } from "../packages/cli/src/publish.mjs";
 
 async function temporary(t) {
   const directory = await mkdtemp(path.join(tmpdir(), "notchnotch-cli-"));
@@ -214,4 +215,36 @@ test("notchnotch build --pack writes a .notchext with the package at its root", 
   await writeFile(path.join(out, "notchnotch.json"), "{}");
   const bad = cli("pack", out, "--out", path.join(directory, "bad.notchext"));
   assert.notEqual(bad.status, 0);
+});
+
+test("notchnotch publish plans the Store folder and copies only source", async (t) => {
+  const source = path.join(await temporary(t), "focus");
+  await mkdir(path.join(source, "src"), { recursive: true });
+  await mkdir(path.join(source, "node_modules/react"), { recursive: true });
+  await mkdir(path.join(source, "dist"), { recursive: true });
+  const manifest = { id: "dev.amir.focus", name: "Focus", version: "1.2.0", apiVersion: 1, entry: "bundle.js", permissions: [], author: "amir" };
+  await writeFile(path.join(source, "notchnotch.json"), JSON.stringify(manifest));
+  await writeFile(path.join(source, "package.json"), JSON.stringify({ name: "focus" }));
+  for (const file of ["src/index.tsx", "README.md", "node_modules/react/index.js", "dist/bundle.js", ".DS_Store", "focus-1.2.0.notchext"]) {
+    await writeFile(path.join(source, file), "x");
+  }
+  const plan = await publishPlan(source, "amir");
+  assert.deepEqual(plan.problems, []);
+  assert.equal(plan.handle, "amir/focus");
+  assert.equal(plan.branch, "ext/amir/focus");
+  assert.deepEqual(plan.files, ["README.md", "notchnotch.json", "package.json", "src/index.tsx"]);
+  assert.deepEqual(plan.notes, []);
+
+  // Someone else's extension: allowed, with a note that its author approves.
+  assert.match((await publishPlan(source, "sara")).notes[0], /amir's extension/);
+
+  await writeFile(path.join(source, "notchnotch.json"), JSON.stringify({ ...manifest, author: undefined }));
+  await writeFile(path.join(source, "package.json"), JSON.stringify({ name: "Focus Timer" }));
+  await writeFile(path.join(source, "build.mjs"), "export async function build() {}");
+  await mkdir(path.join(source, "helpers"));
+  const problems = (await publishPlan(source, "amir")).problems.join("\n");
+  assert.match(problems, /"author": "amir"/);
+  assert.match(problems, /isn't a valid Store address/);
+  assert.match(problems, /custom build\.mjs/);
+  assert.match(problems, /native helpers/);
 });
