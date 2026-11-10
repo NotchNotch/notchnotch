@@ -30,7 +30,7 @@ struct ManagementReviewSheet: View {
     private var header: some View {
         HStack(alignment: .top, spacing: 14) {
             switch item {
-            case .install(let package):
+            case .install(let package, _):
                 ExtensionIdentityView(icon: package.icon, size: 44)
                 VStack(alignment: .leading, spacing: 6) {
                     Text(isUpdate ? "Update \(package.manifest.name)?" : "Install \(package.manifest.name)?").font(.title2).bold().lineLimit(2)
@@ -48,7 +48,7 @@ struct ManagementReviewSheet: View {
     }
     @ViewBuilder private var details: some View {
         switch item {
-        case .install(let package):
+        case .install(let package, let entry):
             let old = coordinator.model.installedExtensions.first(where: { $0.id == package.id })
             if let old {
                 Text("This replaces version \(old.manifest.version). Its settings and data are kept.").font(.callout).foregroundStyle(.secondary)
@@ -60,14 +60,19 @@ struct ManagementReviewSheet: View {
             Text(package.id).font(.callout.monospaced()).foregroundStyle(.secondary).textSelection(.enabled)
             Divider()
             ExtensionPermissionsView(manifest: package.manifest, previous: old?.manifest)
-            Text("Install only extensions you trust.").font(.callout).foregroundStyle(.secondary)
+            if let entry {
+                Label("Reviewed for the NotchNotch Store and checked against its catalog. Published by \(entry.author).", systemImage: "checkmark.seal")
+                    .font(.callout).foregroundStyle(.secondary)
+            } else {
+                Text("Install only extensions you trust.").font(.callout).foregroundStyle(.secondary)
+            }
         case .remove(let record):
             Text("\(record.manifest.name)’s activities will close and its app connections will stop. You can recover its folder from Trash or install it again later.")
                 .foregroundStyle(.secondary)
         }
     }
     private var isUpdate: Bool {
-        if case .install(let package) = item { return coordinator.model.installedExtensions.contains { $0.id == package.id } }
+        if case .install(let package, _) = item { return coordinator.model.installedExtensions.contains { $0.id == package.id } }
         return false
     }
     private var progressTitle: String {
@@ -75,8 +80,8 @@ struct ManagementReviewSheet: View {
     }
     @ViewBuilder private var confirmButton: some View {
         switch item {
-        case .install(let package):
-            Button(isUpdate ? "Update Extension" : "Install Extension") { coordinator.confirmInstall(package) }.buttonStyle(.borderedProminent)
+        case .install(let package, let entry):
+            Button(isUpdate ? "Update Extension" : "Install Extension") { coordinator.confirmInstall(package, from: entry) }.buttonStyle(.borderedProminent)
         case .remove(let record):
             Button("Move to Trash", role: .destructive) { coordinator.confirmRemoval(record) }.buttonStyle(.borderedProminent)
         }

@@ -63,6 +63,11 @@ export async function packageApp() {
 <key>SUPublicEDKey</key><string>${publicKey}</string>
 <key>SUEnableAutomaticChecks</key><true/>
 ` : "";
+  // Every build reads the Store, development ones included.
+  const catalogKey = (await readFile(path.join(root, "apps/macos/CatalogPublicKey"), "utf8")).trim();
+  const store = `<key>NotchCatalogURL</key><string>https://raw.githubusercontent.com/sadeqi-ah/notchnotch-extensions/catalog/index.json</string>
+<key>NotchCatalogPublicKeys</key><array><string>${catalogKey}</string></array>
+`;
   await writeFile(path.join(contents, "Info.plist"), `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
@@ -93,7 +98,7 @@ export async function packageApp() {
 <key>NSAppleEventsUsageDescription</key><string>Read the current song and control Spotify or Apple Music for the Music extension.</string>
 <key>NSCalendarsFullAccessUsageDescription</key><string>Read your selected calendars to show the next event and its countdown in the notch. The Calendar extension does not change your events.</string>
 <key>NSCalendarsUsageDescription</key><string>Read your selected calendars to show upcoming events in the notch.</string>
-${updates}</dict></plist>
+${store}${updates}</dict></plist>
 `);
   // Inside out: bundled extension helpers were signed by their build modules.
   codesign(path.join(contents, "Helpers/ExtensionRunner"),

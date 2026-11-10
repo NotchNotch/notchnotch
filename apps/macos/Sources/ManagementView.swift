@@ -37,6 +37,8 @@ struct ManagementView: View {
         case .notch: "Notch"
         case .about: "About"
         case .libraryIssues: "Couldn’t Load"
+        case .store: "Store"
+        case .storeEntry(let handle): coordinator.model.store.catalog?.entry(handle: handle)?.manifest.name ?? "Store"
         case .extensionDetails(let id): coordinator.model.installedExtensions.first(where: { $0.id == id })?.manifest.name ?? "Extension"
         }
     }
@@ -46,6 +48,15 @@ struct ManagementView: View {
         case .notch: ManagementNotchPage(coordinator: coordinator)
         case .about: ManagementAboutPage(coordinator: coordinator)
         case .libraryIssues: ManagementLibraryIssuesPage(coordinator: coordinator)
+        case .store: StorePage(coordinator: coordinator)
+        case .storeEntry(let handle):
+            if let entry = coordinator.model.store.catalog?.entry(handle: handle) {
+                StoreEntryPage(coordinator: coordinator, entry: entry).id(handle)
+            } else {
+                ContentUnavailableView("Not in the Store", systemImage: "bag",
+                    description: Text("\(handle) isn’t in the Store, or the Store hasn’t opened yet."))
+                    .task { await coordinator.model.store.open() }
+            }
         case .extensionDetails(let id):
             if let record = coordinator.model.installedExtensions.first(where: { $0.id == id }) {
                 ManagementExtensionPage(coordinator: coordinator, record: record).id(id)

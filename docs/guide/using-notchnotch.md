@@ -61,7 +61,15 @@ Each extension has a page with these tabs:
 
 Use the switch at the top of the page to turn an extension off. Its activities disappear and its connections close.
 
-### Install an extension
+### The Store
+
+**Store** in the sidebar lists extensions that were reviewed before being published. Search or pick a category, open one to see its screenshots and what it can do, and choose **Get**. NotchNotch downloads it, checks it is exactly the package that was reviewed, and shows the same review as any other install before anything is installed.
+
+When a newer version of an extension you got from the Store is published, the Store shows a badge and lists it under **Updates**. Anything the update can do that the installed version couldn't is marked **New** in its review.
+
+The Store's list is signed. NotchNotch refuses a list that isn't signed by NotchNotch, is out of date, or is older than one it has already seen, and a download that differs from what the list describes.
+
+### Install an extension from a file
 
 Double-click a `.notchext` file, or click **+** at the bottom of the sidebar and choose one. Before anything is installed, NotchNotch shows what the extension is, who made it, and what it can do beyond its sandbox, riskiest first. When you update an extension, anything it couldn't do before is marked **New**: look twice at those.
 

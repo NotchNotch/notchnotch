@@ -13,6 +13,11 @@ struct ManagementSidebar: View {
                         row("Notch", symbol: "rectangle.topthird.inset.filled", color: .indigo, .notch)
                         row("About", symbol: "info", color: .blue, .about)
                     }
+                    Section {
+                        Label { Text("Store") } icon: { ManagementSidebarIcon(symbol: "bag.fill", color: .pink) }
+                            .badge(coordinator.model.storeUpdates.count)
+                            .tag(ManagementDestination.store)
+                    }
                 }
                 Section("Extensions") {
                     ForEach(coordinator.visibleExtensions) { record in

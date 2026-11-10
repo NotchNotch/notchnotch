@@ -1,8 +1,10 @@
 import Foundation
 
 enum ManagementDestination: Hashable {
-    case general, notch, about, libraryIssues
+    case general, notch, about, libraryIssues, store
     case extensionDetails(String)
+    /// A Store extension by `author/name` handle.
+    case storeEntry(String)
 }
 
 /// What the sidebar and an extension's header say about it.

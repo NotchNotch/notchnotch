@@ -136,6 +136,16 @@ public struct ExtensionCatalog: Codable, Equatable, Sendable {
         }
     }
 
+    /// HTTPS only. Debug builds also accept http://127.0.0.1 so a test Store can
+    /// be served locally; release builds never do.
+    static func isAllowedLink(_ url: URL) -> Bool {
+        guard let host = url.host(), !host.isEmpty else { return false }
+        #if DEBUG
+        if url.scheme == "http", host == "127.0.0.1" { return true }
+        #endif
+        return url.scheme == "https"
+    }
+
     public func entry(id: String) -> Entry? { extensions.first { $0.id == id } }
     public func entry(handle: String) -> Entry? { extensions.first { $0.handle == handle } }
 }
@@ -153,7 +163,7 @@ extension ExtensionCatalog.Entry {
             throw fail("the package hash or size is wrong")
         }
         let links = [package.url] + [icon, iconDark].compactMap { $0 } + (screenshots ?? [])
-        guard links.allSatisfy({ $0.scheme == "https" && $0.host() != nil }) else { throw fail("every link must be https") }
+        guard links.allSatisfy(ExtensionCatalog.isAllowedLink) else { throw fail("every link must be https") }
         guard (screenshots?.count ?? 0) <= ExtensionCatalog.maximumScreenshots else { throw fail("it has too many screenshots") }
         if let minimumAppVersion, CatalogVersion.components(minimumAppVersion) == nil {
             throw fail("minimumAppVersion isn’t a version number")

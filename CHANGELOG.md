@@ -7,6 +7,7 @@ All notable changes to NotchNotch are listed here. The format follows
 ## [Unreleased]
 
 ### Added
+- **Store** in Settings & Extensions: browse, search and filter reviewed extensions, see screenshots and what each can do, and install with **Get**. Every download is checked against the signed catalog and goes through the usual install review. Extensions from the Store show a badge and an **Updates** section when a new version is out.
 - The Store catalog format: a signed `index.json` listing reviewed extensions with their manifests and package hashes. The app rejects a catalog that isn't signed, has expired, or is older than one it has already seen, and a download whose size or SHA-256 differs from the catalog.
 
 ## [0.6.0] - 2026-11-10

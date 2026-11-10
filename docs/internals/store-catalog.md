@@ -7,7 +7,24 @@ builds each changed extension, uploads the `.notchext` to a GitHub release,
 rebuilds `index.json`, signs it, and publishes both files.
 
 The app reads the catalog with `ExtensionCatalog` in
-`native/NotchExtensions/Sources/ExtensionCatalog.swift`.
+`native/NotchExtensions/Sources/ExtensionCatalog.swift` and fetches it with
+`StoreClient`, which keeps the last verified copy in
+`~/Library/Application Support/NotchNotch/Store/`. The catalog URL and trusted
+keys are in the app's Info.plist (`NotchCatalogURL`, `NotchCatalogPublicKeys`),
+written by `scripts/package-app.mjs` for every build.
+
+## Testing against a local Store
+
+Debug builds (`pnpm dev`) accept a test catalog and also allow
+`http://127.0.0.1` links, which release builds never do:
+
+```sh
+NOTCHNOTCH_CATALOG_URL=http://127.0.0.1:8765/index.json \
+NOTCHNOTCH_CATALOG_KEY=<base64 public key of a throwaway pair> pnpm dev
+```
+
+Sign the test `index.json` with that pair's private key and serve the folder
+with `python3 -m http.server 8765 --bind 127.0.0.1`.
 
 ## Files
 

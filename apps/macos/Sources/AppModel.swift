@@ -42,6 +42,34 @@ final class AppModel {
     private var developmentEntries: [DevelopmentRegistry.Entry] = []
     private var developmentTimer: Timer?
 
+    let store = StoreModel(directory: supportDirectory.appendingPathComponent("Store"))
+    /// Extension id → Store handle, for extensions installed from the Store.
+    private(set) var storeInstalls: [String: String] = UserDefaults.standard.dictionary(forKey: "storeInstalls") as? [String: String] ?? [:] {
+        didSet { UserDefaults.standard.set(storeInstalls, forKey: "storeInstalls") }
+    }
+    /// Records where an installed extension came from: a Store handle, or nil for a local file.
+    func recordInstall(_ id: String, storeHandle: String?) { storeInstalls[id] = storeHandle }
+
+    /// This app's version; nil in a build without Info.plist, which counts as new enough.
+    private let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+
+    func storeState(of entry: ExtensionCatalog.Entry) -> StoreEntryState {
+        let compatible = appVersion.map(entry.runs(onApp:)) ?? true
+        guard let record = installedExtensions.first(where: { $0.id == entry.id }) else {
+            return compatible ? .install : .needsApp(entry.minimumAppVersion ?? "")
+        }
+        switch record.origin {
+        case .bundled: return .included
+        case .development: return .developing
+        case .local:
+            guard entry.isNewer(than: record.manifest.version) else { return .installed }
+            return compatible ? .update(from: record.manifest.version) : .needsApp(entry.minimumAppVersion ?? "")
+        }
+    }
+    var storeUpdates: [ExtensionCatalog.Entry] {
+        (store.catalog?.extensions ?? []).filter { if case .update = storeState(of: $0) { true } else { false } }
+    }
+
     /// Per-extension key-value storage written by the runner (manifest ids are validated path-safe).
     func storageURL(for id: String) -> URL {
         Self.supportDirectory.appendingPathComponent("Storage").appendingPathComponent("\(id).json")
@@ -335,6 +363,7 @@ final class AppModel {
     func removeExtension(_ record: InstalledExtension) async throws {
         guard extensionStore.isManaged(record) else { throw ProtocolError.invalid("Included extensions can be disabled but not removed.") }
         forgetAccess(record.id)
+        storeInstalls[record.id] = nil
         try? FileManager.default.removeItem(at: storageURL(for: record.id))
         let id = record.id
         let preferences = preferenceStore

@@ -21,7 +21,7 @@ final class ManagementCoordinator {
         didSet {
             // A reviewed .notchext is unpacked to a temporary folder; drop it once
             // the review closes, whether it was installed or cancelled.
-            if case .install(let old) = oldValue, sheet?.id != oldValue?.id { ExtensionStore.discardStaged(old) }
+            if case .install(let old, _) = oldValue, sheet?.id != oldValue?.id { ExtensionStore.discardStaged(old) }
         }
     }
     var sheetError: String?
@@ -31,6 +31,8 @@ final class ManagementCoordinator {
     @ObservationIgnored private var messageGeneration = 0
     private(set) var choosingPackage = false
     private(set) var operating = false
+    /// The Store extension being downloaded, for its button's progress.
+    private(set) var downloadingID: String?
     @ObservationIgnored weak var window: NSWindow?
     @ObservationIgnored private var picker: NSOpenPanel?
     @ObservationIgnored private var pickerGeneration = 0
@@ -94,7 +96,7 @@ final class ManagementCoordinator {
                 let package = try await model.reviewInstall(folder)
                 guard generation == pickerGeneration else { ExtensionStore.discardStaged(package); return }
                 sheetError = nil
-                sheet = .install(package)
+                sheet = .install(package, store: nil)
             } catch { if generation == pickerGeneration { self.error = error.localizedDescription } }
         }
     }
@@ -111,11 +113,36 @@ final class ManagementCoordinator {
             do {
                 let package = try await model.reviewInstall(url)
                 sheetError = nil
-                sheet = .install(package)
+                sheet = .install(package, store: nil)
             } catch { self.error = "\(url.lastPathComponent) couldn’t be opened. \(error.localizedDescription)" }
         }
     }
-    func confirmInstall(_ package: ExtensionPackage) {
+    /// Downloads a Store extension, checks it against the catalog and opens the
+    /// same review as a local package, so its permissions are always shown first.
+    func installFromStore(_ entry: ExtensionCatalog.Entry) {
+        guard let client = model.store.client else { error = "The Store isn’t available in this build."; return }
+        guard !busy, sheet == nil else { error = "Finish the current installation before getting \(entry.manifest.name)."; return }
+        operating = true
+        downloadingID = entry.id
+        error = nil
+        Task { @MainActor in
+            defer { operating = false; downloadingID = nil }
+            do {
+                let file = try await client.download(entry)
+                defer { try? FileManager.default.removeItem(at: file) }
+                let package = try await model.reviewInstall(file)
+                do { try entry.verifyContents(package) } catch { ExtensionStore.discardStaged(package); throw error }
+                sheetError = nil
+                sheet = .install(package, store: entry)
+            } catch { self.error = "\(entry.manifest.name) couldn’t be downloaded. \(error.localizedDescription)" }
+        }
+    }
+    func openStoreEntry(_ handle: String) {
+        query = ""
+        destination = .storeEntry(handle)
+    }
+
+    func confirmInstall(_ package: ExtensionPackage, from entry: ExtensionCatalog.Entry? = nil) {
         guard !operating else { return }
         let updating = model.installedExtensions.contains { $0.id == package.id }
         operating = true
@@ -124,6 +151,7 @@ final class ManagementCoordinator {
             defer { operating = false }
             do {
                 try await model.installExtension(package)
+                model.recordInstall(package.id, storeHandle: entry?.handle)
                 sheet = nil
                 selectExtension(package.id)
                 notify("\(package.manifest.name) \(updating ? "updated" : "installed").")
