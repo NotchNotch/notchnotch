@@ -170,14 +170,15 @@ public enum ExtensionArchive {
         } else if entry.size == 0 {
             output = Data()
         } else {
+            guard entry.compressedSize > 0 else { throw invalid("The package is damaged.") }
             // Raw DEFLATE into a buffer of the declared size; extra output is cut off
             // and then fails the length or CRC check below.
             var buffer = Data(count: entry.size)
             let written = buffer.withUnsafeMutableBytes { target in
-                compressed.withUnsafeBytes { source in
-                    compression_decode_buffer(target.bindMemory(to: UInt8.self).baseAddress!, entry.size,
-                                              source.bindMemory(to: UInt8.self).baseAddress!, entry.compressedSize,
-                                              nil, COMPRESSION_ZLIB)
+                compressed.withUnsafeBytes { source -> Int in
+                    guard let output = target.bindMemory(to: UInt8.self).baseAddress,
+                          let input = source.bindMemory(to: UInt8.self).baseAddress else { return 0 }
+                    return compression_decode_buffer(output, entry.size, input, entry.compressedSize, nil, COMPRESSION_ZLIB)
                 }
             }
             guard written == entry.size else { throw invalid("The package is damaged.") }

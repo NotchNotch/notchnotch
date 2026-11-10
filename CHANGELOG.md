@@ -13,6 +13,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 - The install review lists what an extension can do beyond its sandbox in plain words, riskiest first: programs, websites, local apps, pictures and settings. In an update, anything new since the installed version is marked **New**.
 
+- Seeded fuzz tests for everything that reads untrusted input: `.notchext` packages, snapshots, manifests, Markdown and URLs. The package reader no longer relies on an implementation detail of `Data` when a deflated entry has no data.
+
 ### Changed
 - Extension storage is written by the app instead of the extension's process, and holds up to 255 KiB.
 

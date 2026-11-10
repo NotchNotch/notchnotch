@@ -12,7 +12,7 @@ private func temporaryDirectory() throws -> URL {
 private let manifest = Data(#"{"id":"dev.test.archive","name":"Archive","version":"1","apiVersion":1,"entry":"bundle.js","permissions":[]}"#.utf8)
 
 /// Writes a stored (uncompressed) zip so tests can craft entries no zip tool would make.
-private struct ZipWriter {
+struct ZipWriter {
     struct Item { var name: String; var data = Data(); var mode: UInt32 = 0o100644; var crc: UInt32? = nil; var flags: UInt16 = 0 }
     static func archive(_ items: [Item]) -> Data {
         var body = Data(), directory = Data()

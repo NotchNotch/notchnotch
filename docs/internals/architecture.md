@@ -58,6 +58,10 @@ Each runner sandboxes itself with an SBPL profile through `sandbox_init`, as Chr
 
 Native helpers are separate processes the app starts after consent. They are not sandboxed: a helper runs with the user's account.
 
+### Fuzzing
+
+Everything that parses data an extension or a download controls has seeded fuzz tests: byte-level and header-field mutations of `.notchext` packages, nested and mutated snapshots, mutated manifests and Markdown, and URLs built from host-confusion tricks for `fetch` and `open`. Each checks a property, not just "no crash": an accepted package stays inside its folder, an accepted `fetch` URL reaches a declared host. A snapshot nested 4,000 levels deep, the most that fits in one message, is rejected without exhausting the stack.
+
 ### Resource limits
 
 Liveness pings catch a runner that stops answering. `RunnerResources` (`native/NotchCore`) catches one that keeps answering while it misbehaves. Every second the host samples the runner with `proc_pid_rusage` and stops it when:

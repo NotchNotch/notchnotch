@@ -22,7 +22,15 @@ pnpm dev
 pnpm check
 ```
 
-This runs the JavaScript tests and the Swift tests, then builds the app. Run it before sending a change. If Swift tests crash after you change a type shared between modules, touch the affected test files to rebuild them.
+This runs the JavaScript tests and the Swift tests, then builds the app. Run it before sending a change.
+
+Code that reads untrusted input (`.notchext` packages, snapshots, manifests, Markdown, URLs) has seeded fuzz tests in `native/NotchExtensions/Tests/FuzzTests.swift`. They run a few hundred cases in every test run. Before changing that code, run them for longer:
+
+```sh
+NOTCHNOTCH_FUZZ_ITERATIONS=50000 swift test --filter Fuzz
+```
+
+A failure names its seed, so it can be replayed. If Swift tests crash after you change a type shared between modules, touch the affected test files to rebuild them.
 
 ## Repository layout
 
