@@ -3,14 +3,14 @@
   <channel>
     <title>NotchNotch</title>
     <item>
-      <title>NotchNotch 0.5.0</title>
-      <pubDate>Mon, 09 Nov 2026 22:51:17 GMT</pubDate>
-      <sparkle:version>7</sparkle:version>
-      <sparkle:shortVersionString>0.5.0</sparkle:shortVersionString>
+      <title>NotchNotch 0.6.0</title>
+      <pubDate>Tue, 10 Nov 2026 05:05:36 GMT</pubDate>
+      <sparkle:version>8</sparkle:version>
+      <sparkle:shortVersionString>0.6.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <link>https://github.com/sadeqi-ah/notchnotch/releases/tag/v0.5.0</link>
-      <description><![CDATA[<h3>Added</h3><ul><li><code>fetch</code> in <code>@notchnotch/sdk</code> for HTTPS requests to hosts listed in the manifest's new <code>network</code> field. NotchNotch makes the request without cookies or cache, follows redirects only to listed hosts and drops credentials when the host changes. The install review and <b>Access</b> tab list the hosts.</li><li><code>notchnotch dev</code> (and <code>npm run dev</code> in new projects) runs an extension from its project folder in the open NotchNotch app, reloads it on every save, and prints its console output in the terminal. A development copy stands in for an installed one with the same id until you press Ctrl+C.</li><li>Manifest <code>preferences</code>: text, password, toggle and dropdown settings that NotchNotch draws in the extension's <b>Setup</b> and passes to it through <code>getPreferenceValues()</code>, even in top-level code. Passwords are kept in the Keychain. An extension with an empty required preference waits, marked <b>Needs setup</b>, until it is filled in.</li><li><code>open(url)</code> in <code>@notchnotch/sdk</code> opens a web page or an app link, such as <code>mailto:</code> or a meeting link, right after a click or key press in the extension: once per interaction, within five seconds. Local files, scripts and system links are refused.</li><li><code>secrets</code> in <code>@notchnotch/sdk</code> keeps tokens and passwords in the login Keychain, readable only by the extension that saved them. The <b>Access</b> tab lists their names and can delete them; removing the extension deletes them.</li></ul>]]></description>
-      <enclosure url="https://github.com/sadeqi-ah/notchnotch/releases/download/v0.5.0/NotchNotch-0.5.0.zip" length="6130613" type="application/octet-stream" sparkle:edSignature="ATiS9Yv2t5v/Ea/9/hWqpteo0z85z8ufyLExaAQMiiDElULePTHsMnFkpGzmbDIRikbHRmx3HpGzmOe9dURgAA=="/>
+      <link>https://github.com/sadeqi-ah/notchnotch/releases/tag/v0.6.0</link>
+      <description><![CDATA[<h3>Security</h3><ul><li>Extension runners are sandboxed by macOS before any extension code runs: they can't read your files, write files, use the network or start programs. Everything extensions do goes through the app. A built-in probe tests that each of these is blocked.</li><li>NotchNotch stops an extension that uses more than 400 MB of memory, keeps the processor busy for 30 seconds, or sends more than 30 messages a second after a short burst, and says which limit it hit.</li><li>The install review lists what an extension can do beyond its sandbox in plain words, riskiest first: programs, websites, local apps, pictures and settings. In an update, anything new since the installed version is marked <b>New</b>.</li><li>Seeded fuzz tests for everything that reads untrusted input: <code>.notchext</code> packages, snapshots, manifests, Markdown and URLs. The package reader no longer relies on an implementation detail of <code>Data</code> when a deflated entry has no data.</li></ul><h3>Changed</h3><ul><li>Extension storage is written by the app instead of the extension's process, and holds up to 255 KiB.</li></ul>]]></description>
+      <enclosure url="https://github.com/sadeqi-ah/notchnotch/releases/download/v0.6.0/NotchNotch-0.6.0.zip" length="6236485" type="application/octet-stream" sparkle:edSignature="k3DRxVZ04PwFDpw/KD46v1yKUCH2kTc+PatuHIOY2jxVBJKKPlBqgu8wlD5VJ0vMxSfArJRqg7rDUEEGRxunCw=="/>
     </item>
   </channel>
 </rss>
