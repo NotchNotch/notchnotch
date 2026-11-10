@@ -3,14 +3,14 @@
   <channel>
     <title>NotchNotch</title>
     <item>
-      <title>NotchNotch 0.6.0</title>
-      <pubDate>Tue, 10 Nov 2026 05:05:36 GMT</pubDate>
-      <sparkle:version>8</sparkle:version>
-      <sparkle:shortVersionString>0.6.0</sparkle:shortVersionString>
+      <title>NotchNotch 0.7.0</title>
+      <pubDate>Tue, 10 Nov 2026 09:56:36 GMT</pubDate>
+      <sparkle:version>9</sparkle:version>
+      <sparkle:shortVersionString>0.7.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <link>https://github.com/sadeqi-ah/notchnotch/releases/tag/v0.6.0</link>
-      <description><![CDATA[<h3>Security</h3><ul><li>Extension runners are sandboxed by macOS before any extension code runs: they can't read your files, write files, use the network or start programs. Everything extensions do goes through the app. A built-in probe tests that each of these is blocked.</li><li>NotchNotch stops an extension that uses more than 400 MB of memory, keeps the processor busy for 30 seconds, or sends more than 30 messages a second after a short burst, and says which limit it hit.</li><li>The install review lists what an extension can do beyond its sandbox in plain words, riskiest first: programs, websites, local apps, pictures and settings. In an update, anything new since the installed version is marked <b>New</b>.</li><li>Seeded fuzz tests for everything that reads untrusted input: <code>.notchext</code> packages, snapshots, manifests, Markdown and URLs. The package reader no longer relies on an implementation detail of <code>Data</code> when a deflated entry has no data.</li></ul><h3>Changed</h3><ul><li>Extension storage is written by the app instead of the extension's process, and holds up to 255 KiB.</li></ul>]]></description>
-      <enclosure url="https://github.com/sadeqi-ah/notchnotch/releases/download/v0.6.0/NotchNotch-0.6.0.zip" length="6236485" type="application/octet-stream" sparkle:edSignature="k3DRxVZ04PwFDpw/KD46v1yKUCH2kTc+PatuHIOY2jxVBJKKPlBqgu8wlD5VJ0vMxSfArJRqg7rDUEEGRxunCw=="/>
+      <link>https://github.com/sadeqi-ah/notchnotch/releases/tag/v0.7.0</link>
+      <description><![CDATA[<h3>Added</h3><ul><li><b>Store</b> in Settings &amp; Extensions: browse, search and filter reviewed extensions, see screenshots, the README, the version history and what each can do, and install with <b>Get</b>. Every download is checked against the signed catalog and goes through the usual install review. Extensions from the Store show a badge and an <b>Updates</b> section when a new version is out.</li><li>The Store opens with 11 extensions: Focus Timer, Weather, World Clock, Countdown, Break Reminder, GitHub Notifications, Hacker News, Service Status, Crypto Prices, Word of the Day and Moon Phase.</li><li><code>notchnotch publish</code> submits an extension to the Store: it runs the Store's checks, copies the source to a fork of the extensions repository and opens or updates a pull request, using the GitHub CLI's sign-in.</li><li><code>notchnotch://extensions/&lt;author&gt;/&lt;name&gt;</code> links open an extension's Store page, for Install buttons on the web. A link never installs anything by itself.</li><li>Extensions from the Store update automatically when the new version asks for nothing new. An update that wants another website, program, app connection, picture host or setting waits in the Store for review. Turn it off in General.</li><li>The Store catalog format: a signed <code>index.json</code> listing reviewed extensions with their manifests and package hashes. The app rejects a catalog that isn't signed, has expired, or is older than one it has already seen, and a download whose size or SHA-256 differs from the catalog.</li></ul>]]></description>
+      <enclosure url="https://github.com/sadeqi-ah/notchnotch/releases/download/v0.7.0/NotchNotch-0.7.0.zip" length="6626577" type="application/octet-stream" sparkle:edSignature="FA/565rKpf7Ry5ahihYy4YDzIuKBDhf0P7GJXty2c28QIBzHegUuGMbybSyMmUFtwcVPlRVePYcd6eIz+lVYBg=="/>
     </item>
   </channel>
 </rss>
