@@ -20,11 +20,11 @@ export const repository = process.env.GITHUB_REPOSITORY || "sadeqi-ah/notchnotch
 export const feedURL = `https://raw.githubusercontent.com/${repository}/appcast/appcast.xml`;
 
 // PKCS#8 / SPKI headers for a raw 32-byte Ed25519 seed / public key.
-const pkcs8 = Buffer.from("302e020100300506032b657004220420", "hex");
+export const pkcs8 = Buffer.from("302e020100300506032b657004220420", "hex");
 const spki = Buffer.from("302a300506032b6570032100", "hex");
 
 /** Accepts Sparkle's exported private key: base64 of the 32-byte seed (or the legacy 64/96-byte forms). */
-function privateKey(base64) {
+export function privateKey(base64) {
   const bytes = Buffer.from(base64.trim(), "base64");
   if (![32, 64, 96].includes(bytes.length)) throw new Error("SPARKLE_PRIVATE_KEY is not a Sparkle EdDSA private key");
   return createPrivateKey({ key: Buffer.concat([pkcs8, bytes.subarray(0, 32)]), format: "der", type: "pkcs8" });

@@ -22,6 +22,7 @@
 - [Contributing](../CONTRIBUTING.md): build, test and send changes
 - [Architecture](internals/architecture.md): how the app, runners and connections work
 - [Releasing](internals/releasing.md): builds, signing and updates
+- [Store catalog](internals/store-catalog.md): the signed list of reviewed extensions
 - [Decisions](internals/decisions/0001-native-extension-platform.md)
 
 Also: [Changelog](../CHANGELOG.md) · [Privacy](../PRIVACY.md) · [Security](../SECURITY.md)

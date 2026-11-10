@@ -6,6 +6,9 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- The Store catalog format: a signed `index.json` listing reviewed extensions with their manifests and package hashes. The app rejects a catalog that isn't signed, has expired, or is older than one it has already seen, and a download whose size or SHA-256 differs from the catalog.
+
 ## [0.6.0] - 2026-11-10
 
 ### Security
