@@ -252,9 +252,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         if managementController == nil { managementController = ManagementWindowController(model: model, updater: updater) }
         managementController?.reveal(extensionID: extensionID)
     }
-    /// Double-clicking a `.notchext` (or dropping it on the app) opens its install review.
+    /// Double-clicking a `.notchext` (or dropping it on the app) opens its install review;
+    /// a `notchnotch://` link from the website opens its Store page.
     func application(_ application: NSApplication, open urls: [URL]) {
-        guard let url = urls.first(where: { $0.pathExtension.lowercased() == ExtensionArchive.fileExtension }) else { return }
+        if let link = urls.lazy.compactMap(StoreLink.init).first {
+            openManagement()
+            managementController?.coordinator.open(link)
+            return
+        }
+        guard let url = urls.first(where: { $0.isFileURL && $0.pathExtension.lowercased() == ExtensionArchive.fileExtension }) else { return }
         openManagement()
         managementController?.coordinator.openPackage(url)
     }

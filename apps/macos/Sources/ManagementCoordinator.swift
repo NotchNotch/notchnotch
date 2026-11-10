@@ -137,6 +137,13 @@ final class ManagementCoordinator {
             } catch { self.error = "\(entry.manifest.name) couldn’t be downloaded. \(error.localizedDescription)" }
         }
     }
+    /// A `notchnotch://` link only ever opens a page; installing still takes Get and the review.
+    func open(_ link: StoreLink) {
+        switch link {
+        case .store: query = ""; destination = .store
+        case .entry(let handle): openStoreEntry(handle)
+        }
+    }
     func openStoreEntry(_ handle: String) {
         query = ""
         destination = .storeEntry(handle)

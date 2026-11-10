@@ -136,6 +136,11 @@ public struct ExtensionCatalog: Codable, Equatable, Sendable {
         }
     }
 
+    /// `author/name` in lowercase letters, digits and dashes.
+    public static func isValidHandle(_ handle: String) -> Bool {
+        handle.range(of: "^[a-z0-9][a-z0-9-]{0,38}/[a-z0-9][a-z0-9-]{0,63}$", options: .regularExpression) != nil
+    }
+
     /// HTTPS only. Debug builds also accept http://127.0.0.1 so a test Store can
     /// be served locally; release builds never do.
     static func isAllowedLink(_ url: URL) -> Bool {
@@ -153,7 +158,7 @@ public struct ExtensionCatalog: Codable, Equatable, Sendable {
 extension ExtensionCatalog.Entry {
     func validate() throws {
         let fail = { (reason: String) in ExtensionCatalog.Failure.invalid("\(handle): \(reason)") }
-        guard handle.range(of: "^[a-z0-9][a-z0-9-]{0,38}/[a-z0-9][a-z0-9-]{0,63}$", options: .regularExpression) != nil else {
+        guard ExtensionCatalog.isValidHandle(handle) else {
             throw fail("the handle must be author/name in lowercase")
         }
         do { try manifest.validate() } catch { throw fail(error.localizedDescription) }

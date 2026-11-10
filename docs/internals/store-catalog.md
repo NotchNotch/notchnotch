@@ -13,6 +13,12 @@ The app reads the catalog with `ExtensionCatalog` in
 keys are in the app's Info.plist (`NotchCatalogURL`, `NotchCatalogPublicKeys`),
 written by `scripts/package-app.mjs` for every build.
 
+## Links
+
+`notchnotch://extensions/<author>/<name>` opens an extension's Store page and
+`notchnotch://store` the Store; `StoreLink` parses them with the same handle
+rule as the catalog and rejects anything else. A link never installs.
+
 ## Testing against a local Store
 
 Debug builds (`pnpm dev`) accept a test catalog and also allow

@@ -88,6 +88,10 @@ export async function packageApp() {
   <key>LSHandlerRank</key><string>Owner</string>
   <key>LSItemContentTypes</key><array><string>dev.notchnotch.extension-package</string></array>
 </dict></array>
+<key>CFBundleURLTypes</key><array><dict>
+  <key>CFBundleURLName</key><string>dev.notchnotch.store-link</string>
+  <key>CFBundleURLSchemes</key><array><string>notchnotch</string></array>
+</dict></array>
 <key>UTExportedTypeDeclarations</key><array><dict>
   <key>UTTypeIdentifier</key><string>dev.notchnotch.extension-package</string>
   <key>UTTypeDescription</key><string>NotchNotch Extension</string>
