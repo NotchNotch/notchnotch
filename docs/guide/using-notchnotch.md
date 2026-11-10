@@ -91,4 +91,6 @@ NotchNotch has no account, no analytics and no tracking. Your music, events and 
 
 **The notch doesn't show anything.** Check that the extension is turned on and connected in its **Setup**. On a Mac without a notch, NotchNotch uses the top center of the display you choose in **Notch**.
 
-**Still stuck?** [Open an issue](https://github.com/sadeqi-ah/notchnotch/issues).
+**Still stuck?** Choose **General › Problems › Export…**, read the report, save it, and attach it to [a new issue](https://github.com/sadeqi-ah/notchnotch/issues). The report lists the app and macOS versions, your extensions, recent errors and short summaries of recent crashes, with your home folder and account name removed. NotchNotch never sends it for you.
+
+To keep errors between launches and hear about crashes, turn on **Remember problems between launches**. NotchNotch then keeps up to two weeks of problems in `~/Library/Application Support/NotchNotch/Problems.json` and reads macOS's crash reports for its own processes. Turning it off deletes the file.

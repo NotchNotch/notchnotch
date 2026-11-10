@@ -51,6 +51,7 @@ struct ManagementGeneralPage: View {
             } footer: {
                 Text("Disconnecting closes every local service and native helper. Each extension reconnects from its Setup tab.")
             }
+            ProblemsSection(coordinator: coordinator)
         }.formStyle(.grouped)
     }
 }

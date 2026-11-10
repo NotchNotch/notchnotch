@@ -45,6 +45,7 @@ final class AppModel {
     private var developmentEntries: [DevelopmentRegistry.Entry] = []
 
     let store = StoreModel(directory: supportDirectory.appendingPathComponent("Store"))
+    let problems = ProblemsModel(directory: supportDirectory)
     /// Extension id → Store handle, for extensions installed from the Store.
     private(set) var storeInstalls: [String: String] = UserDefaults.standard.dictionary(forKey: "storeInstalls") as? [String: String] ?? [:] {
         didSet { UserDefaults.standard.set(storeInstalls, forKey: "storeInstalls") }
@@ -103,7 +104,9 @@ final class AppModel {
                 recordInstall(entry.id, storeHandle: entry.handle)
                 appendLog(entry.id, "Updated from \(previous) to \(entry.manifest.version) from the Store.", level: .info)
             } catch {
-                appendLog(entry.id, "Couldn’t update to \(entry.manifest.version) from the Store: \(error.localizedDescription)", level: .error)
+                let message = "Couldn’t update to \(entry.manifest.version) from the Store: \(error.localizedDescription)"
+                appendLog(entry.id, message, level: .error)
+                problems.record(entry.id, message)
             }
         }
     }
@@ -145,7 +148,12 @@ final class AppModel {
             onLayoutChange?()
         }
     }
-        var errors: [String: String] = [:]
+    /// Why an extension isn't running. Each new reason is also a problem for the report.
+    var errors: [String: String] = [:] {
+        didSet {
+            for (id, message) in errors where oldValue[id] != message { problems.record(id, message) }
+        }
+    }
     var notchWidth: CGFloat = 180
     var topHeight: CGFloat = 34
     var hasNotch = false
@@ -206,6 +214,11 @@ final class AppModel {
     }
 
     func start() {
+        problems.onUnseenCrash = { [weak self] crash in
+            // Extension processes' crashes already show on their pages.
+            if crash.process == "NotchNotch" { self?.greet("NotchNotch restarted after a crash", for: 5) }
+        }
+        problems.start()
         reloadExtensions()
         if ProcessInfo.processInfo.environment["NOTCHNOTCH_DEV"] == "1" {
             reloadTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
@@ -384,6 +397,17 @@ final class AppModel {
             guard self.isEnabled(id), self.errors[id] != nil, self.extensionSessionIDs[id] == nil else { return }
             self.reloadExtensions(restarting: id)
         }
+    }
+    /// The text of a problem report: versions, extensions, problems, this
+    /// session's error lines and recent crashes, with names removed.
+    func problemReport() async -> String {
+        let lines = installedExtensions.map { record in
+            let origin = storeInstalls[record.id] != nil ? "Store" : record.origin.rawValue
+            return ProblemReport.ExtensionLine(id: record.id, version: record.manifest.version, origin: origin,
+                                               enabled: isEnabled(record.id), error: errors[record.id])
+        }
+        let recent = extensionLogs.mapValues { $0.filter { $0.level == .error }.suffix(10).map(\.message) }
+        return await problems.report(extensions: lines, recentErrors: recent)
     }
     func clearLogs(_ id: String) { extensionLogs.removeValue(forKey: id) }
     /// Bumped when stored grants change; UserDefaults itself is not observable.
