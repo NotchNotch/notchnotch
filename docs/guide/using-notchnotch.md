@@ -65,7 +65,7 @@ Use the switch at the top of the page to turn an extension off. Its activities d
 
 **Store** in the sidebar lists extensions that were reviewed before being published. Search or pick a category, open one to see its screenshots and what it can do, and choose **Get**. NotchNotch downloads it, checks it is exactly the package that was reviewed, and shows the same review as any other install before anything is installed.
 
-When a newer version of an extension you got from the Store is published, the Store shows a badge and lists it under **Updates**. Anything the update can do that the installed version couldn't is marked **New** in its review.
+Extensions you got from the Store update on their own, shortly after NotchNotch opens and every few hours, as long as the new version asks for nothing the installed one couldn't do. An update that wants anything new, such as another website or a setting, waits: the Store shows a badge and lists it under **Updates**, and its review marks what's **New**. Turn off **Update Store extensions automatically** in **General** to review every update yourself. Each automatic update is noted in the extension's console.
 
 The Store's list is signed. NotchNotch refuses a list that isn't signed by NotchNotch, is out of date, or is older than one it has already seen, and a download that differs from what the list describes.
 

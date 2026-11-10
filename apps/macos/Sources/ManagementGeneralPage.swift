@@ -23,6 +23,14 @@ struct ManagementGeneralPage: View {
             }
             .onAppear { model.refreshLaunchAtLogin() }
             Section {
+                Toggle("Update Store extensions automatically", isOn: $model.updatesStoreExtensionsAutomatically).toggleStyle(.switch)
+            } header: {
+                Text("Store")
+            } footer: {
+                Text("Updates that ask for anything new, such as another website, wait in the Store for you to review.")
+                    .font(.callout).foregroundStyle(.secondary)
+            }
+            Section {
                 LabeledContent("Installed extensions") {
                     Button("Show in Finder", action: coordinator.showFolder)
                 }

@@ -66,6 +66,46 @@ final class AppModel {
             return compatible ? .update(from: record.manifest.version) : .needsApp(entry.minimumAppVersion ?? "")
         }
     }
+    /// Installs Store updates that ask for nothing new without a review.
+    var updatesStoreExtensionsAutomatically = UserDefaults.standard.object(forKey: "updatesStoreExtensionsAutomatically") as? Bool ?? true {
+        didSet {
+            UserDefaults.standard.set(updatesStoreExtensionsAutomatically, forKey: "updatesStoreExtensionsAutomatically")
+            if updatesStoreExtensionsAutomatically { Task { await checkStoreUpdates() } }
+        }
+    }
+    private var storeUpdateTimer: Timer?
+    private var checkingStoreUpdates = false
+
+    /// Refreshes the Store and installs the updates `StoreUpdates` allows. Each
+    /// one is downloaded, checked against the catalog and inspected exactly as
+    /// a reviewed install; an update that asks for more waits in the Store.
+    func checkStoreUpdates() async {
+        guard updatesStoreExtensionsAutomatically, let client = store.client, !checkingStoreUpdates else { return }
+        checkingStoreUpdates = true
+        defer { checkingStoreUpdates = false }
+        await store.open()
+        guard let catalog = store.catalog else { return }
+        let plan = StoreUpdates.plan(catalog, installed: installedExtensions, storeInstalls: storeInstalls, appVersion: appVersion)
+        for entry in plan.automatic where !installingIDs.contains(entry.id) {
+            let previous = installedExtensions.first { $0.id == entry.id }?.manifest.version ?? "?"
+            do {
+                let file = try await client.download(entry)
+                defer { try? FileManager.default.removeItem(at: file) }
+                let package = try await reviewInstall(file)
+                defer { ExtensionStore.discardStaged(package) }
+                try entry.verifyContents(package)
+                // The user may have removed it or installed another copy meanwhile.
+                guard storeInstalls[entry.id] == entry.handle,
+                      installedExtensions.first(where: { $0.id == entry.id })?.manifest.version == previous else { continue }
+                try await installExtension(package)
+                recordInstall(entry.id, storeHandle: entry.handle)
+                appendLog(entry.id, "Updated from \(previous) to \(entry.manifest.version) from the Store.", level: .info)
+            } catch {
+                appendLog(entry.id, "Couldn’t update to \(entry.manifest.version) from the Store: \(error.localizedDescription)", level: .error)
+            }
+        }
+    }
+
     var storeUpdates: [ExtensionCatalog.Entry] {
         (store.catalog?.extensions ?? []).filter { if case .update = storeState(of: $0) { true } else { false } }
     }
@@ -176,6 +216,17 @@ final class AppModel {
         timer.tolerance = 0.3
         RunLoop.main.add(timer, forMode: .common)
         developmentTimer = timer
+        // Store updates: shortly after launch, then every six hours.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(20))
+            await self?.checkStoreUpdates()
+        }
+        let storeTimer = Timer(timeInterval: 6 * 3600, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { _ = Task { await self?.checkStoreUpdates() } }
+        }
+        storeTimer.tolerance = 600
+        RunLoop.main.add(storeTimer, forMode: .common)
+        storeUpdateTimer = storeTimer
     }
 
     /// Loads, reloads after a rebuild, and unloads `notchnotch dev` projects.
@@ -388,6 +439,7 @@ final class AppModel {
         peekTask?.cancel()
         reloadTimer?.invalidate()
         developmentTimer?.invalidate()
+        storeUpdateTimer?.invalidate()
         for connection in connections.values { connection.stop() }
         connections.removeAll()
     }
