@@ -6,13 +6,12 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-10
+
 ### Security
 - Extension runners are sandboxed by macOS before any extension code runs: they can't read your files, write files, use the network or start programs. Everything extensions do goes through the app. A built-in probe tests that each of these is blocked.
-
 - NotchNotch stops an extension that uses more than 400 MB of memory, keeps the processor busy for 30 seconds, or sends more than 30 messages a second after a short burst, and says which limit it hit.
-
 - The install review lists what an extension can do beyond its sandbox in plain words, riskiest first: programs, websites, local apps, pictures and settings. In an update, anything new since the installed version is marked **New**.
-
 - Seeded fuzz tests for everything that reads untrusted input: `.notchext` packages, snapshots, manifests, Markdown and URLs. The package reader no longer relies on an implementation detail of `Data` when a deflated entry has no data.
 
 ### Changed
@@ -103,7 +102,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.1...v0.3.2
