@@ -6,6 +6,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-11
+
 ### Added
 - `notchnotch screenshot` and **Capture** in an extension's Developer tab draw Store screenshots: each activity expanded in the notch on a standard wallpaper, at 2000 × 1250, without Screen Recording permission. `notchnotch lint` checks the size of screenshots in `metadata/`.
 - VoiceOver reads the notch's announcements and new questions from extensions aloud, so they're no longer only visible.
@@ -127,7 +129,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.4.0...v0.5.0
