@@ -6,6 +6,12 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- `@notchnotch/protocol` exports a name for every protocol type, such as `NodeProps`, `SurfaceKind`, `ConnectionOperation`, `HTTPMethod`, `SecretRequest` and `UserEvent`.
+
+### Fixed
+- `schemas/connections.schema.json` describes `fetch`, secrets and `openURL`, which the app has handled since 0.5 but the schema didn't list. The Swift and TypeScript protocol models are now generated from the schemas, so they can't drift apart again.
+
 ### Changed
 - **About** links to the new website, [notchnotch.github.io](https://notchnotch.github.io), for release notes, extension docs and privacy.
 

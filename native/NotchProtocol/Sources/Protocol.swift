@@ -5,13 +5,10 @@ public let maximumMessageBytes = 262_144
 /// One extension's storage object; leaves room for the envelope that carries it to the app.
 public let maximumStorageBytes = maximumMessageBytes - 1024
 
-public enum SurfaceKind: String, Codable, Sendable { case activity, prompt }
-public enum Presentation: String, Codable, Sendable { case compact, expanded }
-public enum SurfacePhase: String, Codable, Sendable { case active, paused, completed, pending }
-public enum NodeKind: String, Codable, Sendable {
-    case column, row, text, symbol, progress, button, textField, artwork, waveform, player
-    case spacer, divider, toggle, section, listItem, badge, picker
+// The message types themselves are generated from schemas/ into
+// Generated.swift. This file adds their rules and helpers.
 
+extension NodeKind {
     /// Nodes that send user actions. Compact wings are a single host click target.
     public var isInteractive: Bool { [.button, .textField, .toggle, .picker, .player].contains(self) }
     /// Nodes the management window can render with system controls.
@@ -20,106 +17,8 @@ public enum NodeKind: String, Codable, Sendable {
         .spacer, .divider, .toggle, .section, .listItem, .badge, .picker,
     ]
 }
-public enum Tone: String, Codable, Sendable { case primary, secondary, accent, success, warning, danger }
-public enum TextSize: String, Codable, Sendable { case caption, body, headline, title, timer }
-public enum Spacing: String, Codable, Sendable { case none, tight, regular, loose }
-public enum LayoutAlignment: String, Codable, Sendable { case start, center, end }
-public struct PickerOption: Codable, Equatable, Hashable, Sendable {
-    public var value: String
-    public var label: String
-    public init(value: String, label: String) { self.value = value; self.label = label }
-}
 
-public struct NodeProps: Codable, Equatable, Sendable {
-    public var text: String?
-    public var name: String?
-    public var tone: Tone?
-    public var size: TextSize?
-    public var value: Double?
-    public var action: String?
-    public var placeholder: String?
-    public var source: String?
-    public var media: NowPlayingState?
-    public var disabled: Bool?
-    /// Secondary line: list item subtitle or section footer.
-    public var detail: String?
-    public var spacing: Spacing?
-    public var align: LayoutAlignment?
-    /// Picker choices; `selection` holds the chosen value.
-    public var options: [PickerOption]?
-    public var selection: String?
-    /// What VoiceOver says for a symbol, an icon-only button, a progress bar or a field.
-    public var label: String?
-
-    public init(text: String? = nil, name: String? = nil, tone: Tone? = nil, size: TextSize? = nil,
-                value: Double? = nil, action: String? = nil, placeholder: String? = nil, disabled: Bool? = nil,
-                source: String? = nil, media: NowPlayingState? = nil, detail: String? = nil,
-                spacing: Spacing? = nil, align: LayoutAlignment? = nil,
-                options: [PickerOption]? = nil, selection: String? = nil, label: String? = nil) {
-        self.text = text; self.name = name; self.tone = tone; self.size = size
-        self.value = value; self.action = action; self.placeholder = placeholder; self.disabled = disabled
-        self.source = source; self.media = media; self.detail = detail; self.spacing = spacing; self.align = align
-        self.options = options; self.selection = selection; self.label = label
-    }
-}
-
-public struct UINode: Codable, Equatable, Identifiable, Sendable {
-    public var id: String
-    public var type: NodeKind
-    public var props: NodeProps
-    public var children: [UINode]
-    public init(id: String, type: NodeKind, props: NodeProps = .init(), children: [UINode] = []) {
-        self.id = id; self.type = type; self.props = props; self.children = children
-    }
-}
-
-public struct CompactContent: Codable, Equatable, Sendable {
-    public var leading: [UINode]
-    public var trailing: [UINode]
-    public init(leading: [UINode], trailing: [UINode]) { self.leading = leading; self.trailing = trailing }
-}
-
-/// A new id announces a new event. Ordinary snapshots keep the same id.
-public struct PeekContent: Codable, Equatable, Sendable {
-    public var id: String
-    public var text: String
-    public var duration: Double
-    public init(id: String, text: String, duration: Double = 4) {
-        self.id = id; self.text = text; self.duration = duration
-    }
-}
-
-public struct Surface: Codable, Equatable, Identifiable, Sendable {
-    public var id: String
-    public var kind: SurfaceKind
-    public var title: String
-    public var initialView: Presentation
-    public var phase: SurfacePhase
-    public var compact: CompactContent?
-    public var expanded: UINode
-    public var peek: PeekContent?
-    public var idlePreview: Bool?
-
-    public init(id: String, kind: SurfaceKind, title: String, initialView: Presentation = .compact,
-                phase: SurfacePhase = .active, compact: CompactContent? = nil, expanded: UINode, peek: PeekContent? = nil, idlePreview: Bool? = nil) {
-        self.id = id; self.kind = kind; self.title = title; self.initialView = initialView
-        self.phase = phase; self.compact = compact; self.expanded = expanded; self.peek = peek; self.idlePreview = idlePreview
-    }
-}
-
-public struct Snapshot: Codable, Sendable {
-    public var protocolVersion: Int
-    public var type: String
-    public var extensionID: String
-    public var revision: Int
-    public var surfaces: [Surface]
-    public var settings: UINode?
-    public init(extensionID: String, revision: Int, surfaces: [Surface], settings: UINode? = nil) {
-        self.protocolVersion = 1; self.type = "snapshot"; self.extensionID = extensionID
-        self.revision = revision; self.surfaces = surfaces
-        self.settings = settings
-    }
-
+extension Snapshot {
     /// `imageHosts` comes from the sender's manifest and limits remote artwork.
     public func validate(expectedExtensionID: String, imageHosts: [String] = []) throws {
         guard protocolVersion == 1, type == "snapshot", extensionID == expectedExtensionID, revision > 0,
@@ -196,14 +95,6 @@ public struct Snapshot: Codable, Sendable {
         }
         if let settings { try visit(settings, depth: 0, settings: true) }
     }
-}
-
-public struct UserEvent: Codable, Sendable {
-    public var protocolVersion = 1
-    public var type = "event"
-    public var action: String
-    public var value: String?
-    public init(action: String, value: String? = nil) { self.action = action; self.value = value }
 }
 
 /// Host-to-runner liveness check. The runner answers with `RunnerPong` from

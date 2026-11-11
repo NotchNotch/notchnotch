@@ -15,6 +15,7 @@
   ],
   "$defs": {
     "json": {
+      "x-name": "JSONValue",
       "oneOf": [
         {
           "type": "null"
@@ -40,9 +41,12 @@
             "$ref": "#/$defs/json"
           }
         }
-      ]
+      ],
+      "x-swift-external": true,
+      "x-ts-type": "null | boolean | number | string | JSONValue[] | { [key: string]: JSONValue }"
     },
     "command": {
+      "x-name": "ConnectionCommand",
       "type": "object",
       "required": [
         "protocolVersion",
@@ -71,14 +75,21 @@
         },
         "connectionID": {
           "type": "string",
-          "pattern": "^[a-z][a-z0-9-]{0,63}$"
+          "pattern": "^([a-z][a-z0-9-]{0,63})?$",
+          "description": "A connection declared in the manifest; empty for operations the app answers itself (fetch, secrets, openURL)."
         },
         "operation": {
+          "x-name": "ConnectionOperation",
           "enum": [
             "request",
             "open",
             "send",
-            "close"
+            "close",
+            "fetch",
+            "secretGet",
+            "secretSet",
+            "secretDelete",
+            "openURL"
           ]
         },
         "sessionID": {
@@ -89,17 +100,31 @@
         "request": {
           "$ref": "#/$defs/httpRequest"
         },
+        "fetch": {
+          "$ref": "#/$defs/networkRequest",
+          "description": "For `fetch`, which uses no declared connection; `connectionID` is empty."
+        },
+        "secret": {
+          "$ref": "#/$defs/secretRequest",
+          "description": "For the `secret…` operations; `connectionID` is empty."
+        },
+        "url": {
+          "type": "string",
+          "maxLength": 8192,
+          "description": "For `openURL`; `connectionID` is empty."
+        },
         "message": {
           "$ref": "#/$defs/json"
         },
         "interactive": {
           "type": "boolean",
-          "description": "false fails instead of asking the user when access was not granted before"
+          "description": "`false` fails instead of asking the user when access was not granted before."
         }
       },
       "additionalProperties": false
     },
     "response": {
+      "x-name": "ConnectionResponse",
       "type": "object",
       "required": [
         "protocolVersion",
@@ -129,6 +154,7 @@
       "additionalProperties": false
     },
     "event": {
+      "x-name": "ConnectionEvent",
       "type": "object",
       "required": [
         "protocolVersion",
@@ -155,6 +181,7 @@
           "maxLength": 128
         },
         "event": {
+          "x-swift-type": "String",
           "enum": [
             "message",
             "closed"
@@ -171,6 +198,7 @@
       "additionalProperties": false
     },
     "httpRequest": {
+      "x-name": "ConnectionHTTPRequest",
       "type": "object",
       "required": [
         "path",
@@ -182,15 +210,7 @@
           "pattern": "^/(?!/)"
         },
         "method": {
-          "enum": [
-            "GET",
-            "POST",
-            "PUT",
-            "PATCH",
-            "DELETE",
-            "HEAD",
-            "OPTIONS"
-          ]
+          "$ref": "#/$defs/httpMethod"
         },
         "headers": {
           "type": "object",
@@ -208,6 +228,77 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 30000
+        }
+      },
+      "additionalProperties": false,
+      "description": "A request to a declared local HTTP connection."
+    },
+    "httpMethod": {
+      "x-swift-type": "String",
+      "x-ts-name": "HTTPMethod",
+      "enum": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "HEAD",
+        "OPTIONS"
+      ],
+      "default": "GET"
+    },
+    "networkRequest": {
+      "x-name": "NetworkRequest",
+      "description": "An HTTPS request to a host listed in the manifest's `network`.",
+      "type": "object",
+      "required": [
+        "url",
+        "method"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^https://",
+          "maxLength": 8192
+        },
+        "method": {
+          "$ref": "#/$defs/httpMethod"
+        },
+        "headers": {
+          "type": "object",
+          "maxProperties": 32,
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 4096
+          }
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 196608
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30000
+        }
+      },
+      "additionalProperties": false
+    },
+    "secretRequest": {
+      "x-name": "SecretRequest",
+      "description": "A key in the extension's own Keychain items, and the value for `secretSet`.",
+      "type": "object",
+      "required": [
+        "key"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]{1,64}$"
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 8192
         }
       },
       "additionalProperties": false

@@ -60,7 +60,8 @@ Write short sentences in plain English, lead with the task, and make every code 
 
 - Keep each commit to one logical change, with a message that says what it does and why.
 - Add a line to **Unreleased** in [CHANGELOG.md](CHANGELOG.md) for anything a user or extension author would notice.
-- Manifest and protocol rules exist in both Swift and the CLI. Change both, and the JSON Schema, together.
+- The protocol's message and UI types are generated from `schemas/protocol.schema.json` and `schemas/connections.schema.json` into `native/NotchProtocol/Sources/Generated.swift` and `packages/protocol/src/generated.ts`. To add a field or a node type, change the schema, run `node scripts/generate-protocol.mjs` and commit the result; `pnpm test` fails when they're out of date. Validation stays handwritten in Swift extensions beside them.
+- Manifest rules still exist in both Swift and the CLI. Change both, and `schemas/manifest.schema.json`, together.
 
 Releases are described in [Releasing](docs/internals/releasing.md).
 

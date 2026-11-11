@@ -75,16 +75,7 @@ public struct ConnectionDefinition: Codable, Equatable, Sendable {
     }
 }
 
-public struct ConnectionHTTPRequest: Codable, Sendable {
-    public var path: String
-    public var method: String
-    public var headers: [String: String]?
-    public var body: String?
-    public var timeoutMs: Int?
-
-    public init(path: String, method: String = "GET", headers: [String: String]? = nil, body: String? = nil, timeoutMs: Int? = nil) {
-        self.path = path; self.method = method; self.headers = headers; self.body = body; self.timeoutMs = timeoutMs
-    }
+extension ConnectionHTTPRequest {
 
     public func url(for definition: ConnectionDefinition) throws -> URL {
         guard definition.transport == .http, let endpoint = definition.endpoint, let origin = URL(string: endpoint),
@@ -153,12 +144,8 @@ public struct UserActivation: Sendable {
 }
 
 /// A key, and for `secretSet` its value, in an extension's Keychain secrets.
-public struct SecretRequest: Codable, Sendable {
+extension SecretRequest {
     public static let maximumValueBytes = 8192
-    public var key: String
-    public var value: String?
-
-    public init(key: String, value: String? = nil) { self.key = key; self.value = value }
 
     public func validate(requiresValue: Bool) throws {
         guard key.range(of: "^[A-Za-z0-9._-]{1,64}$", options: .regularExpression) != nil else {
@@ -171,16 +158,7 @@ public struct SecretRequest: Codable, Sendable {
 }
 
 /// An HTTPS request to a host the manifest lists in `network`.
-public struct NetworkRequest: Codable, Sendable {
-    public var url: String
-    public var method: String
-    public var headers: [String: String]?
-    public var body: String?
-    public var timeoutMs: Int?
-
-    public init(url: String, method: String = "GET", headers: [String: String]? = nil, body: String? = nil, timeoutMs: Int? = nil) {
-        self.url = url; self.method = method; self.headers = headers; self.body = body; self.timeoutMs = timeoutMs
-    }
+extension NetworkRequest {
 
     /// The request's URL when it is well formed and its host is declared.
     public func validatedURL(hosts: [String]) throws -> URL {
@@ -211,56 +189,13 @@ public enum NetworkHosts {
     }
 }
 
-public struct ConnectionCommand: Codable, Sendable {
-    public enum Operation: String, Codable, Sendable {
-        case request, open, send, close, fetch, secretGet, secretSet, secretDelete, openURL
-        /// Operations the app answers itself, without a declared connection.
-        public var usesConnection: Bool { ![.fetch, .secretGet, .secretSet, .secretDelete, .openURL].contains(self) }
-    }
-    public var protocolVersion = 1
-    public var type = "connectionCommand"
-    public var extensionID: String
-    public var requestID: String
-    public var connectionID: String
-    public var operation: Operation
-    public var sessionID: String?
-    public var request: ConnectionHTTPRequest?
-    /// For `fetch`, which uses no declared connection; `connectionID` is empty.
-    public var fetch: NetworkRequest?
-    /// For the `secret…` operations; `connectionID` is empty.
-    public var secret: SecretRequest?
-    /// For `openURL`; `connectionID` is empty.
-    public var url: String?
-    public var message: JSONValue?
-    /// `false` fails instead of asking the user when access was not granted before.
-    public var interactive: Bool?
+extension ConnectionOperation {
+    /// Operations the app answers itself, without a declared connection.
+    public var usesConnection: Bool { ![.fetch, .secretGet, .secretSet, .secretDelete, .openURL].contains(self) }
+}
 
-    private enum CodingKeys: String, CodingKey { case protocolVersion, type, extensionID, requestID, connectionID, operation, sessionID, request, fetch, secret, url, message, interactive }
-
-    public init(from decoder: any Decoder) throws {
-        let values = try decoder.container(keyedBy: CodingKeys.self)
-        protocolVersion = try values.decode(Int.self, forKey: .protocolVersion)
-        type = try values.decode(String.self, forKey: .type)
-        extensionID = try values.decode(String.self, forKey: .extensionID)
-        requestID = try values.decode(String.self, forKey: .requestID)
-        connectionID = try values.decode(String.self, forKey: .connectionID)
-        operation = try values.decode(Operation.self, forKey: .operation)
-        sessionID = try values.decodeIfPresent(String.self, forKey: .sessionID)
-        request = try values.decodeIfPresent(ConnectionHTTPRequest.self, forKey: .request)
-        fetch = try values.decodeIfPresent(NetworkRequest.self, forKey: .fetch)
-        secret = try values.decodeIfPresent(SecretRequest.self, forKey: .secret)
-        url = try values.decodeIfPresent(String.self, forKey: .url)
-        message = values.contains(.message) ? try values.decode(JSONValue.self, forKey: .message) : nil
-        interactive = try values.decodeIfPresent(Bool.self, forKey: .interactive)
-    }
-
-    public init(extensionID: String, requestID: String, connectionID: String, operation: Operation,
-                sessionID: String? = nil, request: ConnectionHTTPRequest? = nil, fetch: NetworkRequest? = nil,
-                secret: SecretRequest? = nil, url: String? = nil, message: JSONValue? = nil, interactive: Bool? = nil) {
-        self.extensionID = extensionID; self.requestID = requestID; self.connectionID = connectionID
-        self.operation = operation; self.sessionID = sessionID; self.request = request; self.fetch = fetch; self.secret = secret; self.url = url; self.message = message
-        self.interactive = interactive
-    }
+extension ConnectionCommand {
+    public typealias Operation = ConnectionOperation
 
     public func validate(expectedExtensionID: String) throws {
         guard protocolVersion == 1, type == "connectionCommand", extensionID == expectedExtensionID,
@@ -271,29 +206,5 @@ public struct ConnectionCommand: Codable, Sendable {
         if let message, try JSONEncoder().encode(message).count > maximumConnectionPayloadBytes {
             throw ProtocolError.invalid("Connection message exceeds 64 KiB")
         }
-    }
-}
-
-public struct ConnectionResponse: Codable, Sendable {
-    public var protocolVersion = 1
-    public var type = "connectionResponse"
-    public let requestID: String
-    public let result: JSONValue?
-    public let error: String?
-    public init(requestID: String, result: JSONValue? = nil, error: String? = nil) {
-        self.requestID = requestID; self.result = result; self.error = error
-    }
-}
-
-public struct ConnectionEvent: Codable, Sendable {
-    public var protocolVersion = 1
-    public var type = "connectionEvent"
-    public let connectionID: String
-    public let sessionID: String
-    public let event: String
-    public let message: JSONValue?
-    public let error: String?
-    public init(connectionID: String, sessionID: String, event: String, message: JSONValue? = nil, error: String? = nil) {
-        self.connectionID = connectionID; self.sessionID = sessionID; self.event = event; self.message = message; self.error = error
     }
 }

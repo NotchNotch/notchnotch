@@ -44,7 +44,7 @@ Transport is newline-delimited UTF-8 JSON over child stdin/stdout. Console outpu
 
 The host validates identity, protocol version, revision, surface contract, node types, and bounded trees before changing state. Limits are 256 KiB/message, 16 surfaces/snapshot, 512 UI nodes/snapshot, and nesting depth 16. Progress values must be finite and between 0 and 1. Text events are capped at 4096 characters. An invalid snapshot or runtime error removes only that extension's surfaces and offers restart through the menu.
 
-`schemas/` documents the wire contract. Swift and TypeScript models are currently handwritten, not generated. Host validation and real runner tests exercise the contract. A generator can replace duplication once the schema settles.
+`schemas/` is the wire contract. `scripts/generate-protocol.mjs` turns `protocol.schema.json` and `connections.schema.json` into the Swift and TypeScript models (`Generated.swift`, `generated.ts`): types, fields, `Codable` conformance and initializers. Annotations in the schemas (`x-name`, `x-swift-type`, `default`, …) keep the existing Swift names and initializer defaults. The rules a snapshot or command must follow (sizes, nesting, allowed hosts) stay handwritten in Swift extensions, so the schema can't loosen them by accident. A test fails when the generated files don't match the schemas. The manifest is still modeled by hand on both sides.
 
 ## Trust and omitted capabilities
 

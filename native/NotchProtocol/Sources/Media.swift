@@ -4,33 +4,7 @@ public enum MediaCommand: String, Codable, Sendable {
     case playPause, previous, next, seek, volume, shuffle, repeatMode = "repeat", openPlayer
 }
 
-public struct NowPlayingState: Codable, Equatable, Sendable {
-    public var id: String
-    public var eventID: String
-    public var player: String
-    public var playerName: String?
-    public var title: String
-    public var artist: String
-    public var album: String
-    public var artwork: String?
-    public var duration: Double
-    public var position: Double
-    public var isPlaying: Bool
-    public var volume: Double
-    public var shuffle: Bool
-    public var repeating: Bool
-    public var updatedAt: Double
-
-    public init(id: String, eventID: String, player: String, playerName: String? = nil, title: String, artist: String,
-                album: String = "", artwork: String? = nil, duration: Double, position: Double,
-                isPlaying: Bool, volume: Double = 1, shuffle: Bool = false, repeating: Bool = false,
-                updatedAt: Double = Date.now.timeIntervalSince1970) {
-        self.id = id; self.eventID = eventID; self.player = player; self.title = title; self.artist = artist
-        self.playerName = playerName; self.album = album; self.artwork = artwork; self.duration = duration; self.position = position
-        self.isPlaying = isPlaying; self.volume = volume; self.shuffle = shuffle; self.repeating = repeating
-        self.updatedAt = updatedAt
-    }
-
+extension NowPlayingState {
     /// `imageHosts` are the artwork hosts the sending extension declared in its manifest.
     public func validate(imageHosts: [String] = []) throws {
         guard !id.isEmpty, id.count <= 512, !eventID.isEmpty, eventID.count <= 128,
