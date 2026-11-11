@@ -65,7 +65,7 @@ const pngHeader = (width, height = width) => {
   return buffer;
 };
 
-test("checkPackage requires a declared PNG icon to be 512×512, dark variant included", async (t) => {
+test("checkPackage requires a declared PNG icon to be 512×512", async (t) => {
   const directory = await temporary(t);
   await writeFile(path.join(directory, "notchnotch.json"), JSON.stringify({
     id: "dev.test.icon", name: "Icon", version: "1", apiVersion: 1, entry: "bundle.js", permissions: [], icon: "icon.png",
@@ -76,10 +76,6 @@ test("checkPackage requires a declared PNG icon to be 512×512, dark variant inc
   await writeFile(path.join(directory, "assets/icon.png"), pngHeader(256));
   assert.match((await checkPackage(directory)).join("\n"), /512×512 PNG/);
   await writeFile(path.join(directory, "assets/icon.png"), pngHeader(512));
-  assert.deepEqual(await checkPackage(directory), []);
-  await writeFile(path.join(directory, "assets/icon@dark.png"), "not a png");
-  assert.match((await checkPackage(directory)).join("\n"), /icon@dark.png must be/);
-  await writeFile(path.join(directory, "assets/icon@dark.png"), pngHeader(512));
   assert.deepEqual(await checkPackage(directory), []);
 });
 

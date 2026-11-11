@@ -10,8 +10,7 @@ Draw your own icon. It appears in Settings, the install review, connection reque
 { "icon": "icon.png" }
 ```
 
-- `assets/icon.png`: PNG, exactly 512×512 pixels, at most 512 KiB. Draw the whole shape; NotchNotch shows it as is, without a mask or background.
-- `assets/icon@dark.png` (optional): the same icon for dark backgrounds. The notch is always dark, so it uses this variant when there is one, as does Settings in dark mode. Add it when your icon is dark and would disappear on black.
+- `assets/icon.png`: PNG, exactly 512×512 pixels, at most 512 KiB. Draw the whole shape; NotchNotch shows it as is, without a mask or background. One image serves light and dark mode alike, so draw a colored tile that reads on both.
 - The name may contain letters, digits, `.`, `_` and `-`, and ends in `.png`.
 
 Start from the [icon template](https://example.com/figma-icon-template): a 512 canvas with the tile shape, the area for your glyph, and previews at the sizes NotchNotch uses.

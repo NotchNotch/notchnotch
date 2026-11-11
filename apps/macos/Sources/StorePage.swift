@@ -210,9 +210,8 @@ struct StoreEntryPage: View {
 struct StoreIcon: View {
     let entry: ExtensionCatalog.Entry
     let size: CGFloat
-    @Environment(\.colorScheme) private var colorScheme
     var body: some View {
-        if let url = (colorScheme == .dark ? entry.iconDark : nil) ?? entry.icon {
+        if let url = entry.icon {
             AsyncImage(url: url) { image in
                 image.resizable().interpolation(.high).aspectRatio(contentMode: .fit)
             } placeholder: {

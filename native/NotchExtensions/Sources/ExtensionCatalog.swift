@@ -36,7 +36,6 @@ public struct ExtensionCatalog: Codable, Equatable, Sendable {
         public var manifest: ExtensionManifest
         public var package: Package
         public var icon: URL?
-        public var iconDark: URL?
         public var screenshots: [URL]?
         /// The version's README.md and CHANGELOG.md, pinned to the commit it was built from.
         public var readme: URL?
@@ -170,7 +169,7 @@ extension ExtensionCatalog.Entry {
               package.size > 0, package.size <= ExtensionArchive.maximumArchiveBytes else {
             throw fail("the package hash or size is wrong")
         }
-        let links = [package.url] + [icon, iconDark, readme, changelog].compactMap { $0 } + (screenshots ?? [])
+        let links = [package.url] + [icon, readme, changelog].compactMap { $0 } + (screenshots ?? [])
         guard links.allSatisfy(ExtensionCatalog.isAllowedLink) else { throw fail("every link must be https") }
         guard (screenshots?.count ?? 0) <= ExtensionCatalog.maximumScreenshots else { throw fail("it has too many screenshots") }
         if let minimumAppVersion, CatalogVersion.components(minimumAppVersion) == nil {

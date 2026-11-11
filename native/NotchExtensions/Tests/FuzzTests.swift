@@ -182,7 +182,7 @@ private let manifest = Data(#"{"id":"dev.test.fuzz","name":"Fuzz","version":"1",
         let mutatedManifest = Fuzz.mutate(Data(manifest.utf8), &generator)
         if let decoded = try? JSONDecoder().decode(ExtensionManifest.self, from: mutatedManifest), (try? decoded.validate()) != nil {
             #expect(decoded.apiVersion == 1 && decoded.entry == "bundle.js", "seed \(seed)")
-            if let icon = decoded.iconFiles { #expect(!icon.light.contains("/"), "seed \(seed): icon \(icon.light)") }
+            if let icon = decoded.iconFile { #expect(!icon.contains("/"), "seed \(seed): icon \(icon)") }
             _ = PermissionSummary.items(for: decoded)
         }
         let markdown = String(decoding: Fuzz.mutate(Data("# Title\n\n- one\n  two\n1. **bold** [link](https://example.com)\n> quote\n```\ncode\n```\n---\n![alt](x.png)".utf8), &generator), as: UTF8.self)

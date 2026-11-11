@@ -14,6 +14,7 @@ All notable changes to NotchNotch are listed here. The format follows
 - `schemas/connections.schema.json` describes `fetch`, secrets and `openURL`, which the app has handled since 0.5 but the schema didn't list. `schemas/manifest.schema.json` allows 32 helper arguments, like the app and the CLI, instead of 22. The Swift and TypeScript protocol and manifest models are now generated from the schemas, so they can't drift apart again.
 
 ### Changed
+- Extensions have one icon for light and dark mode. `icon@dark.png` is no longer read or checked, and the Store catalog no longer lists `iconDark`.
 - **About** links to the new website, [notchnotch.github.io](https://notchnotch.github.io), for release notes, extension docs and privacy.
 
 ## [0.8.1] - 2026-11-11

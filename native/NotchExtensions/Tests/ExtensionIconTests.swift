@@ -32,19 +32,11 @@ private func writePNG(_ url: URL, width: Int, height: Int = 0) throws {
     #expect(try ExtensionStore(directory: root).inspect(root).icon == .symbol("timer"))
 }
 
-@Test func aPNGIconResolvesToItsAssetAndOptionalDarkVariant() throws {
+@Test func aPNGIconResolvesToItsAsset() throws {
     let root = try makePackage(icon: "icon.png")
     defer { try? FileManager.default.removeItem(at: root) }
-    let assets = root.resolvingSymlinksInPath().appendingPathComponent("assets")
-    try writePNG(assets.appendingPathComponent("icon.png"), width: 512)
-    let store = ExtensionStore(directory: root)
-    let light = try store.inspect(root).icon
-    #expect(light.imageURL(dark: true)?.lastPathComponent == "icon.png")
-
-    try writePNG(assets.appendingPathComponent("icon@dark.png"), width: 512)
-    let both = try store.inspect(root).icon
-    #expect(both.imageURL(dark: false)?.lastPathComponent == "icon.png")
-    #expect(both.imageURL(dark: true)?.lastPathComponent == "icon@dark.png")
+    try writePNG(root.resolvingSymlinksInPath().appendingPathComponent("assets/icon.png"), width: 512)
+    #expect(try ExtensionStore(directory: root).inspect(root).icon.imageURL?.lastPathComponent == "icon.png")
 }
 
 @Test func iconsThatAreMissingOrTheWrongSizeAreRejected() throws {
@@ -54,10 +46,9 @@ private func writePNG(_ url: URL, width: Int, height: Int = 0) throws {
     #expect(throws: ProtocolError.self) { try store.inspect(root) }
     try writePNG(root.appendingPathComponent("assets/icon.png"), width: 256)
     #expect(throws: ProtocolError.self) { try store.inspect(root) }
-    try writePNG(root.appendingPathComponent("assets/icon.png"), width: 512)
-    try writePNG(root.appendingPathComponent("assets/icon@dark.png"), width: 512, height: 500)
+    try writePNG(root.appendingPathComponent("assets/icon.png"), width: 512, height: 500)
     #expect(throws: ProtocolError.self) { try store.inspect(root) }
-    try Data("not a png".utf8).write(to: root.appendingPathComponent("assets/icon@dark.png"))
+    try Data("not a png".utf8).write(to: root.appendingPathComponent("assets/icon.png"))
     #expect(throws: ProtocolError.self) { try store.inspect(root) }
 }
 

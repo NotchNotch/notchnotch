@@ -135,9 +135,8 @@ public struct RuntimeNotice: Codable, Sendable {
 
 extension ExtensionManifest {
     /// An `icon` ending in `.png` names a file in the package's `assets/`
-    /// folder; `name@dark.png` beside it is the optional dark variant. Any
-    /// other value is an SF Symbol name.
-    public var iconFiles: (light: String, dark: String)? {
+    /// folder. Any other value is an SF Symbol name.
+    public var iconFile: String? {
         guard let icon, icon.hasSuffix(".png") else { return nil }
         return (icon, String(icon.dropLast(4)) + "@dark.png")
     }

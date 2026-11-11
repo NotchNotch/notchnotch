@@ -60,7 +60,7 @@
     "icon": {
       "type": "string",
       "maxLength": 128,
-      "description": "An SF Symbol name, or the file name of a 512×512 PNG in the package's assets/ folder (such as icon.png). An optional name@dark.png beside it is used on dark backgrounds.",
+      "description": "An SF Symbol name, or the file name of a 512×512 PNG in the package's assets/ folder (such as icon.png).",
       "anyOf": [
         {
           "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}\\.png$"

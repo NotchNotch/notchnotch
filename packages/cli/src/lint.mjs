@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { iconFiles } from "./manifest.mjs";
+import { iconFile } from "./manifest.mjs";
 
 /** SHA-256 of the placeholder `assets/icon.png` in the `create-notchnotch-extension` template. */
 export const PLACEHOLDER_ICON_SHA256 = "2af6329145badfa91acf7a3a6d7e7e9185f8635aeffc84216097b945d8f7f4eb";
@@ -35,13 +35,13 @@ export async function lintExtension(directory) {
   if (!manifest.categories) warn("categories: add one to three categories");
   if (!manifest.license) warn("license: add an SPDX license identifier, such as MIT");
 
-  const icon = iconFiles(manifest);
+  const icon = iconFile(manifest);
   if (!icon) {
     warn('icon: add your own 512×512 assets/icon.png and set "icon": "icon.png"');
   } else {
-    const data = await readFile(path.join(directory, "assets", icon.light)).catch(() => undefined);
+    const data = await readFile(path.join(directory, "assets", icon)).catch(() => undefined);
     if (data && createHash("sha256").update(data).digest("hex") === PLACEHOLDER_ICON_SHA256) {
-      warn(`icon: replace the template's placeholder assets/${icon.light} with your own icon`);
+      warn(`icon: replace the template's placeholder assets/${icon} with your own icon`);
     }
   }
 

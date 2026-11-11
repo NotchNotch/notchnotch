@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { access, constants, copyFile, cp, lstat, mkdir, open, readFile, readdir, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { iconFiles, validateManifest } from "./manifest.mjs";
+import { iconFile, validateManifest } from "./manifest.mjs";
 
 export { validateManifest } from "./manifest.mjs";
 export { lintExtension, titleCaseProblem } from "./lint.mjs";
@@ -135,21 +135,17 @@ export async function checkPackage(directory) {
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
-/** Same rules as the app: a 512×512 PNG of at most 512 KiB, and the same for an optional `@dark` variant. */
+/** Same rules as the app: a 512×512 PNG of at most 512 KiB. */
 async function checkIcon(directory, manifest) {
-  const names = iconFiles(manifest);
-  if (!names) return [];
-  const problems = [];
-  for (const [name, required] of [[names.light, true], [names.dark, false]]) {
-    const file = path.join(directory, "assets", name);
-    const info = await lstat(file).catch(() => null);
-    if (!info) { if (required) problems.push(`The icon assets/${name} is missing`); continue; }
-    const header = info.isFile() && info.size > 0 && info.size <= 512 * 1024 ? await readHeader(file, 24) : null;
-    const valid = header && header.subarray(0, 8).equals(PNG_SIGNATURE) && header.toString("latin1", 12, 16) === "IHDR" &&
-      header.readUInt32BE(16) === 512 && header.readUInt32BE(20) === 512;
-    if (!valid) problems.push(`The icon assets/${name} must be a 512×512 PNG file of at most 512 KiB`);
-  }
-  return problems;
+  const name = iconFile(manifest);
+  if (!name) return [];
+  const file = path.join(directory, "assets", name);
+  const info = await lstat(file).catch(() => null);
+  if (!info) return [`The icon assets/${name} is missing`];
+  const header = info.isFile() && info.size > 0 && info.size <= 512 * 1024 ? await readHeader(file, 24) : null;
+  const valid = header && header.subarray(0, 8).equals(PNG_SIGNATURE) && header.toString("latin1", 12, 16) === "IHDR" &&
+    header.readUInt32BE(16) === 512 && header.readUInt32BE(20) === 512;
+  return valid ? [] : [`The icon assets/${name} must be a 512×512 PNG file of at most 512 KiB`];
 }
 
 async function readHeader(file, length) {

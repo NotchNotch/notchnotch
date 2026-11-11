@@ -22,19 +22,15 @@ struct ExtensionIdentityView: View {
     }
 }
 
-/// Draws an extension's PNG icon as the author designed it, choosing the
-/// `@dark` variant on dark backgrounds. A file that can no longer be read
-/// shows the generic extension symbol.
+/// Draws an extension's PNG icon as the author designed it. A file that can
+/// no longer be read shows the generic extension symbol.
 struct ExtensionIconImage: View {
     let icon: ExtensionIcon
     let size: CGFloat
-    /// Forces a variant, for surfaces that are always dark such as the notch.
-    var appearance: ColorScheme?
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Group {
-            if let url = icon.imageURL(dark: (appearance ?? colorScheme) == .dark),
+            if let url = icon.imageURL,
                let image = ExtensionIconCache.image(at: url) {
                 Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
             } else {

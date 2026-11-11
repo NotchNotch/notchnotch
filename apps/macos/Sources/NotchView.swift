@@ -261,7 +261,7 @@ struct NotchView: View {
         let manifest = record?.manifest
         return HStack(spacing: 10) {
             if case .image = record?.icon, let icon = record?.icon {
-                ExtensionIconImage(icon: icon, size: NotchTheme.iconTile, appearance: .dark)
+                ExtensionIconImage(icon: icon, size: NotchTheme.iconTile)
             } else {
                 Image(systemName: manifest?.icon ?? "bubble.left.fill")
                     .font(.system(size: 13, weight: .semibold))

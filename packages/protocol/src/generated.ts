@@ -196,7 +196,7 @@ export interface ExtensionManifest {
   permissions: ("local-network" | "process")[];
   /** Named local destinations: loopback HTTP or WebSocket services and native helpers. */
   connections?: Record<string, ConnectionDefinition>;
-  /** An SF Symbol name, or the file name of a 512×512 PNG in the package's assets/ folder (such as icon.png). An optional name@dark.png beside it is used on dark backgrounds. */
+  /** An SF Symbol name, or the file name of a 512×512 PNG in the package's assets/ folder (such as icon.png). */
   icon?: string;
   description?: string;
   /** HTTPS hosts the app may fetch Artwork from for this extension. An exact DNS name or a *.subdomain wildcard (which does not match the bare domain). */

@@ -1,7 +1,7 @@
-/** The light and dark file names in `assets/` when `icon` names a PNG, otherwise `undefined`. */
-export function iconFiles(manifest) {
+/** The file name in `assets/` when `icon` names a PNG, otherwise `undefined`. */
+export function iconFile(manifest) {
   if (typeof manifest.icon !== "string" || !manifest.icon.endsWith(".png")) return undefined;
-  return { light: manifest.icon, dark: `${manifest.icon.slice(0, -4)}@dark.png` };
+  return manifest.icon;
 }
 
 /** Categories an extension can list in its manifest, in display order. A test keeps this in step with schemas/manifest.schema.json. */

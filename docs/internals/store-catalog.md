@@ -60,7 +60,6 @@ uploaded byte for byte. Nothing re-serializes it.
         "size": 48213
       },
       "icon": "https://…/icon.png",
-      "iconDark": "https://…/icon@dark.png",
       "screenshots": ["https://…/1.png"],
       "readme": "https://…/README.md",
       "changelog": "https://…/CHANGELOG.md",
