@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or help
+    url: https://github.com/sadeqi-ah/notchnotch/discussions/categories/q-a
+    about: Ask in Discussions. Questions about building extensions are welcome there too.
+  - name: Submit an extension to the Store
+    url: https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/publishing.md#publish-to-the-store
+    about: Run `notchnotch publish` from your extension's folder; it opens a pull request in notchnotch-extensions.
+  - name: Problem with a Store extension
+    url: https://github.com/sadeqi-ah/notchnotch-extensions/issues
+    about: Report it where the extension's source lives.

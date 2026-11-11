@@ -36,7 +36,7 @@ Start with [Getting started](docs/extensions/getting-started.md), then browse th
 
 ## Contributing
 
-Bug reports, ideas and pull requests are welcome. See [Contributing](CONTRIBUTING.md) to build the app, and report security problems privately as described in [Security](SECURITY.md).
+Bug reports, ideas and pull requests are welcome. See [Contributing](CONTRIBUTING.md) to build the app, ask questions in [Discussions](https://github.com/sadeqi-ah/notchnotch/discussions), and report security problems privately as described in [Security](SECURITY.md). Anyone can submit an extension to the Store with `notchnotch publish`. Everyone follows the [code of conduct](CODE_OF_CONDUCT.md).
 
 [Changelog](CHANGELOG.md) · [Privacy](PRIVACY.md) · [Documentation](docs/README.md)
 

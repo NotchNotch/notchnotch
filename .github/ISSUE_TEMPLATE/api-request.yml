@@ -1,0 +1,23 @@
+name: API request
+description: An extension needs something the SDK can't do yet.
+labels: [api-request]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What the extension needs
+      description: The component, event, permission or system information you're missing.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What it's for
+      description: The extension you're building and what this would let it do. A link to its source helps.
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: What you tried
+      description: How you're working around it today, if at all.

@@ -1,0 +1,46 @@
+name: Bug report
+description: Something in NotchNotch or an included extension doesn't work.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. For a problem with a Store extension, open the issue in [notchnotch-extensions](https://github.com/sadeqi-ah/notchnotch-extensions/issues) instead. Security problems go through [Report a vulnerability](https://github.com/sadeqi-ah/notchnotch/security/advisories/new), not here.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the notch
+        2. …
+  - type: input
+    id: version
+    attributes:
+      label: NotchNotch version
+      description: Settings & Extensions… › About.
+      placeholder: "0.8.0 (42)"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and Mac
+      placeholder: "macOS 26.5, MacBook Pro with a notch"
+  - type: textarea
+    id: report
+    attributes:
+      label: Problem report
+      description: |
+        In **Settings & Extensions… › General › Problems**, choose **Export…**, read the report and drag the saved file here. It lists versions, extensions, errors and recent crashes, with your home folder and name removed. Skip this if you'd rather not share it.
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: Screenshots or a screen recording help a lot with notch layout problems.

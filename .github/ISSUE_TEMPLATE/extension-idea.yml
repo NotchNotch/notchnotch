@@ -1,0 +1,20 @@
+name: Extension idea
+description: Something you'd like to see in the notch. Anyone can build it as an extension.
+labels: [extension idea]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas that fit an extension are listed so anyone can pick one up. If you want to build it yourself, start with the [extension docs](https://github.com/sadeqi-ah/notchnotch/tree/main/docs/extensions/getting-started.md) and submit it to the Store with `notchnotch publish`. For something extensions can't do yet, use **API request** instead.
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What it shows in the notch, and when you'd look at it.
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: Where its information comes from
+      description: A website or API, an app on your Mac, or only things you type in.
