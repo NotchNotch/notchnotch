@@ -12,7 +12,7 @@ Builds universal (arm64 + x86_64) release binaries, packages `dist/NotchNotch.ap
 
 Installed copies update themselves with [Sparkle](https://sparkle-project.org). Only release builds (`pnpm release`) contain the feed URL and public key; `pnpm dev` and CI builds never check for updates.
 
-- **Feed:** `https://raw.githubusercontent.com/sadeqi-ah/notchnotch/appcast/appcast.xml`, on the `appcast` branch. The **Publish update feed** workflow updates it when you publish a release, never for a draft, so users are only offered downloads that exist.
+- **Feed:** `https://raw.githubusercontent.com/NotchNotch/notchnotch/appcast/appcast.xml`, on the `appcast` branch. The **Publish update feed** workflow updates it when you publish a release, never for a draft, so users are only offered downloads that exist.
 - **Signature:** every update archive is signed with an EdDSA key. The public key is committed in `apps/macos/SparklePublicKey` and embedded as `SUPublicEDKey`. Sparkle rejects an archive whose signature doesn't match, so ad hoc code signing is fine: when the EdDSA signature is valid, Sparkle accepts a new ad hoc signature as long as it is itself valid.
 - **Version:** Sparkle compares `CFBundleVersion`, which the release workflow sets to its run number. Releases built locally default to build 1 and should not be published as updates.
 

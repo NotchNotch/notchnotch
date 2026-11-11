@@ -67,7 +67,7 @@ A new project fails `lint` until you replace each placeholder.
 ## Publish to the Store
 
 The Store lists extensions reviewed in
-[sadeqi-ah/notchnotch-extensions](https://github.com/sadeqi-ah/notchnotch-extensions).
+[NotchNotch/notchnotch-extensions](https://github.com/NotchNotch/notchnotch-extensions).
 To submit yours, install the [GitHub CLI](https://cli.github.com), sign in once
 with `gh auth login`, then from your extension's folder:
 
@@ -84,7 +84,7 @@ request. `<author>` is the manifest's `author`, your GitHub user name, and
 same pull request.
 
 CI checks the pull request, and a maintainer reviews it against the
-[review guidelines](https://github.com/sadeqi-ah/notchnotch-extensions#what-review-looks-at).
+[review guidelines](https://github.com/NotchNotch/notchnotch-extensions#what-review-looks-at).
 Once merged, it's in the Store within minutes. To publish an update, raise
 `version`, add a `CHANGELOG.md` entry and run `publish` again; people who got it
 from the Store receive it automatically unless it asks for anything new.

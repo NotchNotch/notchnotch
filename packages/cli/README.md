@@ -1,6 +1,6 @@
 # @notchnotch/cli
 
-Builds and checks [NotchNotch](https://github.com/sadeqi-ah/notchnotch) extensions.
+Builds and checks [NotchNotch](https://github.com/NotchNotch/notchnotch) extensions.
 
 ```sh
 notchnotch dev [folder]                          # run it in NotchNotch, reload on save, print its console
@@ -13,4 +13,4 @@ notchnotch screenshot [folder]                   # Store screenshots of the runn
 notchnotch publish [folder] [--dry-run]          # open or update a Store pull request (needs gh auth login)
 ```
 
-`@notchnotch/cli/native` exports `helperApp()` to package a native helper as an app bundle with its own privacy usage descriptions, and `codesign()`. See [Native helpers](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/native-helpers.md).
+`@notchnotch/cli/native` exports `helperApp()` to package a native helper as an app bundle with its own privacy usage descriptions, and `codesign()`. See [Native helpers](https://github.com/NotchNotch/notchnotch/blob/main/docs/extensions/native-helpers.md).

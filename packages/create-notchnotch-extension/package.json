@@ -4,11 +4,11 @@
   "description": "Create a NotchNotch extension: npm create notchnotch-extension my-extension",
   "license": "MIT",
   "author": "AmirHossein Sadeghi",
-  "homepage": "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/README.md",
-  "bugs": "https://github.com/sadeqi-ah/notchnotch/issues",
+  "homepage": "https://github.com/NotchNotch/notchnotch/blob/main/docs/README.md",
+  "bugs": "https://github.com/NotchNotch/notchnotch/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sadeqi-ah/notchnotch.git",
+    "url": "git+https://github.com/NotchNotch/notchnotch.git",
     "directory": "packages/create-notchnotch-extension"
   },
   "keywords": [

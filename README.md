@@ -20,7 +20,7 @@ The notch on your Mac, put to work. NotchNotch shows what's happening now around
 
 ## Install
 
-1. Download the latest `NotchNotch-<version>.dmg` from [Releases](https://github.com/sadeqi-ah/notchnotch/releases).
+1. Download the latest `NotchNotch-<version>.dmg` from [Releases](https://github.com/NotchNotch/notchnotch/releases).
 2. Open it and drag **NotchNotch** to **Applications**.
 3. Open NotchNotch. This preview isn't notarized by Apple yet, so the first time, open **System Settings › Privacy & Security** and choose **Open Anyway** next to *"NotchNotch" was blocked*.
 
@@ -36,7 +36,7 @@ Start with [Getting started](docs/extensions/getting-started.md), then browse th
 
 ## Contributing
 
-Bug reports, ideas and pull requests are welcome. See [Contributing](CONTRIBUTING.md) to build the app, ask questions in [Discussions](https://github.com/sadeqi-ah/notchnotch/discussions), and report security problems privately as described in [Security](SECURITY.md). Anyone can submit an extension to the Store with `notchnotch publish`. Everyone follows the [code of conduct](CODE_OF_CONDUCT.md).
+Bug reports, ideas and pull requests are welcome. See [Contributing](CONTRIBUTING.md) to build the app, ask questions in [Discussions](https://github.com/NotchNotch/notchnotch/discussions), and report security problems privately as described in [Security](SECURITY.md). Anyone can submit an extension to the Store with `notchnotch publish`. Everyone follows the [code of conduct](CODE_OF_CONDUCT.md).
 
 [Changelog](CHANGELOG.md) · [Privacy](PRIVACY.md) · [Documentation](docs/README.md)
 

@@ -67,10 +67,10 @@ Releases are described in [Releasing](docs/internals/releasing.md).
 - **Bugs, extension ideas and API requests** each have an issue template. A
   bug report can include a problem report from **General › Problems ›
   Export…**.
-- **Questions** go to [Discussions](https://github.com/sadeqi-ah/notchnotch/discussions)
+- **Questions** go to [Discussions](https://github.com/NotchNotch/notchnotch/discussions)
   (Q&A), and extensions you built to **Show and tell**.
 - **Store extensions** live in
-  [notchnotch-extensions](https://github.com/sadeqi-ah/notchnotch-extensions):
+  [notchnotch-extensions](https://github.com/NotchNotch/notchnotch-extensions):
   submit with `notchnotch publish`, report their problems there.
 - Labels: `bug`, `api-request`, `extension idea`, `store`, `good first issue`.
 

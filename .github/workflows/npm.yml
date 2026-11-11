@@ -4,7 +4,7 @@ name: Publish SDK to npm
 # create-notchnotch-extension at the release's version, with npm provenance.
 #
 # Authentication: pnpm first tries npm Trusted Publishing (OIDC). Configure it
-# on npmjs.com for each package (repository sadeqi-ah/notchnotch, workflow
+# on npmjs.com for each package (repository NotchNotch/notchnotch, workflow
 # npm.yml); then no secret is needed. Until then it falls back to NPM_TOKEN.
 
 on:

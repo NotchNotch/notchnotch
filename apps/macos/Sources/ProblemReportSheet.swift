@@ -29,7 +29,7 @@ struct ProblemReportSheet: View {
             .accessibilityLabel("Report text")
             Divider()
             HStack(spacing: 12) {
-                Link("Open GitHub Issues", destination: URL(string: "https://github.com/sadeqi-ah/notchnotch/issues")!)
+                Link("Open GitHub Issues", destination: URL(string: "https://github.com/NotchNotch/notchnotch/issues")!)
                 Spacer()
                 Button(copied ? "Copied" : "Copy") {
                     NSPasteboard.general.clearContents()

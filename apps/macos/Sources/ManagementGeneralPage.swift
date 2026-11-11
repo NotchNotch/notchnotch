@@ -131,10 +131,10 @@ struct ManagementAboutPage: View {
                 }
             }
             Section("Resources") {
-                link("Release notes", "https://github.com/sadeqi-ah/notchnotch/blob/main/CHANGELOG.md")
-                link("Build an extension", "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/getting-started.md")
-                link("Privacy", "https://github.com/sadeqi-ah/notchnotch/blob/main/PRIVACY.md")
-                link("Report an issue", "https://github.com/sadeqi-ah/notchnotch/issues")
+                link("Release notes", "https://github.com/NotchNotch/notchnotch/blob/main/CHANGELOG.md")
+                link("Build an extension", "https://github.com/NotchNotch/notchnotch/blob/main/docs/extensions/getting-started.md")
+                link("Privacy", "https://github.com/NotchNotch/notchnotch/blob/main/PRIVACY.md")
+                link("Report an issue", "https://github.com/NotchNotch/notchnotch/issues")
             }
             Section {
                 Text("Copyright © 2026 AmirHossein Sadeghi. Licensed under the GNU GPL v3.0; the extension SDK is MIT licensed.")

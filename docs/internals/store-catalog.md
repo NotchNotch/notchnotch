@@ -1,7 +1,7 @@
 # Store catalog
 
 The Store lists the extensions reviewed in
-[`sadeqi-ah/notchnotch-extensions`](https://github.com/sadeqi-ah/notchnotch-extensions).
+[`NotchNotch/notchnotch-extensions`](https://github.com/NotchNotch/notchnotch-extensions).
 There are no servers: after a pull request is merged, that repository's CI
 builds each changed extension, uploads the `.notchext` to a GitHub release,
 rebuilds `index.json`, signs it, and publishes both files.
@@ -55,7 +55,7 @@ uploaded byte for byte. Nothing re-serializes it.
       "handle": "sadeqi-ah/focus-timer",
       "manifest": { "id": "dev.notchnotch.focus-timer", "name": "Focus Timer", "version": "1.2.0", "author": "sadeqi-ah", "…": "…" },
       "package": {
-        "url": "https://github.com/sadeqi-ah/notchnotch-extensions/releases/download/…/focus-timer-1.2.0.notchext",
+        "url": "https://github.com/NotchNotch/notchnotch-extensions/releases/download/…/focus-timer-1.2.0.notchext",
         "sha256": "…64 lowercase hex…",
         "size": 48213
       },
@@ -109,7 +109,7 @@ doesn't compromise the other.
 
 ```sh
 node scripts/catalog.mjs keys                 # once; writes apps/macos/CatalogPublicKey
-gh secret set CATALOG_PRIVATE_KEY --repo sadeqi-ah/notchnotch-extensions \
+gh secret set CATALOG_PRIVATE_KEY --repo NotchNotch/notchnotch-extensions \
   < ~/.config/notchnotch/catalog-ed25519-private-key
 CATALOG_PRIVATE_KEY=… node scripts/catalog.mjs sign index.json
 ```

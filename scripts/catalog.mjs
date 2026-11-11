@@ -40,7 +40,7 @@ async function generateKeys() {
 Public key:  ${path.relative(root, publicKeyFile)} (commit it)
 
 Let the extensions repository's CI sign the catalog:
-  gh secret set CATALOG_PRIVATE_KEY --repo sadeqi-ah/notchnotch-extensions < ${privateKeyFile}`);
+  gh secret set CATALOG_PRIVATE_KEY --repo NotchNotch/notchnotch-extensions < ${privateKeyFile}`);
 }
 
 async function signFile(file) {

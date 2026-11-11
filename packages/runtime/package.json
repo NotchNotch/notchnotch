@@ -4,11 +4,11 @@
   "description": "Starts a NotchNotch extension inside the app's JavaScriptCore runtime.",
   "license": "MIT",
   "author": "AmirHossein Sadeghi",
-  "homepage": "https://github.com/sadeqi-ah/notchnotch/blob/main/docs/README.md",
-  "bugs": "https://github.com/sadeqi-ah/notchnotch/issues",
+  "homepage": "https://github.com/NotchNotch/notchnotch/blob/main/docs/README.md",
+  "bugs": "https://github.com/NotchNotch/notchnotch/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sadeqi-ah/notchnotch.git",
+    "url": "git+https://github.com/NotchNotch/notchnotch.git",
     "directory": "packages/runtime"
   },
   "keywords": [

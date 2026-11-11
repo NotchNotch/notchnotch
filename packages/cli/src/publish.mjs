@@ -10,7 +10,7 @@ import path from "node:path";
 import { buildExtension, checkPackage } from "./index.mjs";
 import { lintExtension } from "./lint.mjs";
 
-export const storeRepository = process.env.NOTCHNOTCH_STORE_REPOSITORY || "sadeqi-ah/notchnotch-extensions";
+export const storeRepository = process.env.NOTCHNOTCH_STORE_REPOSITORY || "NotchNotch/notchnotch-extensions";
 const HANDLE = /^[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,63}$/;
 /** Never copied into the Store repository: builds, dependencies and local files. */
 const SKIPPED = new Set(["node_modules", "dist", ".git", ".DS_Store", ".env"]);

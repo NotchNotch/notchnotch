@@ -13,7 +13,7 @@ private func entry(_ handle: String = "amir/focus", id: String = "dev.amir.focus
     return #"""
     {"handle":"\#(handle)","published":"2026-11-01T00:00:00Z",
      "manifest":{"id":"\#(id)","name":"Focus","version":"\#(version)","apiVersion":1,"entry":"bundle.js","permissions":[],"author":"\#(author)"},
-     "package":{"url":"https://github.com/sadeqi-ah/notchnotch-extensions/releases/download/x/focus.notchext","sha256":"\#(sha256)","size":4}\#(extra)}
+     "package":{"url":"https://github.com/NotchNotch/notchnotch-extensions/releases/download/x/focus.notchext","sha256":"\#(sha256)","size":4}\#(extra)}
     """#
 }
 

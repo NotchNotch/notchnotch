@@ -1,6 +1,6 @@
 # @notchnotch/sdk
 
-React components and APIs for [NotchNotch](https://github.com/sadeqi-ah/notchnotch) extensions: live activities in the MacBook notch, prompts, a settings page, storage and connections to local apps.
+React components and APIs for [NotchNotch](https://github.com/NotchNotch/notchnotch) extensions: live activities in the MacBook notch, prompts, a settings page, storage and connections to local apps.
 
 ```sh
 npm create notchnotch-extension@latest my-extension
@@ -18,4 +18,4 @@ start(
 );
 ```
 
-See the [documentation](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/README.md), starting with [Getting started](https://github.com/sadeqi-ah/notchnotch/blob/main/docs/extensions/getting-started.md).
+See the [documentation](https://github.com/NotchNotch/notchnotch/blob/main/docs/README.md), starting with [Getting started](https://github.com/NotchNotch/notchnotch/blob/main/docs/extensions/getting-started.md).

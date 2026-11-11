@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const publicKeyFile = path.join(root, "apps/macos/SparklePublicKey");
 export const privateKeyFile = path.join(homedir(), ".config/notchnotch/sparkle-ed25519-private-key");
-export const repository = process.env.GITHUB_REPOSITORY || "sadeqi-ah/notchnotch";
+export const repository = process.env.GITHUB_REPOSITORY || "NotchNotch/notchnotch";
 /** Published by .github/workflows/appcast.yml when a release is published. */
 export const feedURL = `https://raw.githubusercontent.com/${repository}/appcast/appcast.xml`;
 

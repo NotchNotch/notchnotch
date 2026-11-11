@@ -6,6 +6,9 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- NotchNotch moved to the [NotchNotch](https://github.com/NotchNotch) organization on GitHub. Updates and the Store now come from `NotchNotch/notchnotch` and `NotchNotch/notchnotch-extensions`. Older versions keep working through GitHub's redirects and switch over when they update.
+
 ## [0.8.0] - 2026-11-11
 
 ### Added
@@ -129,13 +132,13 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/sadeqi-ah/notchnotch/compare/v0.8.0...HEAD
-[0.8.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.7.0...v0.8.0
-[0.7.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.6.0...v0.7.0
-[0.6.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.2...v0.4.0
-[0.3.2]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.1...v0.3.2
-[0.3.1]: https://github.com/sadeqi-ah/notchnotch/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/sadeqi-ah/notchnotch/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/sadeqi-ah/notchnotch/releases/tag/v0.2.0
+[Unreleased]: https://github.com/NotchNotch/notchnotch/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/NotchNotch/notchnotch/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/NotchNotch/notchnotch/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/NotchNotch/notchnotch/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/NotchNotch/notchnotch/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/NotchNotch/notchnotch/compare/v0.3.2...v0.4.0
+[0.3.2]: https://github.com/NotchNotch/notchnotch/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/NotchNotch/notchnotch/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/NotchNotch/notchnotch/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/NotchNotch/notchnotch/releases/tag/v0.2.0

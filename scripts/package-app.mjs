@@ -65,7 +65,7 @@ export async function packageApp() {
 ` : "";
   // Every build reads the Store, development ones included.
   const catalogKey = (await readFile(path.join(root, "apps/macos/CatalogPublicKey"), "utf8")).trim();
-  const store = `<key>NotchCatalogURL</key><string>https://raw.githubusercontent.com/sadeqi-ah/notchnotch-extensions/catalog/index.json</string>
+  const store = `<key>NotchCatalogURL</key><string>https://raw.githubusercontent.com/NotchNotch/notchnotch-extensions/catalog/index.json</string>
 <key>NotchCatalogPublicKeys</key><array><string>${catalogKey}</string></array>
 `;
   await writeFile(path.join(contents, "Info.plist"), `<?xml version="1.0" encoding="UTF-8"?>

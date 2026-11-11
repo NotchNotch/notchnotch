@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting. For a problem with a Store extension, open the issue in [notchnotch-extensions](https://github.com/sadeqi-ah/notchnotch-extensions/issues) instead. Security problems go through [Report a vulnerability](https://github.com/sadeqi-ah/notchnotch/security/advisories/new), not here.
+        Thanks for reporting. For a problem with a Store extension, open the issue in [notchnotch-extensions](https://github.com/NotchNotch/notchnotch-extensions/issues) instead. Security problems go through [Report a vulnerability](https://github.com/NotchNotch/notchnotch/security/advisories/new), not here.
   - type: textarea
     id: what
     attributes:
