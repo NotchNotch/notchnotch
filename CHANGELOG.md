@@ -8,9 +8,10 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ### Added
 - `@notchnotch/protocol` exports a name for every protocol type, such as `NodeProps`, `SurfaceKind`, `ConnectionOperation`, `HTTPMethod`, `SecretRequest` and `UserEvent`.
+- `@notchnotch/protocol` exports the manifest's types: `ExtensionManifest`, `ExtensionPreference`, `ConnectionDefinition` and the category names, for tools that read or write `notchnotch.json`.
 
 ### Fixed
-- `schemas/connections.schema.json` describes `fetch`, secrets and `openURL`, which the app has handled since 0.5 but the schema didn't list. The Swift and TypeScript protocol models are now generated from the schemas, so they can't drift apart again.
+- `schemas/connections.schema.json` describes `fetch`, secrets and `openURL`, which the app has handled since 0.5 but the schema didn't list. `schemas/manifest.schema.json` allows 32 helper arguments, like the app and the CLI, instead of 22. The Swift and TypeScript protocol and manifest models are now generated from the schemas, so they can't drift apart again.
 
 ### Changed
 - **About** links to the new website, [notchnotch.github.io](https://notchnotch.github.io), for release notes, extension docs and privacy.

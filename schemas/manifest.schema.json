@@ -1,6 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "NotchNotch extension manifest v1 preview",
+  "x-name": "ExtensionManifest",
+  "description": "notchnotch.json: what an extension is, what it may reach and the settings it asks for.",
   "type": "object",
   "required": [
     "id",
@@ -36,11 +38,13 @@
       "maxItems": 2,
       "uniqueItems": true,
       "items": {
+        "x-swift-type": "String",
         "enum": [
           "local-network",
           "process"
         ]
-      }
+      },
+      "description": "`local-network` for loopback HTTP and WebSocket connections, `process` for native helpers."
     },
     "connections": {
       "type": "object",
@@ -50,7 +54,8 @@
       },
       "additionalProperties": {
         "$ref": "#/$defs/connection"
-      }
+      },
+      "description": "Named local destinations: loopback HTTP or WebSocket services and native helpers."
     },
     "icon": {
       "type": "string",
@@ -72,7 +77,7 @@
       "maxLength": 512
     },
     "imageHosts": {
-      "description": "HTTPS hosts the app may load Artwork from. An exact DNS name or a *.subdomain wildcard (which does not match the bare domain).",
+      "description": "HTTPS hosts the app may fetch Artwork from for this extension. An exact DNS name or a *.subdomain wildcard (which does not match the bare domain).",
       "type": "array",
       "maxItems": 8,
       "uniqueItems": true,
@@ -81,49 +86,6 @@
         "maxLength": 253,
         "pattern": "^(\\*\\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$"
       }
-    },
-    "author": {
-      "description": "Store handle of the publisher, such as a GitHub user name.",
-      "type": "string",
-      "pattern": "^[a-z0-9]([a-z0-9-]{0,37}[a-z0-9])?$"
-    },
-    "categories": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 3,
-      "uniqueItems": true,
-      "items": {
-        "enum": [
-          "Communication",
-          "Developer Tools",
-          "Finance",
-          "Fun",
-          "Health",
-          "Media",
-          "News",
-          "Productivity",
-          "Sports",
-          "System",
-          "Weather",
-          "Other"
-        ]
-      }
-    },
-    "homepage": {
-      "type": "string",
-      "maxLength": 2048,
-      "pattern": "^https://"
-    },
-    "repository": {
-      "type": "string",
-      "maxLength": 2048,
-      "pattern": "^https://"
-    },
-    "license": {
-      "description": "An SPDX license expression, such as MIT.",
-      "type": "string",
-      "maxLength": 64,
-      "pattern": "^[A-Za-z0-9.+-]+( (AND|OR|WITH) [A-Za-z0-9.+-]+)*$"
     },
     "network": {
       "description": "HTTPS hosts the extension may reach with fetch. An exact DNS name or a *.subdomain wildcard (which does not match the bare domain).",
@@ -141,6 +103,7 @@
       "type": "array",
       "maxItems": 16,
       "items": {
+        "x-name": "ExtensionPreference",
         "type": "object",
         "additionalProperties": false,
         "required": [
@@ -154,6 +117,7 @@
             "pattern": "^[A-Za-z][A-Za-z0-9_]{0,31}$"
           },
           "type": {
+            "x-name": "PreferenceKind",
             "enum": [
               "text",
               "password",
@@ -178,6 +142,7 @@
             "type": "boolean"
           },
           "default": {
+            "x-swift-type": "JSONValue",
             "type": [
               "string",
               "boolean"
@@ -188,6 +153,7 @@
             "minItems": 1,
             "maxItems": 32,
             "items": {
+              "x-name": "PreferenceOption",
               "type": "object",
               "additionalProperties": false,
               "required": [
@@ -206,15 +172,65 @@
                   "maxLength": 64
                 }
               }
-            }
+            },
+            "description": "Choices for a dropdown."
           }
-        }
+        },
+        "description": "One setting declared in the manifest. The app stores its value, draws the field in Setup and hands the values to the extension when it starts."
       }
+    },
+    "author": {
+      "description": "Store handle of the publisher, such as a GitHub user name.",
+      "type": "string",
+      "pattern": "^[a-z0-9]([a-z0-9-]{0,37}[a-z0-9])?$"
+    },
+    "categories": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "x-swift-type": "String",
+        "enum": [
+          "Communication",
+          "Developer Tools",
+          "Finance",
+          "Fun",
+          "Health",
+          "Media",
+          "News",
+          "Productivity",
+          "Sports",
+          "System",
+          "Weather",
+          "Other"
+        ],
+        "x-ts-name": "ExtensionCategoryName",
+        "x-swift-list": "ExtensionCategory.all"
+      },
+      "description": "One to three entries from `ExtensionCategory.all`."
+    },
+    "homepage": {
+      "type": "string",
+      "maxLength": 2048,
+      "pattern": "^https://"
+    },
+    "repository": {
+      "type": "string",
+      "maxLength": 2048,
+      "pattern": "^https://"
+    },
+    "license": {
+      "description": "An SPDX license expression, such as MIT.",
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9.+-]+( (AND|OR|WITH) [A-Za-z0-9.+-]+)*$"
     }
   },
   "additionalProperties": false,
   "$defs": {
     "connection": {
+      "x-name": "ConnectionDefinition",
       "oneOf": [
         {
           "type": "object",
@@ -267,7 +283,7 @@
             },
             "arguments": {
               "type": "array",
-              "maxItems": 22,
+              "maxItems": 32,
               "items": {
                 "type": "string",
                 "maxLength": 4096
@@ -276,7 +292,9 @@
           },
           "additionalProperties": false
         }
-      ]
+      ],
+      "x-discriminator-name": "ConnectionTransport",
+      "description": "A declared local destination: a loopback HTTP or WebSocket service, or a native helper started over stdio."
     }
   }
 }

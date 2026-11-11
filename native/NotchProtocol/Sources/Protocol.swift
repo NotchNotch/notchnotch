@@ -133,31 +133,7 @@ public struct RuntimeNotice: Codable, Sendable {
     }
 }
 
-public struct ExtensionManifest: Codable, Equatable, Sendable {
-    public var id: String
-    public var name: String
-    public var version: String
-    public var apiVersion: Int
-    public var entry: String
-    public var permissions: [String]
-    public var connections: [String: ConnectionDefinition]?
-    public var icon: String?
-    public var description: String?
-    /// HTTPS hosts the host may fetch artwork from for this extension.
-    public var imageHosts: [String]?
-    /// HTTPS hosts the extension may reach with `fetch`.
-    public var network: [String]?
-    /// Settings the app asks for and draws natively, such as an API token.
-    public var preferences: [ExtensionPreference]?
-    /// Store handle of the publisher, such as a GitHub user name.
-    public var author: String?
-    /// One to three entries from `ExtensionCategory.all`.
-    public var categories: [String]?
-    public var homepage: String?
-    public var repository: String?
-    /// An SPDX license expression, such as `MIT`.
-    public var license: String?
-
+extension ExtensionManifest {
     /// An `icon` ending in `.png` names a file in the package's `assets/`
     /// folder; `name@dark.png` beside it is the optional dark variant. Any
     /// other value is an SF Symbol name.
@@ -238,31 +214,12 @@ extension ExtensionManifest {
 
 /// One setting declared in the manifest. The app stores its value, draws the
 /// field in Setup and hands the values to the extension when it starts.
-public struct ExtensionPreference: Codable, Equatable, Sendable {
-    public enum Kind: String, Codable, Sendable { case text, password, toggle, dropdown }
-    public struct Option: Codable, Equatable, Sendable {
-        public var value: String
-        public var title: String
-        public init(value: String, title: String) { self.value = value; self.title = title }
-    }
+extension ExtensionPreference {
+    public typealias Kind = PreferenceKind
+    public typealias Option = PreferenceOption
 
     public static let maximumCount = 16
     public static let maximumTextBytes = 4096
-
-    public var name: String
-    public var type: Kind
-    public var title: String
-    public var description: String?
-    public var placeholder: String?
-    public var required: Bool?
-    public var `default`: JSONValue?
-    public var options: [Option]?
-
-    public init(name: String, type: Kind, title: String, description: String? = nil, placeholder: String? = nil,
-                required: Bool? = nil, default value: JSONValue? = nil, options: [Option]? = nil) {
-        self.name = name; self.type = type; self.title = title; self.description = description
-        self.placeholder = placeholder; self.required = required; self.default = value; self.options = options
-    }
 
     public var isRequired: Bool { required == true }
 
@@ -328,14 +285,6 @@ extension ExtensionManifest {
             return values[preference.name] == nil
         }.map(\.title)
     }
-}
-
-/// Categories an extension can list in its manifest, in display order.
-public enum ExtensionCategory {
-    public static let all = [
-        "Communication", "Developer Tools", "Finance", "Fun", "Health", "Media",
-        "News", "Productivity", "Sports", "System", "Weather", "Other",
-    ]
 }
 
 public enum ProtocolError: Error, LocalizedError, Sendable {

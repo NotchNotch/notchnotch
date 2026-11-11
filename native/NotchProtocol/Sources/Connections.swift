@@ -30,16 +30,8 @@ public indirect enum JSONValue: Codable, Equatable, Sendable {
     }
 }
 
-public struct ConnectionDefinition: Codable, Equatable, Sendable {
-    public enum Transport: String, Codable, Sendable { case http, websocket, stdio }
-    public var transport: Transport
-    public var endpoint: String?
-    public var executable: String?
-    public var arguments: [String]?
-
-    public init(transport: Transport, endpoint: String? = nil, executable: String? = nil, arguments: [String]? = nil) {
-        self.transport = transport; self.endpoint = endpoint; self.executable = executable; self.arguments = arguments
-    }
+extension ConnectionDefinition {
+    public typealias Transport = ConnectionTransport
 
     public func validate(permissions: [String]) throws {
         switch transport {

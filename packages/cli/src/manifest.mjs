@@ -4,13 +4,13 @@ export function iconFiles(manifest) {
   return { light: manifest.icon, dark: `${manifest.icon.slice(0, -4)}@dark.png` };
 }
 
-/** Categories an extension can list in its manifest, in display order. Keep in step with ExtensionCategory in the app. */
+/** Categories an extension can list in its manifest, in display order. A test keeps this in step with schemas/manifest.schema.json. */
 export const categories = [
   "Communication", "Developer Tools", "Finance", "Fun", "Health", "Media",
   "News", "Productivity", "Sports", "System", "Weather", "Other",
 ];
 
-const preferenceTypes = new Set(["text", "password", "toggle", "dropdown"]);
+export const preferenceTypes = new Set(["text", "password", "toggle", "dropdown"]);
 
 /** Same rules as ExtensionPreference.validate in the app. */
 function validatePreferences(manifest) {
@@ -69,7 +69,7 @@ function validateStoreMetadata(manifest) {
   }
 }
 
-const allowedPermissions = new Set(["local-network", "process"]);
+export const allowedPermissions = new Set(["local-network", "process"]);
 
 export function validateManifest(manifest) {
   const invalid = () => { throw new Error(`Unsupported manifest: ${manifest.id ?? "unknown"}`); };
