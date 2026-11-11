@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import CalendarSupport
+@testable import NotchCapabilities
 
 private func event(_ id: String, start: Double, end: Double, allDay: Bool = false, cancelled: Bool = false) -> CalendarEvent {
     CalendarEvent(id: id, title: id, calendarID: "work", calendarTitle: "Work", start: start, end: end,

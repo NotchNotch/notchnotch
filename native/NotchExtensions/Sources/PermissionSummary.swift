@@ -7,7 +7,7 @@ import NotchProtocol
 /// asking for more.
 public enum PermissionSummary {
     public enum Kind: Int, Comparable, Sendable {
-        case runPrograms, internet, localApps, pictures, settings
+        case runPrograms, personalData, internet, localApps, pictures, settings
         public static func < (lhs: Kind, rhs: Kind) -> Bool { lhs.rawValue < rhs.rawValue }
     }
 
@@ -45,6 +45,12 @@ public enum PermissionSummary {
                 ([connection.executable ?? ""] + (connection.arguments ?? [])).joined(separator: " ")
             }
         }
+        result[.personalData] = SystemCapability.allCases.filter { manifest.permissions.contains($0.rawValue) }.map { capability in
+            switch capability {
+            case .calendar: "Your calendars: the next week’s events"
+            case .nowPlaying: "What’s playing in Spotify or Apple Music, and playback controls"
+            }
+        }
         result[.internet] = manifest.network ?? []
         if manifest.permissions.contains("local-network") {
             result[.localApps] = connections.filter { $0.transport != .stdio }.compactMap(\.endpoint)
@@ -59,6 +65,7 @@ public enum PermissionSummary {
     private static func title(_ kind: Kind) -> String {
         switch kind {
         case .runPrograms: "Run programs on your Mac"
+        case .personalData: "Read data on this Mac"
         case .internet: "Exchange data with these websites"
         case .localApps: "Talk to apps on this Mac"
         case .pictures: "Show pictures from these websites"
@@ -69,6 +76,7 @@ public enum PermissionSummary {
     private static func explanation(_ kind: Kind) -> String {
         switch kind {
         case .runPrograms: "These programs run with your account and can read your files and use the network. NotchNotch asks before each one starts."
+        case .personalData: "NotchNotch reads it for the extension and asks before the first time. macOS may ask NotchNotch too."
         case .internet: "Only with these websites, without asking again."
         case .localApps: "NotchNotch asks before it connects."
         case .pictures: "NotchNotch downloads the pictures itself."

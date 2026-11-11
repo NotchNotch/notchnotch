@@ -166,32 +166,29 @@ test("manifest imageHosts accept DNS names and subdomain wildcards only", () => 
   }
 });
 
-test("bundled helpers are app bundles that declare their own usage descriptions", async () => {
+test("the music package keeps the artwork hosts the now-playing capability checks", async () => {
   // Built by `pnpm test` before these tests run.
-  const music = await readFile("dist/extensions/music/helpers/MusicAdapter.app/Contents/Info.plist", "utf8");
-  const calendar = await readFile("dist/extensions/calendar/helpers/CalendarAdapter.app/Contents/Info.plist", "utf8");
-  assert.match(music, /NSAppleEventsUsageDescription/);
-  assert.match(calendar, /NSCalendarsFullAccessUsageDescription/);
   const manifest = JSON.parse(await readFile("dist/extensions/music/notchnotch.json", "utf8"));
+  assert.deepEqual(manifest.permissions, ["now-playing"]);
   assert.deepEqual(manifest.imageHosts, ["i.scdn.co", "mosaic.scdn.co", "*.mzstatic.com"]);
+  const provider = await readFile("native/NotchCapabilities/Sources/NowPlaying/MusicProvider.swift", "utf8");
+  assert.match(provider, /imageHosts = \["i\.scdn\.co", "mosaic\.scdn\.co", "\*\.mzstatic\.com"\]/);
 });
 
-test("the app carries every privacy entitlement and usage description its bundled helpers need", async () => {
-  // TCC attributes code inside NotchNotch.app to the app itself, even with
-  // responsibility disclaimed. A bundled helper's request is checked against
-  // the app's entitlements and Info.plist, and is denied without a prompt if
-  // either is missing (the Calendar failure in the first 0.3.0 build).
-  const keys = (xml) => [...xml.matchAll(/<key>([^<]+)<\/key>/g)].map((match) => match[1]);
-  const host = keys(await readFile("apps/macos/NotchNotch.entitlements", "utf8"));
+test("the app carries the privacy entitlement and usage description of every capability", async () => {
+  // Capabilities run inside NotchNotch, so macOS checks the app's own
+  // entitlements and Info.plist, and denies without a prompt if either is missing.
+  const needs = {
+    calendar: ["com.apple.security.personal-information.calendars", "NSCalendarsFullAccessUsageDescription"],
+    "now-playing": ["com.apple.security.automation.apple-events", "NSAppleEventsUsageDescription"],
+  };
+  const { capabilities } = await import("../packages/cli/src/manifest.mjs");
+  assert.deepEqual(Object.keys(needs).sort(), [...capabilities].sort());
+  const entitlements = await readFile("apps/macos/NotchNotch.entitlements", "utf8");
   const packaging = await readFile("scripts/package-app.mjs", "utf8");
-  for (const name of ["music", "calendar"]) {
-    for (const key of keys(await readFile(`extensions/${name}/helper.entitlements`, "utf8"))) {
-      assert.ok(host.includes(key), `NotchNotch.entitlements is missing ${key} used by ${name}`);
-    }
-    const builder = await readFile(`extensions/${name}/build.mjs`, "utf8");
-    for (const [, key] of builder.matchAll(/(NS[A-Za-z]+UsageDescription)/g)) {
-      assert.ok(packaging.includes(`<key>${key}</key>`), `The app's Info.plist is missing ${key} used by ${name}`);
-    }
+  for (const [name, [entitlement, usage]] of Object.entries(needs)) {
+    assert.ok(entitlements.includes(`<key>${entitlement}</key>`), `NotchNotch.entitlements is missing ${entitlement} for ${name}`);
+    assert.ok(packaging.includes(`<key>${usage}</key>`), `The app's Info.plist is missing ${usage} for ${name}`);
   }
 });
 

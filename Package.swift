@@ -7,8 +7,6 @@ let package = Package(
     products: [
         .executable(name: "NotchNotch", targets: ["NotchNotch"]),
         .executable(name: "ExtensionRunner", targets: ["ExtensionRunner"]),
-        .executable(name: "MusicAdapter", targets: ["MusicAdapter"]),
-        .executable(name: "CalendarAdapter", targets: ["CalendarAdapter"]),
     ],
     dependencies: [
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.10.1"),
@@ -21,11 +19,9 @@ let package = Package(
         .target(name: "NotchExtensions", dependencies: ["NotchProtocol"], path: "native/NotchExtensions/Sources"),
         .target(name: "NotchRenderer", dependencies: ["NotchProtocol", "NotchCore"], path: "native/NotchRenderer/Sources"),
         .executableTarget(name: "ExtensionRunner", dependencies: ["NotchRuntime"], path: "native/ExtensionRunner/Sources"),
-        .executableTarget(name: "MusicAdapter", dependencies: ["NotchCore", "NotchProtocol"], path: "extensions/music/helper-src"),
-        .target(name: "CalendarSupport", path: "extensions/calendar/helper-core"),
-        .executableTarget(name: "CalendarAdapter", dependencies: ["CalendarSupport", "NotchProtocol"], path: "extensions/calendar/helper-src"),
-        .testTarget(name: "CalendarSupportTests", dependencies: ["CalendarSupport"], path: "extensions/calendar/helper-tests"),
-        .executableTarget(name: "NotchNotch", dependencies: ["NotchCore", "NotchRenderer", "NotchConnections", "NotchExtensions",
+        .target(name: "NotchCapabilities", dependencies: ["NotchProtocol", "NotchCore", "NotchConnections"], path: "native/NotchCapabilities/Sources"),
+        .testTarget(name: "NotchCapabilitiesTests", dependencies: ["NotchCapabilities"], path: "native/NotchCapabilities/Tests"),
+        .executableTarget(name: "NotchNotch", dependencies: ["NotchCore", "NotchRenderer", "NotchConnections", "NotchExtensions", "NotchCapabilities",
                                                            .product(name: "Sparkle", package: "Sparkle")], path: "apps/macos/Sources"),
         .testTarget(name: "NotchCoreTests", dependencies: ["NotchCore"], path: "native/NotchCore/Tests"),
         .testTarget(name: "NotchRuntimeTests", dependencies: ["NotchRuntime"], path: "native/NotchRuntime/Tests"),

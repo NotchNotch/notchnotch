@@ -5,7 +5,7 @@ Your next event in the notch, with a live countdown and a button to join the mee
 ## Set up
 
 1. Open **Setup** and choose **Connect Calendar**.
-2. Allow NotchNotch to use the calendar helper.
+2. Allow Calendar to read your calendars.
 3. When macOS asks, allow access to your calendars.
 
 It uses the accounts already in the Calendar app, such as iCloud, Google or Exchange. There is nothing else to sign in to.

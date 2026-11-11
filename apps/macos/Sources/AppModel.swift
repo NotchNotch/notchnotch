@@ -6,6 +6,7 @@ import NotchRenderer
 import NotchProtocol
 import NotchExtensions
 import NotchConnections
+import NotchCapabilities
 
 @MainActor @Observable
 final class AppModel {
@@ -511,6 +512,7 @@ final class AppModel {
     func removeExtension(_ record: InstalledExtension) async throws {
         guard canUninstall(record) else { throw ProtocolError.invalid("\(record.manifest.name) can’t be uninstalled.") }
         forgetAccess(record.id)
+        SystemCapabilities.forget(extensionID: record.id)
         storeInstalls[record.id] = nil
         try? FileManager.default.removeItem(at: storageURL(for: record.id))
         let id = record.id

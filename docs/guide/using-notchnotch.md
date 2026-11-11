@@ -30,7 +30,7 @@ Shows what's playing in Spotify or Apple Music, with playback controls.
 
 1. Open **Settings & Extensions…** from the menu bar and choose **Music**.
 2. In **Setup**, choose **Connect Spotify** or **Connect Apple Music**.
-3. Allow NotchNotch to use the music helper, then allow it to control the player when macOS asks.
+3. Allow Music to see and control what's playing, then allow NotchNotch to control the player when macOS asks.
 
 ## Calendar
 

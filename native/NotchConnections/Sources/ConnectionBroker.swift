@@ -37,10 +37,27 @@ public struct ConnectionAuthorizationRequest: Sendable, Equatable {
     public var fingerprint: String
     /// `false` must not show UI; answer from stored grants only.
     public var interactive: Bool
-    public init(connectionID: String, target: String, fingerprint: String, interactive: Bool) {
+    /// Set when the app itself serves the stream instead of a helper or local service.
+    public var capability: SystemCapability?
+    public init(connectionID: String, target: String, fingerprint: String, interactive: Bool, capability: SystemCapability? = nil) {
         self.connectionID = connectionID; self.target = target; self.fingerprint = fingerprint; self.interactive = interactive
+        self.capability = capability
     }
 }
+
+/// One extension's open stream to a system capability. Messages from the
+/// extension arrive in `receive`; the session answers through the `send`
+/// closure it was created with, at most 64 KiB per message.
+@MainActor
+public protocol CapabilitySession: AnyObject {
+    func receive(_ message: JSONValue)
+    func stop()
+}
+
+/// Creates a session for an extension that has the capability's permission and
+/// the person's consent. nil when this Mac can't provide it.
+public typealias CapabilityProvider = @MainActor (_ capability: SystemCapability, _ extensionID: String,
+                                                  _ send: @escaping @MainActor (JSONValue) -> Void) -> (any CapabilitySession)?
 
 /// Transports are generic. Application-specific protocols stay in extension code.
 @MainActor
@@ -49,16 +66,18 @@ public final class ConnectionBroker {
         let sessionID: String
         var process: StdioConnection?
         var websocket: URLSessionWebSocketTask?
+        var capability: (any CapabilitySession)?
         var reader: Task<Void, Never>?
         var intervalStart = Date.now
         var messageCount = 0
         init(sessionID: String) { self.sessionID = sessionID }
-        func stop() { reader?.cancel(); websocket?.cancel(with: .goingAway, reason: nil); process?.stop() }
+        func stop() { reader?.cancel(); websocket?.cancel(with: .goingAway, reason: nil); process?.stop(); capability?.stop() }
     }
 
     private let manifest: ExtensionManifest
     private let directory: URL
     private let authorize: @MainActor (ConnectionAuthorizationRequest) async -> Bool
+    private let capabilities: CapabilityProvider?
     private let emit: (String) -> Void
     private let session: URLSession
     private let websocketSession: URLSession
@@ -73,17 +92,17 @@ public final class ConnectionBroker {
     private var operations: [String: Task<Void, Never>] = [:]
     private var stopped = false
 
-    public convenience init(manifest: ExtensionManifest, directory: URL,
+    public convenience init(manifest: ExtensionManifest, directory: URL, capabilities: CapabilityProvider? = nil,
                             authorize: @escaping @MainActor (ConnectionAuthorizationRequest) async -> Bool, emit: @escaping (String) -> Void) {
-        self.init(manifest: manifest, directory: directory, networkProtocolClasses: nil, authorize: authorize, emit: emit)
+        self.init(manifest: manifest, directory: directory, networkProtocolClasses: nil, capabilities: capabilities, authorize: authorize, emit: emit)
     }
 
     /// `networkProtocolClasses` lets tests answer `fetch` without the internet.
-    init(manifest: ExtensionManifest, directory: URL, networkProtocolClasses: [AnyClass]?,
+    init(manifest: ExtensionManifest, directory: URL, networkProtocolClasses: [AnyClass]?, capabilities: CapabilityProvider? = nil,
          authorize: @escaping @MainActor (ConnectionAuthorizationRequest) async -> Bool, emit: @escaping (String) -> Void) {
         self.networkProtocolClasses = networkProtocolClasses
         self.manifest = manifest; self.directory = directory.resolvingSymlinksInPath()
-        self.authorize = authorize; self.emit = emit
+        self.authorize = authorize; self.capabilities = capabilities; self.emit = emit
         let configuration = URLSessionConfiguration.ephemeral
         configuration.connectionProxyDictionary = [:]
         configuration.httpShouldSetCookies = false
@@ -159,6 +178,9 @@ public final class ConnectionBroker {
             guard let request = command.fetch else { throw ProtocolError.invalid("fetch request is missing") }
             return try await fetch(request)
         }
+        if let capability = SystemCapability(connectionID: command.connectionID) {
+            return try await performCapability(capability, command)
+        }
         guard let definition = manifest.connections?[command.connectionID] else {
             throw ProtocolError.invalid("Connection is not declared in this extension's manifest")
         }
@@ -172,24 +194,11 @@ public final class ConnectionBroker {
         }
         let executable = definition.transport == .stdio ? try resolveExecutable(definition.executable!) : nil
         if !granted.contains(command.connectionID) {
-            let interactive = command.interactive ?? true
             let target = executable.map { $0.path + "\nArguments: " + (definition.arguments ?? []).joined(separator: " · ") }
                 ?? definition.endpoint!
-            let request = ConnectionAuthorizationRequest(
+            try await authorizeOnce(ConnectionAuthorizationRequest(
                 connectionID: command.connectionID, target: target,
-                fingerprint: try Self.fingerprint(executable: executable, definition: definition), interactive: interactive)
-            // Concurrent operations on one connection share a single question.
-            let key = "\(command.connectionID)|\(interactive)"
-            let decision = pendingDecisions[key] ?? Task { [authorize] in await authorize(request) }
-            pendingDecisions[key] = decision
-            let allowed = await decision.value
-            if pendingDecisions[key] == decision { pendingDecisions.removeValue(forKey: key) }
-            guard !stopped, !Task.isCancelled else { throw ProtocolError.invalid("Extension connections disconnected") }
-            guard allowed else {
-                throw ProtocolError.invalid(interactive ? "Connection access was not granted."
-                                            : "Connection access is required. Connect from the extension's settings.")
-            }
-            granted.insert(command.connectionID)
+                fingerprint: try Self.fingerprint(executable: executable, definition: definition), interactive: command.interactive ?? true))
         }
         switch command.operation {
         case .request:
@@ -253,6 +262,66 @@ public final class ConnectionBroker {
             else if let websocket = stream.websocket { try await websocket.send(.string(String(decoding: data, as: UTF8.self))) }
             return .null
         case .close, .fetch, .secretGet, .secretSet, .secretDelete, .openURL: return .null
+        }
+    }
+
+    /// Asks the host once per connection and session; concurrent operations share one question.
+    private func authorizeOnce(_ request: ConnectionAuthorizationRequest) async throws {
+        let key = "\(request.connectionID)|\(request.interactive)"
+        let decision = pendingDecisions[key] ?? Task { [authorize] in await authorize(request) }
+        pendingDecisions[key] = decision
+        let allowed = await decision.value
+        if pendingDecisions[key] == decision { pendingDecisions.removeValue(forKey: key) }
+        guard !stopped, !Task.isCancelled else { throw ProtocolError.invalid("Extension connections disconnected") }
+        guard allowed else {
+            throw ProtocolError.invalid(request.interactive ? "Connection access was not granted."
+                                        : "Connection access is required. Connect from the extension's settings.")
+        }
+        granted.insert(request.connectionID)
+    }
+
+    /// The app serves the stream itself. The permission is checked here, not
+    /// only at install, and the person is asked like for any connection.
+    private func performCapability(_ capability: SystemCapability, _ command: ConnectionCommand) async throws -> JSONValue {
+        let id = command.connectionID
+        guard manifest.permissions.contains(capability.rawValue) else {
+            throw ProtocolError.invalid("Add \"\(capability.rawValue)\" to permissions in notchnotch.json to use this capability")
+        }
+        guard let capabilities else { throw ProtocolError.invalid("This build of NotchNotch doesn't provide \(capability.rawValue)") }
+        switch command.operation {
+        case .close:
+            closedSessions[id] = command.sessionID
+            if let stream = streams[id], stream.sessionID == command.sessionID { streams.removeValue(forKey: id)?.stop() }
+            return .null
+        case .open:
+            guard let sessionID = command.sessionID, !sessionID.isEmpty else { throw ProtocolError.invalid("Stream requires a session identifier") }
+            if !granted.contains(id) {
+                try await authorizeOnce(ConnectionAuthorizationRequest(connectionID: id, target: capability.rawValue,
+                    fingerprint: id, interactive: command.interactive ?? true, capability: capability))
+            }
+            guard closedSessions[id] != sessionID else { throw ProtocolError.invalid("Stream was closed while opening") }
+            if let stream = streams[id] {
+                guard stream.sessionID == sessionID else { throw ProtocolError.invalid("Connection is already open") }
+                return .null
+            }
+            let stream = Stream(sessionID: sessionID)
+            guard let session = capabilities(capability, manifest.id, { [weak self, weak stream] message in
+                guard let self, let stream else { return }
+                self.deliver(message, id: id, stream: stream)
+            }) else { throw ProtocolError.invalid("\(capability.rawValue) isn't available on this Mac") }
+            stream.capability = session
+            streams[id] = stream
+            return .null
+        case .send:
+            guard let stream = streams[id], stream.sessionID == command.sessionID, let session = stream.capability,
+                  let message = command.message else { throw ProtocolError.invalid("Stream is closed or message is missing") }
+            guard try JSONEncoder().encode(message).count <= maximumConnectionPayloadBytes else {
+                throw ProtocolError.invalid("Connection message exceeds 64 KiB")
+            }
+            session.receive(message)
+            return .null
+        default:
+            throw ProtocolError.invalid("Capabilities are streams: open, send and close")
         }
     }
 

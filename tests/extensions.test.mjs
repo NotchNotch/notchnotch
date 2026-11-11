@@ -164,7 +164,7 @@ test("Music connects through the generic SDK, receives state, and sends playback
     runner.message({ type: "connectionResponse", requestID: command.requestID, result: null });
   }
   function incoming(sessionID, message) {
-    runner.message({ type: "connectionEvent", connectionID: "player", sessionID, event: "message", message });
+    runner.message({ type: "connectionEvent", connectionID: "capability:now-playing", sessionID, event: "message", message });
   }
   try {
     const initial = await runner.wait((message) => !!message.settings);
@@ -173,7 +173,7 @@ test("Music connects through the generic SDK, receives state, and sends playback
     await denySilentOpen(runner);
     runner.send(action({ expanded: initial.settings }, "Connect Spotify"));
     const open = await runner.waitMessage((message) => message.type === "connectionCommand" && message.operation === "open" && message.interactive !== false);
-    assert.equal(open.connectionID, "player");
+    assert.equal(open.connectionID, "capability:now-playing");
     acknowledge(open);
     const get = await runner.waitMessage((message) => message.message?.method === "music/getState");
     acknowledge(get);
@@ -214,35 +214,11 @@ test("Music connects through the generic SDK, receives state, and sends playback
     incoming(open.sessionID, { method: "music/state", params: { ...status(state), commandError: "Player unavailable" } });
     await runner.wait((message) => message.revision > art.revision &&
       nodes(message.surfaces[0].expanded).some((node) => node.props.text === "Player unavailable"));
-    runner.message({ type: "connectionEvent", connectionID: "player", sessionID: open.sessionID, event: "closed" });
+    runner.message({ type: "connectionEvent", connectionID: "capability:now-playing", sessionID: open.sessionID, event: "closed" });
     await runner.wait((message) => message.revision > art.revision &&
       message.surfaces.length === 0 && nodes(message.settings).some((node) => node.props.text === "Connect Spotify"));
     assert.equal(runner.messages.filter((message) => message.operation === "open" && message.interactive !== false).length, 1);
     assert.equal(runner.messages.some((message) => message.type === "mediaCommand"), false);
-  } finally { await runner.stop(); }
-});
-
-test("The packaged music helper speaks bounded JSON-RPC and rejects unsupported actions", async () => {
-  const runner = launchProcess(path.join(root, "dist/extensions/music/helpers/MusicAdapter.app/Contents/MacOS/MusicAdapter"), []);
-  function request(id, method, params) {
-    runner.child.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n");
-  }
-  try {
-    request("state", "music/getState");
-    const initial = await runner.waitMessage((message) => message.id === "state");
-    assert.equal(initial.jsonrpc, "2.0");
-    assert.ok(Array.isArray(initial.result.authorized));
-    assert.equal(typeof initial.result.errors, "object");
-    request("unknown", "arbitraryScript", { script: "do something" });
-    const unknown = await runner.waitMessage((message) => message.id === "unknown");
-    assert.equal(unknown.error.code, -32601);
-    request("player", "music/connect", { player: "arbitrary.application" });
-    assert.equal((await runner.waitMessage((message) => message.id === "player")).error.code, -32602);
-    request("command", "music/command", { command: "runScript" });
-    assert.equal((await runner.waitMessage((message) => message.id === "command")).error.code, -32602);
-    request("final", "music/getState");
-    await runner.waitMessage((message) => message.id === "final");
-    assert.equal(runner.messages.filter((message) => message.id === "unknown").length, 1);
   } finally { await runner.stop(); }
 });
 
@@ -254,7 +230,7 @@ test("Calendar connects explicitly, selects calendars, and follows event changes
   const choices = [{ id: "work", title: "Work", selected: true }, { id: "personal", title: "Personal", selected: true }];
   const status = (events = [], extra = {}) => ({ authorization: "authorized", calendars: choices, events, ...extra });
   function incoming(sessionID, message) {
-    runner.message({ type: "connectionEvent", connectionID: "calendar", sessionID, event: "message", message });
+    runner.message({ type: "connectionEvent", connectionID: "capability:calendar", sessionID, event: "message", message });
   }
   function acknowledge(command, result) {
     runner.message({ type: "connectionResponse", requestID: command.requestID, result: null });
@@ -266,7 +242,7 @@ test("Calendar connects explicitly, selects calendars, and follows event changes
     await denySilentOpen(runner);
     runner.send(action({ expanded: initial.settings }, "Connect"));
     const open = await runner.waitMessage((message) => message.operation === "open" && message.interactive !== false);
-    assert.equal(open.connectionID, "calendar");
+    assert.equal(open.connectionID, "capability:calendar");
     acknowledge(open);
     const connect = await runner.waitMessage((message) => message.message?.method === "calendar/connect");
     acknowledge(connect, status([distant]));
@@ -307,31 +283,9 @@ test("Calendar connects explicitly, selects calendars, and follows event changes
     const denied = await runner.wait((message) => nodes(message.settings).some((node) => node.props.text === "Calendar access denied"));
     assert.deepEqual(denied.surfaces, []);
     assert.ok(nodes(denied.settings).some((node) => node.type === "button" && node.props.text === "Connect"));
-    runner.message({ type: "connectionEvent", connectionID: "calendar", sessionID: open.sessionID, event: "closed" });
+    runner.message({ type: "connectionEvent", connectionID: "capability:calendar", sessionID: open.sessionID, event: "closed" });
     await runner.wait((message) => nodes(message.settings).some((node) => /Calendar disconnected/.test(node.props.text ?? "")));
     assert.equal(runner.messages.filter((message) => message.operation === "open" && message.interactive !== false).length, 1);
-  } finally { await runner.stop(); }
-});
-
-test("The Calendar helper exposes status without prompting and rejects unsupported operations", async () => {
-  const runner = launchProcess(path.join(root, "dist/extensions/calendar/helpers/CalendarAdapter.app/Contents/MacOS/CalendarAdapter"), []);
-  function request(id, method, params) {
-    runner.child.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n");
-  }
-  try {
-    request("status", "calendar/getState");
-    const response = await runner.waitMessage((message) => message.id === "status");
-    assert.equal(response.jsonrpc, "2.0");
-    assert.ok(["authorized", "notDetermined", "denied", "restricted", "writeOnly"].includes(response.result.authorization));
-    assert.ok(Array.isArray(response.result.events));
-    assert.ok(Array.isArray(response.result.calendars));
-    if (response.result.authorization !== "authorized") assert.deepEqual(response.result.events, []);
-    request("write", "calendar/deleteEvent", { id: "anything" });
-    assert.equal((await runner.waitMessage((message) => message.id === "write")).error.code, -32601);
-    request("selection", "calendar/select", { ids: [42] });
-    assert.equal((await runner.waitMessage((message) => message.id === "selection")).error.code, -32602);
-    request("join", "calendar/join", { id: "missing-event" });
-    assert.equal((await runner.waitMessage((message) => message.id === "join")).error.code, -32602);
   } finally { await runner.stop(); }
 });
 
@@ -367,7 +321,7 @@ test("Music reconnects silently at launch when access was always allowed", async
     runner.message({ type: "connectionResponse", requestID: silent.requestID, result: null });
     const get = await runner.waitMessage((message) => message.message?.method === "music/getState");
     runner.message({ type: "connectionResponse", requestID: get.requestID, result: null });
-    runner.message({ type: "connectionEvent", connectionID: "player", sessionID: silent.sessionID, event: "message",
+    runner.message({ type: "connectionEvent", connectionID: "capability:now-playing", sessionID: silent.sessionID, event: "message",
       message: { jsonrpc: "2.0", id: get.message.id, result: { state, authorized: ["com.spotify.client"], errors: {} } } });
     const resumed = await runner.wait((message) => message.surfaces[0]?.id === "now-playing");
     assert.equal(resumed.surfaces[0].phase, "paused");

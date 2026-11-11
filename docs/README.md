@@ -13,9 +13,10 @@
 5. [Storage](extensions/storage.md): keep values and secrets across restarts
 6. [Network](extensions/network.md): call web APIs with `fetch`
 7. [Connections](extensions/connections.md): talk to local apps and services
-8. [Native helpers](extensions/native-helpers.md): reach apps through native code
-9. [Manifest](extensions/manifest.md): every field of `notchnotch.json`
-10. [Publishing](extensions/publishing.md): icon, About page, store guidelines and `.notchext` files
+8. [Capabilities](extensions/capabilities.md): calendars and what's playing, read by NotchNotch
+9. [Native helpers](extensions/native-helpers.md): reach apps through native code
+10. [Manifest](extensions/manifest.md): every field of `notchnotch.json`
+11. [Publishing](extensions/publishing.md): icon, About page, store guidelines and `.notchext` files
 
 ## Contributing to NotchNotch
 
@@ -24,6 +25,6 @@
 - [Releasing](internals/releasing.md): builds, signing and updates
 - [Store catalog](internals/store-catalog.md): the signed list of reviewed extensions
 - [Performance budget](internals/performance.md): idle limits and how to measure them
-- [Decisions](internals/decisions/0001-native-extension-platform.md)
+- Decisions: [native extension platform](internals/decisions/0001-native-extension-platform.md), [system capabilities](internals/decisions/0002-system-capabilities.md)
 
 Also: [Changelog](../CHANGELOG.md) · [Privacy](../PRIVACY.md) · [Security](../SECURITY.md)

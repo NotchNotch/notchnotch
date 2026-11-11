@@ -72,7 +72,7 @@ public struct ProblemJournal: Codable, Equatable, Sendable {
 /// memory maps) stays out of a problem report.
 public struct CrashSummary: Equatable, Sendable {
     /// The processes NotchNotch ships, whose crashes belong in a report.
-    public static let processes: Set<String> = ["NotchNotch", "ExtensionRunner", "MusicAdapter", "CalendarAdapter"]
+    public static let processes: Set<String> = ["NotchNotch", "ExtensionRunner"]
     public static let maximumFrames = 12
 
     public var process: String

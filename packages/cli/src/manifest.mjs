@@ -69,7 +69,9 @@ function validateStoreMetadata(manifest) {
   }
 }
 
-export const allowedPermissions = new Set(["local-network", "process"]);
+/** Capabilities are permissions too; each one is also a stream named `capability:<name>`. */
+export const capabilities = ["calendar", "now-playing"];
+export const allowedPermissions = new Set(["local-network", "process", ...capabilities]);
 
 export function validateManifest(manifest) {
   const invalid = () => { throw new Error(`Unsupported manifest: ${manifest.id ?? "unknown"}`); };

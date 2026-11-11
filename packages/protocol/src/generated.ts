@@ -192,8 +192,8 @@ export interface ExtensionManifest {
   version: string;
   apiVersion: 1;
   entry: "bundle.js";
-  /** `local-network` for loopback HTTP and WebSocket connections, `process` for native helpers. */
-  permissions: ("local-network" | "process")[];
+  /** `local-network` for loopback HTTP and WebSocket connections, `process` for native helpers, `calendar` and `now-playing` for the app's system capabilities. */
+  permissions: ("local-network" | "process" | "calendar" | "now-playing")[];
   /** Named local destinations: loopback HTTP or WebSocket services and native helpers. */
   connections?: Record<string, ConnectionDefinition>;
   /** An SF Symbol name, or the file name of a 512×512 PNG in the package's assets/ folder (such as icon.png). */

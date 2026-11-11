@@ -39,8 +39,6 @@ run("codesign", ["--verify", "--strict", "--verbose=2", app]);
 // Print what macOS will key permissions to: the designated requirement must stay
 // identical across releases for granted access to survive updates.
 for (const target of [app, path.join(app, "Contents/Helpers/ExtensionRunner"),
-  path.join(app, "Contents/Resources/extensions/music/helpers/MusicAdapter.app"),
-  path.join(app, "Contents/Resources/extensions/calendar/helpers/CalendarAdapter.app"),
   path.join(app, "Contents/Frameworks/Sparkle.framework")]) {
   run("codesign", ["--display", "--requirements", "-", "--verbose=1", target]);
 }

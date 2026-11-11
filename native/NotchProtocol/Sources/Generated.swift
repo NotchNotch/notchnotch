@@ -426,7 +426,7 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
     public var version: String
     public var apiVersion = 1
     public var entry = "bundle.js"
-    /// `local-network` for loopback HTTP and WebSocket connections, `process` for native helpers.
+    /// `local-network` for loopback HTTP and WebSocket connections, `process` for native helpers, `calendar` and `now-playing` for the app's system capabilities.
     public var permissions: [String]
     /// Named local destinations: loopback HTTP or WebSocket services and native helpers.
     public var connections: [String: ConnectionDefinition]?

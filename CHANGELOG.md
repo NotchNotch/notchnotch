@@ -16,6 +16,7 @@ All notable changes to NotchNotch are listed here. The format follows
 - `schemas/connections.schema.json` describes `fetch`, secrets and `openURL`, which the app has handled since 0.5 but the schema didn't list. `schemas/manifest.schema.json` allows 32 helper arguments, like the app and the CLI, instead of 22. The Swift and TypeScript protocol and manifest models are now generated from the schemas, so they can't drift apart again.
 
 ### Changed
+- Calendar moved to the Store and no longer comes with NotchNotch. If you used it, NotchNotch installs it from the Store for you and keeps your chosen calendars.
 - Music and Calendar have new icons in the macOS 26 style, like the Store's extensions.
 - Extensions have one icon for light and dark mode. `icon@dark.png` is no longer read or checked, and the Store catalog no longer lists `iconDark`.
 - **About** links to the new website, [notchnotch.github.io](https://notchnotch.github.io), for release notes, extension docs and privacy.

@@ -5,7 +5,7 @@ See what's playing in Spotify or Apple Music without leaving what you're doing, 
 ## Set up
 
 1. Open **Setup** and choose **Connect Spotify** or **Connect Apple Music**.
-2. Allow NotchNotch to use the music helper.
+2. Allow Music to see and control what’s playing.
 3. When macOS asks, allow NotchNotch to control the player.
 
 Choose **Always Allow** to reconnect automatically next time NotchNotch starts.

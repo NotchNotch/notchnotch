@@ -1,7 +1,6 @@
 import AppKit
 import EventKit
 import CryptoKit
-import CalendarSupport
 import NotchProtocol
 
 struct CalendarChoice: Encodable, Equatable {
@@ -20,15 +19,16 @@ struct CalendarStatus: Encodable, Equatable {
 @MainActor
 final class CalendarSource {
     private let store = EKEventStore()
-    private let preferences = UserDefaults(suiteName: "dev.notchnotch.calendar.adapter") ?? .standard
+    private let extensionID: String
     private var timer: Timer?
     private var observer: NSObjectProtocol?
     private var selectedIDs: Set<String>?
     private(set) var status = CalendarStatus(authorization: "notDetermined")
     var onChange: ((CalendarStatus) -> Void)?
 
-    init() {
-        selectedIDs = preferences.stringArray(forKey: "selectedCalendarIDs").map(Set.init)
+    init(extensionID: String) {
+        self.extensionID = extensionID
+        selectedIDs = CalendarSelections.ids(for: extensionID).map(Set.init)
     }
 
     func start() {
@@ -72,7 +72,7 @@ final class CalendarSource {
         let known = Set(store.calendars(for: .event).map(\.calendarIdentifier))
         guard ids.count <= 64, Set(ids).isSubset(of: known) else { throw ProtocolError.invalid("Unknown calendar selection") }
         selectedIDs = Set(ids)
-        preferences.set(ids, forKey: "selectedCalendarIDs")
+        CalendarSelections.set(ids, for: extensionID)
         refresh()
     }
 
@@ -136,5 +136,37 @@ final class CalendarSource {
         case .writeOnly: "writeOnly"
         default: "denied"
         }
+    }
+}
+
+/// Which calendars each extension shows, by calendar identifier only; nil
+/// means all of them. Kept in the app's defaults and forgotten on uninstall.
+enum CalendarSelections {
+    private static let key = "calendarSelections"
+    /// Where the Calendar extension's helper kept its one selection before 0.9.
+    private static let legacyDomain = "dev.notchnotch.calendar.adapter"
+    static let legacyExtensionID = "dev.notchnotch.calendar"
+
+    static func ids(for extensionID: String) -> [String]? {
+        migrateLegacySelection()
+        return all[extensionID]
+    }
+
+    static func set(_ ids: [String]?, for extensionID: String) {
+        var values = all
+        values[extensionID] = ids
+        UserDefaults.standard.set(values, forKey: key)
+    }
+
+    private static var all: [String: [String]] {
+        UserDefaults.standard.dictionary(forKey: key) as? [String: [String]] ?? [:]
+    }
+
+    /// Copies the helper's selection to the Calendar extension once, then removes the helper's domain.
+    private static func migrateLegacySelection() {
+        guard let legacy = UserDefaults(suiteName: legacyDomain),
+              let ids = legacy.stringArray(forKey: "selectedCalendarIDs") else { return }
+        if all[legacyExtensionID] == nil { set(ids, for: legacyExtensionID) }
+        UserDefaults.standard.removePersistentDomain(forName: legacyDomain)
     }
 }

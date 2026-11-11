@@ -11,6 +11,7 @@ struct ConsentRequest {
     let connectionID: String
     let target: String
     let runsTool: Bool
+    var capability: SystemCapability?
 }
 
 /// Asks for connection access in a floating, non-modal window. Requests are
@@ -79,22 +80,24 @@ private struct ConsentView: View {
             HStack(alignment: .top, spacing: 12) {
                 ExtensionIdentityView(icon: request.extensionIcon, size: 44)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Allow \(request.extensionName) to \(request.runsTool ? "run a local tool" : "connect to a local app")?")
+                    Text("Allow \(request.extensionName) to \(action)?")
                         .font(.headline).fixedSize(horizontal: false, vertical: true)
-                    Text(request.runsTool
-                         ? "The tool runs with your user account and can access your files and network. Allow only tools you trust."
-                         : "The extension can exchange data with this local service on your Mac.")
+                    Text(explanation)
                         .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
             }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(request.connectionID).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                Text(request.target).font(.caption.monospaced()).textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
+            if request.capability == nil {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(request.connectionID).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    Text(request.target).font(.caption.monospaced()).textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(10).frame(maxWidth: .infinity, alignment: .leading)
+                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
             }
-            .padding(10).frame(maxWidth: .infinity, alignment: .leading)
-            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
-            Text("“Always Allow” is remembered until the helper changes or you forget access in Settings & Extensions.")
+            Text(request.capability == nil
+                 ? "“Always Allow” is remembered until the helper changes or you forget access in Settings & Extensions."
+                 : "“Always Allow” is remembered until you forget access in Settings & Extensions.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             HStack {
                 Button("Don’t Allow") { decide(.deny) }.keyboardShortcut(.cancelAction)
@@ -105,5 +108,23 @@ private struct ConsentView: View {
         }
         .padding(20).padding(.top, 8)
         .frame(width: 420)
+    }
+
+    private var action: String {
+        switch request.capability {
+        case .calendar: "read your calendars"
+        case .nowPlaying: "see and control what’s playing"
+        case nil: request.runsTool ? "run a local tool" : "connect to a local app"
+        }
+    }
+
+    private var explanation: String {
+        switch request.capability {
+        case .calendar: "It sees the next week’s events from the calendars you choose: titles, times, locations and meeting links. Not notes or attendees, and it can’t change anything."
+        case .nowPlaying: "It sees the song playing in Spotify or Apple Music and can play, pause and skip. macOS asks separately before NotchNotch controls each app."
+        case nil: request.runsTool
+            ? "The tool runs with your user account and can access your files and network. Allow only tools you trust."
+            : "The extension can exchange data with this local service on your Mac."
+        }
     }
 }

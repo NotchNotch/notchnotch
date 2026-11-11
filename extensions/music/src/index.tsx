@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Activity, Artwork, Button, ConnectionStream, JSONRPCClient, MusicPlayer,
+  Activity, Artwork, Button, capability, JSONRPCClient, MusicPlayer,
   Row, Settings, Symbol, Text, Waveform,
 } from "@notchnotch/sdk";
 import type { JSONValue, MediaRequest, NowPlayingState } from "@notchnotch/protocol";
@@ -18,7 +18,7 @@ const players = [
 ];
 
 function Music() {
-  const rpc = useMemo(() => new JSONRPCClient(new ConnectionStream("player")), []);
+  const rpc = useMemo(() => new JSONRPCClient(capability("now-playing")), []);
   const [status, setStatus] = useState<MusicStatus | null>(null);
   const [connected, setConnected] = useState(false);
   const active = useRef(false);
@@ -77,7 +77,7 @@ function Music() {
       if (player) setStatus(await rpc.request<MusicStatus>("music/connect", { player }, 120_000));
     } catch (failure) {
       setError(String(failure));
-      // A failed handshake must not leave a nonresponsive helper cached for
+      // A failed handshake must not leave a nonresponsive stream cached for
       // every subsequent Connect attempt.
       if (!active.current) await rpc.disconnect().catch(() => {});
     } finally { connecting.current = false; setBusy(false); }

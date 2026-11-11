@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Activity, Badge, Button, ConnectionStream, Divider, JSONRPCClient, ListItem, Progress, Row, Section, Settings,
+  Activity, Badge, Button, capability, Divider, JSONRPCClient, ListItem, Progress, Row, Section, Settings,
   Spacer, Symbol, Text, Toggle,
 } from "@notchnotch/sdk";
 import type { JSONValue } from "@notchnotch/protocol";
@@ -39,7 +39,7 @@ function countdown(seconds: number, compact = false) {
 }
 
 function Calendar() {
-  const rpc = useMemo(() => new JSONRPCClient(new ConnectionStream("calendar")), []);
+  const rpc = useMemo(() => new JSONRPCClient(capability("calendar")), []);
   const [status, setStatus] = useState<CalendarStatus | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);

@@ -152,3 +152,58 @@ private func manifest(permissions: [String] = ["process"], connections: String =
     #expect(responsible(helper.pid) == helper.pid)
     #expect(responsible(helper.pid) != responsible(getpid()))
 }
+
+/// Answers every request with what it was asked, so the test sees the round trip.
+@MainActor private final class EchoCapability: CapabilitySession {
+    let send: @MainActor (JSONValue) -> Void
+    var stopped = false
+    init(send: @escaping @MainActor (JSONValue) -> Void) { self.send = send }
+    func receive(_ message: JSONValue) { send(.object(["echo": message])) }
+    func stop() { stopped = true }
+}
+
+@Test @MainActor func capabilitiesNeedTheirPermissionAndConsentAndStopWithTheStream() async throws {
+    var messages: [[String: Any]] = []
+    var asked: [ConnectionAuthorizationRequest] = []
+    var sessions: [EchoCapability] = []
+    func broker(_ permissions: [String]) throws -> ConnectionBroker {
+        ConnectionBroker(manifest: try manifest(permissions: permissions, connections: "{}"), directory: URL(fileURLWithPath: "/tmp"),
+                         capabilities: { capability, extensionID, send in
+            #expect(capability == .calendar && extensionID == "dev.test.bridge")
+            let session = EchoCapability(send: send)
+            sessions.append(session)
+            return session
+        }, authorize: { request in asked.append(request); return true }, emit: { json in
+            if let value = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any] { messages.append(value) }
+        })
+    }
+    func response(_ id: String) async throws -> [String: Any]? {
+        for _ in 0..<100 where !messages.contains(where: { $0["requestID"] as? String == id }) { try await Task.sleep(for: .milliseconds(10)) }
+        return messages.first { $0["requestID"] as? String == id }
+    }
+
+    // Without the permission, nothing is asked and no session starts.
+    let denied = try broker([])
+    denied.receive(.init(extensionID: "dev.test.bridge", requestID: "no", connectionID: "capability:calendar", operation: .open, sessionID: "a"))
+    #expect((try await response("no"))?["error"] as? String != nil)
+    #expect(asked.isEmpty && sessions.isEmpty)
+    denied.stop()
+
+    let allowed = try broker(["calendar"])
+    allowed.receive(.init(extensionID: "dev.test.bridge", requestID: "open", connectionID: "capability:calendar", operation: .open, sessionID: "b"))
+    #expect((try await response("open"))?["error"] == nil)
+    #expect(asked.map(\.capability) == [.calendar] && asked.first?.connectionID == "capability:calendar")
+    allowed.receive(.init(extensionID: "dev.test.bridge", requestID: "send", connectionID: "capability:calendar", operation: .send,
+                          sessionID: "b", message: .string("hello")))
+    for _ in 0..<100 where !messages.contains(where: { $0["type"] as? String == "connectionEvent" }) { try await Task.sleep(for: .milliseconds(10)) }
+    let event = try #require(messages.first { $0["type"] as? String == "connectionEvent" })
+    #expect(event["connectionID"] as? String == "capability:calendar" && event["sessionID"] as? String == "b")
+    #expect((event["message"] as? [String: Any])?["echo"] as? String == "hello")
+    // An undeclared capability name is still refused.
+    allowed.receive(.init(extensionID: "dev.test.bridge", requestID: "other", connectionID: "capability:now-playing", operation: .open, sessionID: "c"))
+    #expect((try await response("other"))?["error"] as? String != nil)
+    allowed.receive(.init(extensionID: "dev.test.bridge", requestID: "close", connectionID: "capability:calendar", operation: .close, sessionID: "b"))
+    _ = try await response("close")
+    #expect(sessions.count == 1 && sessions[0].stopped)
+    allowed.stop()
+}

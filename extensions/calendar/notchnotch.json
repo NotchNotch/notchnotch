@@ -4,14 +4,7 @@
   "version": "0.8.1",
   "apiVersion": 1,
   "entry": "bundle.js",
-  "permissions": ["process"],
-  "connections": {
-    "calendar": {
-      "transport": "stdio",
-      "executable": "./helpers/CalendarAdapter.app/Contents/MacOS/CalendarAdapter",
-      "arguments": []
-    }
-  },
+  "permissions": ["calendar"],
   "icon": "icon.png",
   "description": "Your next event, with a live countdown and meeting controls. Connect the calendars already on your Mac.",
   "author": "sadeqi-ah",

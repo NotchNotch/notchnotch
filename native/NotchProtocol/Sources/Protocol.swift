@@ -138,14 +138,14 @@ extension ExtensionManifest {
     /// folder. Any other value is an SF Symbol name.
     public var iconFile: String? {
         guard let icon, icon.hasSuffix(".png") else { return nil }
-        return (icon, String(icon.dropLast(4)) + "@dark.png")
+        return icon
     }
 
     public func validate() throws {
         guard id.range(of: "^[a-z][a-z0-9.-]{2,79}$", options: .regularExpression) != nil,
               !name.isEmpty, name.count <= 128, !version.isEmpty, version.count <= 64,
               apiVersion == 1, entry == "bundle.js", Set(permissions).count == permissions.count,
-              permissions.allSatisfy({ ["local-network", "process"].contains($0) }),
+              permissions.allSatisfy({ ["local-network", "process"].contains($0) || SystemCapability(rawValue: $0) != nil }),
               (icon?.count ?? 0) <= 128, (description?.count ?? 0) <= 512,
               (connections?.count ?? 0) <= 8 else {
             throw ProtocolError.invalid("Invalid API v1 extension manifest or permissions")
@@ -289,4 +289,20 @@ extension ExtensionManifest {
 public enum ProtocolError: Error, LocalizedError, Sendable {
     case invalid(String)
     public var errorDescription: String? { if case let .invalid(message) = self { return message }; return nil }
+}
+
+/// Protected data the app reads for an extension in place of a native helper.
+/// Each one is a manifest permission and a JSON-RPC stream with the connection
+/// identifier `capability:<name>`, which a manifest connection can't use.
+public enum SystemCapability: String, CaseIterable, Sendable {
+    case calendar
+    case nowPlaying = "now-playing"
+
+    public static let connectionPrefix = "capability:"
+    public var connectionID: String { Self.connectionPrefix + rawValue }
+
+    public init?(connectionID: String) {
+        guard connectionID.hasPrefix(Self.connectionPrefix) else { return nil }
+        self.init(rawValue: String(connectionID.dropFirst(Self.connectionPrefix.count)))
+    }
 }

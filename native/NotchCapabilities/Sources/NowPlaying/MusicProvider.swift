@@ -139,7 +139,7 @@ final class MusicProvider {
             errors[player] = nil
             await refresh()
         } else {
-            errors[player] = "Allow the music helper to control \(player.name) in System Settings → Privacy & Security → Automation"
+            errors[player] = "Allow NotchNotch to control \(player.name) in System Settings → Privacy & Security → Automation"
         }
     }
 

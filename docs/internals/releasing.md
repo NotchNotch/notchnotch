@@ -41,15 +41,13 @@ NOTCHNOTCH_SIGN_IDENTITY="NotchNotch Self-Signed" pnpm release
 
 The script prints the `gh secret set` commands that let the release workflow sign with the same identity. Keep the `.p12` private, and keep using the same identity: a new one resets users' permissions once.
 
-With any real identity, the app, `ExtensionRunner` and bundled helpers are signed inside-out with the hardened runtime and these entitlements:
+With any real identity, the app and `ExtensionRunner` are signed inside-out with the hardened runtime and these entitlements:
 
 | Target | Entitlements |
 | --- | --- |
-| `NotchNotch.app` | Apple Events, Calendars. TCC attributes the bundled helpers to the app that contains them |
+| `NotchNotch.app` | Apple Events, Calendars, for the `now-playing` and `calendar` capabilities |
 | `ExtensionRunner` | `cs.allow-jit` for JavaScriptCore |
 | `Sparkle.framework` | None (`Autoupdate` and `Updater.app` are signed first; its XPC services are removed because the app isn't sandboxed) |
-| `MusicAdapter.app` | Apple Events |
-| `CalendarAdapter.app` | Calendars |
 
 ## Checklist
 

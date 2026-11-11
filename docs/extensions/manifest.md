@@ -29,7 +29,7 @@
 | `version` | 1–64 characters, such as `1.0.0` |
 | `apiVersion` | `1` |
 | `entry` | `"bundle.js"` |
-| `permissions` | `[]`, or what your [connections](connections.md) need: `local-network`, `process` |
+| `permissions` | `[]`, or what your [connections](connections.md) need (`local-network`, `process`) and the [capabilities](capabilities.md) you use (`calendar`, `now-playing`) |
 
 ## Identity
 

@@ -104,7 +104,7 @@ export async function packageApp() {
 <key>NSCalendarsUsageDescription</key><string>Read your selected calendars to show upcoming events in the notch.</string>
 ${store}${updates}</dict></plist>
 `);
-  // Inside out: bundled extension helpers were signed by their build modules.
+  // Inside out: the runner first, then the app.
   codesign(path.join(contents, "Helpers/ExtensionRunner"),
     { entitlements: path.join(root, "native/ExtensionRunner/ExtensionRunner.entitlements") });
   codesign(app, { entitlements: path.join(root, "apps/macos/NotchNotch.entitlements") });

@@ -46,6 +46,7 @@ struct ExtensionPermissionsView: View {
     private func symbol(_ kind: PermissionSummary.Kind) -> String {
         switch kind {
         case .runPrograms: "terminal.fill"
+        case .personalData: "person.crop.circle"
         case .internet: "globe"
         case .localApps: "network"
         case .pictures: "photo"
@@ -56,6 +57,7 @@ struct ExtensionPermissionsView: View {
     private func color(_ kind: PermissionSummary.Kind) -> Color {
         switch kind {
         case .runPrograms: .orange
+        case .personalData: .purple
         case .internet: .blue
         case .localApps: .teal
         case .pictures: .purple

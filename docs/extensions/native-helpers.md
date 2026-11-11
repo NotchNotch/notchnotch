@@ -1,6 +1,8 @@
 # Native helpers
 
-Some apps can only be reached from native code: through Apple events, a framework such as EventKit, or a command-line tool. A **helper** is a program your extension runs and talks to over a `stdio` [connection](connections.md). Music and Calendar both work this way.
+Some apps can only be reached from native code: through Apple events, a framework such as EventKit, or a command-line tool. A **helper** is a program your extension runs and talks to over a `stdio` [connection](connections.md).
+
+For calendars and what's playing in Spotify or Apple Music, use a [capability](capabilities.md) instead: NotchNotch reads the data itself, so there's no program to build or sign, and the extension can be in the Store. The Store doesn't accept helpers yet.
 
 The other app doesn't have to be yours, but it needs some interface a helper can use: a documented CLI, a local API, Apple events or a system framework. A helper can't reach into an app's private state.
 
@@ -65,8 +67,6 @@ To use a protected resource:
 - Ship the helper as an app bundle whose `Info.plist` has the matching usage description, such as `NSContactsUsageDescription`. Without it, macOS denies the request. `helperApp` builds that bundle.
 - Give each helper its own `bundleIdentifier`, under a domain you own. macOS keys grants to the identifier and the code signature.
 - Sign it with a stable identity. Helpers are signed ad hoc unless `NOTCHNOTCH_SIGN_IDENTITY` names an identity, and macOS asks again after every ad hoc rebuild. With a real identity, pass `entitlements` for the hardened runtime, such as `com.apple.security.personal-information.addressbook`.
-
-Music and Calendar are the exception: they ship inside `NotchNotch.app`, and macOS attributes code inside an app to the app, so they ask as NotchNotch.
 
 ## Trust
 
