@@ -23,6 +23,16 @@ final class AppModel {
     @ObservationIgnored private var snapshotRevisions: [String: Int] = [:]
     private var renderedIDs: Set<String> = []
     private var disabledExtensionIDs = Set(UserDefaults.standard.stringArray(forKey: "disabledExtensionIDs") ?? [])
+    /// Every extension that ships inside the app, installed or not. Their native
+    /// helpers can't come from the Store yet, so the Store offers them from here.
+    private(set) var includedExtensions: [InstalledExtension] = []
+    /// The included extensions the person has installed. nil until the first scan
+    /// decides: Music on a new Mac, so the notch isn't empty, plus any extension
+    /// that already saved data here before included extensions became optional.
+    private var installedIncludedIDs = UserDefaults.standard.stringArray(forKey: "installedIncludedIDs").map(Set.init) {
+        didSet { UserDefaults.standard.set(installedIncludedIDs?.sorted(), forKey: "installedIncludedIDs") }
+    }
+    static let defaultIncludedIDs: Set<String> = ["dev.notchnotch.music"]
     private var installingIDs: Set<String> = []
     var expandOnHover: Bool = UserDefaults.standard.object(forKey: "expandOnHover") as? Bool ?? true {
         didSet {
@@ -284,9 +294,16 @@ final class AppModel {
         developmentEntries = developmentRegistry.entries()
         let scan = extensionStore.scan(included: extensionRoot, development: ProcessInfo.processInfo.environment["NOTCHNOTCH_EXTENSIONS"] != nil,
                                        developing: developmentEntries)
-        if installedExtensions != scan.extensions { installedExtensions = scan.extensions }
+        let included = scan.extensions.filter { $0.origin == .bundled }
+        if installedIncludedIDs == nil {
+            let used = included.map(\.id).filter { FileManager.default.fileExists(atPath: storageURL(for: $0).path) }
+            installedIncludedIDs = Self.defaultIncludedIDs.union(used)
+        }
+        let installed = scan.extensions.filter { $0.origin != .bundled || installedIncludedIDs?.contains($0.id) == true }
+        if includedExtensions != included { includedExtensions = included }
+        if installedExtensions != installed { installedExtensions = installed }
         if libraryIssues != scan.issues { libraryIssues = scan.issues }
-        let candidates = scan.extensions.filter { isEnabled($0.id) && !installingIDs.contains($0.id) }
+        let candidates = installed.filter { isEnabled($0.id) && !installingIDs.contains($0.id) }
         let ids = Set(candidates.map(\.id))
         for id in connections.keys.filter({ !ids.contains($0) }) { stopExtension(id) }
         for id in missingPreferences.keys where !ids.contains(id) { missingPreferences.removeValue(forKey: id) }
@@ -452,7 +469,7 @@ final class AppModel {
         let package = try await Task.detached(priority: .userInitiated) {
             folder.pathExtension.lowercased() == ExtensionArchive.fileExtension ? try store.inspectArchive(folder) : try store.inspect(folder)
         }.value
-        if let existing = installedExtensions.first(where: { $0.id == package.id }), !store.isManaged(existing) {
+        if let existing = (installedExtensions + includedExtensions).first(where: { $0.id == package.id }), !store.isManaged(existing) {
             ExtensionStore.discardStaged(package)
             throw ProtocolError.invalid("\(existing.manifest.name) is included with NotchNotch and cannot be replaced. Use a different extension identifier.")
         }
@@ -460,7 +477,7 @@ final class AppModel {
     }
     func installExtension(_ package: ExtensionPackage) async throws {
         // Check again at confirmation time; included/development ids cannot be replaced.
-        if let existing = installedExtensions.first(where: { $0.id == package.id }), !extensionStore.isManaged(existing) {
+        if let existing = (installedExtensions + includedExtensions).first(where: { $0.id == package.id }), !extensionStore.isManaged(existing) {
             throw ProtocolError.invalid("An included extension already uses this identifier.")
         }
         let replacing = installedExtensions.contains { $0.id == package.id }
@@ -477,8 +494,22 @@ final class AppModel {
         reloadExtensions(restarting: record.id)
     }
 
+    func isInstalled(_ id: String) -> Bool { installedExtensions.contains { $0.id == id } }
+    /// Installed packages and installed included extensions; not `notchnotch dev` projects.
+    func canUninstall(_ record: InstalledExtension) -> Bool {
+        record.origin == .bundled ? installedIncludedIDs?.contains(record.id) == true : extensionStore.isManaged(record)
+    }
+    /// Turns on an included extension that waits in the Store.
+    func installIncluded(_ id: String) {
+        guard includedExtensions.contains(where: { $0.id == id }) else { return }
+        installedIncludedIDs = (installedIncludedIDs ?? []).union([id])
+        reloadExtensions()
+    }
+
+    /// Stops the extension and forgets everything it saved. An installed package
+    /// moves to Trash; an included one goes back to the Store.
     func removeExtension(_ record: InstalledExtension) async throws {
-        guard extensionStore.isManaged(record) else { throw ProtocolError.invalid("Included extensions can be disabled but not removed.") }
+        guard canUninstall(record) else { throw ProtocolError.invalid("\(record.manifest.name) can’t be uninstalled.") }
         forgetAccess(record.id)
         storeInstalls[record.id] = nil
         try? FileManager.default.removeItem(at: storageURL(for: record.id))
@@ -487,6 +518,14 @@ final class AppModel {
         Task.detached {
             try? ExtensionSecretStore().deleteAll(extensionID: id)
             preferences.removeAll(extensionID: id)
+        }
+        if record.origin == .bundled {
+            stopExtension(record.id)
+            installedIncludedIDs?.remove(record.id)
+            disabledExtensionIDs.remove(record.id)
+            UserDefaults.standard.set(disabledExtensionIDs.sorted(), forKey: "disabledExtensionIDs")
+            reloadExtensions()
+            return
         }
         installingIDs.insert(record.id)
         stopExtension(record.id)

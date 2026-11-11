@@ -7,6 +7,8 @@ All notable changes to NotchNotch are listed here. The format follows
 ## [Unreleased]
 
 ### Added
+- **Uninstall** on every extension's page and in the sidebar's right-click menu. It used to hide under Developer, and only for extensions installed from a file or the Store.
+- The Store lists the extensions included with NotchNotch. Only Music is installed on a new Mac; get Calendar from the Store. Uninstalling an included extension puts it back in the Store. Calendar stays installed on Macs where it already saved data.
 - `@notchnotch/protocol` exports a name for every protocol type, such as `NodeProps`, `SurfaceKind`, `ConnectionOperation`, `HTTPMethod`, `SecretRequest` and `UserEvent`.
 - `@notchnotch/protocol` exports the manifest's types: `ExtensionManifest`, `ExtensionPreference`, `ConnectionDefinition` and the category names, for tools that read or write `notchnotch.json`.
 

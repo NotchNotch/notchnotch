@@ -83,6 +83,10 @@ struct ManagementExtensionPage: View {
                 }.font(.caption)
             }
             Spacer(minLength: 12)
+            if model.canUninstall(record) {
+                Button("Uninstall…", role: .destructive) { coordinator.requestRemoval(record) }
+                    .disabled(coordinator.busy)
+            }
             Toggle("Enabled", isOn: $model[enabledFor: record.id])
                 .toggleStyle(.switch).labelsHidden().controlSize(.large)
                 .help(model.isEnabled(record.id) ? "Turn off \(record.manifest.name)" : "Turn on \(record.manifest.name)")
@@ -260,12 +264,6 @@ struct ManagementExtensionPage: View {
             LabeledContent("Extension") {
                 Button("Restart") { model.restartExtension(record.id) }
                     .disabled(!model.isEnabled(record.id) || coordinator.busy)
-            }
-            if model.extensionStore.isManaged(record) {
-                LabeledContent("Installed package") {
-                    Button("Remove…", role: .destructive) { coordinator.requestRemoval(record) }
-                        .disabled(coordinator.busy)
-                }
             }
         }
     }

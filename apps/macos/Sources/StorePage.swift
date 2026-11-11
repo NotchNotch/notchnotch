@@ -29,15 +29,16 @@ struct StorePage: View {
     }
 
     @ViewBuilder private var content: some View {
-        if store.client == nil {
+        let included = filteredIncluded
+        if store.client == nil, included.isEmpty {
             ContentUnavailableView("Store unavailable", systemImage: "bag",
                 description: Text("This build of NotchNotch has no Store settings."))
         } else if let catalog = store.catalog {
             let entries = filtered(catalog.extensions)
-            if catalog.extensions.isEmpty {
+            if catalog.extensions.isEmpty, coordinator.model.includedExtensions.isEmpty {
                 ContentUnavailableView("No extensions yet", systemImage: "bag",
                     description: Text("Reviewed extensions appear here as they’re published."))
-            } else if entries.isEmpty {
+            } else if entries.isEmpty, included.isEmpty {
                 ContentUnavailableView.search(text: search)
             } else {
                 List {
@@ -48,11 +49,27 @@ struct StorePage: View {
                     if !updates.isEmpty {
                         Section("Updates") { ForEach(updates) { StoreRow(coordinator: coordinator, entry: $0) } }
                     }
-                    Section(updates.isEmpty ? "" : "All Extensions") {
-                        ForEach(entries) { StoreRow(coordinator: coordinator, entry: $0) }
+                    includedSection(included)
+                    if !entries.isEmpty {
+                        Section(updates.isEmpty && included.isEmpty ? "" : "All Extensions") {
+                            ForEach(entries) { StoreRow(coordinator: coordinator, entry: $0) }
+                        }
                     }
                 }.listStyle(.inset)
             }
+        } else if !included.isEmpty {
+            // The catalog isn't here yet, but what ships inside the app is.
+            List {
+                includedSection(included)
+                Section {
+                    if case .failed(let message) = store.phase {
+                        ManagementNotice(text: "Couldn’t open the Store. \(message)", isError: true)
+                        Button("Try Again") { Task { await store.refresh() } }
+                    } else if store.client != nil {
+                        HStack { ProgressView().controlSize(.small); Text("Opening the Store…").foregroundStyle(.secondary) }
+                    }
+                }
+            }.listStyle(.inset)
         } else if case .failed(let message) = store.phase {
             ContentUnavailableView {
                 Label("Couldn’t open the Store", systemImage: "wifi.exclamationmark")
@@ -63,6 +80,22 @@ struct StorePage: View {
             }
         } else {
             ProgressView("Opening the Store…").frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    @ViewBuilder private func includedSection(_ records: [InstalledExtension]) -> some View {
+        if !records.isEmpty {
+            Section("Included with NotchNotch") {
+                ForEach(records) { IncludedRow(coordinator: coordinator, record: $0) }
+            }
+        }
+    }
+
+    private var filteredIncluded: [InstalledExtension] {
+        let term = search.trimmingCharacters(in: .whitespacesAndNewlines)
+        return coordinator.model.includedExtensions.filter { record in
+            (category.map { (record.manifest.categories ?? []).contains($0) } ?? true) &&
+            (term.isEmpty || [record.manifest.name, record.manifest.description ?? ""].contains { $0.localizedCaseInsensitiveContains(term) })
         }
     }
 
@@ -95,6 +128,31 @@ private struct StoreRow: View {
                 }.contentShape(Rectangle())
             }.buttonStyle(.plain)
             StoreActionButton(coordinator: coordinator, entry: entry)
+        }.padding(.vertical, 4)
+    }
+}
+
+/// An extension that ships inside the app: Get installs it, Open shows its page.
+private struct IncludedRow: View {
+    let coordinator: ManagementCoordinator
+    let record: InstalledExtension
+    var body: some View {
+        let installed = coordinator.model.isInstalled(record.id)
+        HStack(spacing: 12) {
+            ExtensionIdentityView(icon: record.icon, size: 40)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(record.manifest.name).font(.headline).lineLimit(1)
+                if let description = record.manifest.description {
+                    Text(description).font(.callout).foregroundStyle(.secondary).lineLimit(2)
+                }
+                Text(record.manifest.author ?? "NotchNotch").font(.caption).foregroundStyle(.tertiary)
+            }
+            Spacer(minLength: 0)
+            if installed {
+                Button("Open") { coordinator.selectExtension(record.id) }.buttonStyle(.bordered)
+            } else {
+                Button("Get") { coordinator.installIncluded(record) }.buttonStyle(.bordered).disabled(coordinator.busy)
+            }
         }.padding(.vertical, 4)
     }
 }

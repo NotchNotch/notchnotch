@@ -166,7 +166,7 @@ final class ManagementCoordinator {
         }
     }
     func requestRemoval(_ record: InstalledExtension) {
-        guard !busy, model.extensionStore.isManaged(record) else { return }
+        guard !busy, model.canUninstall(record) else { return }
         sheetError = nil
         sheet = .remove(record)
     }
@@ -180,9 +180,15 @@ final class ManagementCoordinator {
                 try await model.removeExtension(record)
                 sheet = nil
                 destination = .general
-                notify("\(record.manifest.name) moved to Trash.")
+                notify(record.origin == .bundled ? "\(record.manifest.name) uninstalled. Get it again from the Store." : "\(record.manifest.name) moved to Trash.")
             } catch { sheetError = error.localizedDescription }
         }
+    }
+    func installIncluded(_ record: InstalledExtension) {
+        guard !busy else { return }
+        model.installIncluded(record.id)
+        selectExtension(record.id)
+        notify("\(record.manifest.name) installed.")
     }
     func dismissSheet() {
         guard !operating else { return }

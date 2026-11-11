@@ -30,7 +30,13 @@ struct ManagementSidebar: View {
                             }
                             Spacer(minLength: 0)
                             StatusIndicator(status: coordinator.status(of: record.id))
-                        }.tag(ManagementDestination.extensionDetails(record.id))
+                        }
+                        .tag(ManagementDestination.extensionDetails(record.id))
+                        .contextMenu {
+                            if coordinator.model.canUninstall(record) {
+                                Button("Uninstall…", role: .destructive) { coordinator.requestRemoval(record) }
+                            }
+                        }
                     }
                     if coordinator.visibleExtensions.isEmpty {
                         Text(coordinator.query.isEmpty ? "No extensions" : "No matches").foregroundStyle(.secondary)

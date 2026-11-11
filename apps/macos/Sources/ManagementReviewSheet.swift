@@ -40,8 +40,9 @@ struct ManagementReviewSheet: View {
             case .remove(let record):
                 Image(systemName: "trash").font(.title).foregroundStyle(.secondary).frame(width: 44, height: 44)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Remove \(record.manifest.name)?").font(.title2).bold().lineLimit(2)
-                    Text("Its installed folder will move to Trash.").font(.callout).foregroundStyle(.secondary)
+                    Text("Uninstall \(record.manifest.name)?").font(.title2).bold().lineLimit(2)
+                    Text(record.origin == .bundled ? "It goes back to the Store." : "Its installed folder will move to Trash.")
+                        .font(.callout).foregroundStyle(.secondary)
                 }
             }
         }
@@ -67,7 +68,7 @@ struct ManagementReviewSheet: View {
                 Text("Install only extensions you trust.").font(.callout).foregroundStyle(.secondary)
             }
         case .remove(let record):
-            Text("\(record.manifest.name)’s activities will close and its app connections will stop. You can recover its folder from Trash or install it again later.")
+            Text("\(record.manifest.name)’s activities will close, its app connections will stop, and its settings and saved data will be deleted. \(record.origin == .bundled ? "You can get it again from the Store." : "You can recover its folder from Trash or install it again later.")")
                 .foregroundStyle(.secondary)
         }
     }
@@ -76,14 +77,14 @@ struct ManagementReviewSheet: View {
         return false
     }
     private var progressTitle: String {
-        switch item { case .install: isUpdate ? "Updating…" : "Installing…"; case .remove: "Moving to Trash…" }
+        switch item { case .install: isUpdate ? "Updating…" : "Installing…"; case .remove(let record): record.origin == .bundled ? "Uninstalling…" : "Moving to Trash…" }
     }
     @ViewBuilder private var confirmButton: some View {
         switch item {
         case .install(let package, let entry):
             Button(isUpdate ? "Update Extension" : "Install Extension") { coordinator.confirmInstall(package, from: entry) }.buttonStyle(.borderedProminent)
         case .remove(let record):
-            Button("Move to Trash", role: .destructive) { coordinator.confirmRemoval(record) }.buttonStyle(.borderedProminent)
+            Button("Uninstall", role: .destructive) { coordinator.confirmRemoval(record) }.buttonStyle(.borderedProminent)
         }
     }
 }
