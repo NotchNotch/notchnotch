@@ -1,6 +1,6 @@
 {
   "name": "@notchnotch/runtime",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Starts a NotchNotch extension inside the app's JavaScriptCore runtime.",
   "license": "MIT",
   "author": "AmirHossein Sadeghi",

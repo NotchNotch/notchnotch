@@ -1,7 +1,7 @@
 {
   "id": "dev.notchnotch.music",
   "name": "Music",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "apiVersion": 1,
   "entry": "bundle.js",
   "permissions": ["now-playing"],
