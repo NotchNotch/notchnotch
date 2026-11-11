@@ -6,6 +6,9 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- **About** links to the new website, [notchnotch.github.io](https://notchnotch.github.io), for release notes, extension docs and privacy.
+
 ## [0.8.1] - 2026-11-11
 
 ### Changed

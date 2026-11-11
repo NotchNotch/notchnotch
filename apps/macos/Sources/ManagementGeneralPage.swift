@@ -131,9 +131,10 @@ struct ManagementAboutPage: View {
                 }
             }
             Section("Resources") {
-                link("Release notes", "https://github.com/NotchNotch/notchnotch/blob/main/CHANGELOG.md")
-                link("Build an extension", "https://github.com/NotchNotch/notchnotch/blob/main/docs/extensions/getting-started.md")
-                link("Privacy", "https://github.com/NotchNotch/notchnotch/blob/main/PRIVACY.md")
+                link("Website", "https://notchnotch.github.io")
+                link("Release notes", "https://notchnotch.github.io/changelog/")
+                link("Build an extension", "https://notchnotch.github.io/docs/extensions/getting-started/")
+                link("Privacy", "https://notchnotch.github.io/privacy/")
                 link("Report an issue", "https://github.com/NotchNotch/notchnotch/issues")
             }
             Section {

@@ -11,6 +11,8 @@ The notch on your Mac, put to work. NotchNotch shows what's happening now around
 
 **Developer preview** for macOS 14 or later. Free and open source.
 
+**[notchnotch.github.io](https://notchnotch.github.io)**: download, documentation and the [Store](https://notchnotch.github.io/store/).
+
 ## Features
 
 - **Music:** what's playing in Spotify or Apple Music, with playback controls.
@@ -32,7 +34,7 @@ NotchNotch updates itself after that. See [Using NotchNotch](docs/guide/using-no
 npm create notchnotch-extension@latest my-extension
 ```
 
-Start with [Getting started](docs/extensions/getting-started.md), then browse the [documentation](docs/README.md).
+Start with [Getting started](docs/extensions/getting-started.md), then browse the [documentation](docs/README.md), also on [the website](https://notchnotch.github.io/docs/).
 
 ## Contributing
 

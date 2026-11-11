@@ -46,6 +46,8 @@ A failure names its seed, so it can be replayed. If Swift tests crash after you 
 
 ## Documentation
 
+The website, [notchnotch.github.io](https://notchnotch.github.io), is built from `docs/`, `CHANGELOG.md`, `PRIVACY.md`, `SECURITY.md` and this file by [NotchNotch/notchnotch.github.io](https://github.com/NotchNotch/notchnotch.github.io), every three hours. Relative links between them become links between site pages.
+
 Docs are Markdown in [`docs/`](docs/README.md), and change in the same pull request as the code they describe.
 
 - `docs/guide` is for people who use NotchNotch.
