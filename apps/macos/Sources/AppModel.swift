@@ -34,6 +34,10 @@ final class AppModel {
         didSet { UserDefaults.standard.set(installedIncludedIDs?.sorted(), forKey: "installedIncludedIDs") }
     }
     static let defaultIncludedIDs: Set<String> = ["dev.notchnotch.music"]
+    /// Extensions that used to be included and now come from the Store, by Store
+    /// handle. Whoever had one gets the Store version without a review: same
+    /// publisher, and it asks for no more than the person already allowed.
+    static let movedToStore: [String: String] = ["dev.notchnotch.calendar": "sadeqi-ah/calendar"]
     private var installingIDs: Set<String> = []
     var expandOnHover: Bool = UserDefaults.standard.object(forKey: "expandOnHover") as? Bool ?? true {
         didSet {
@@ -253,8 +257,13 @@ final class AppModel {
             try? await Task.sleep(for: .seconds(20))
             await self?.checkStoreUpdates()
         }
+        // Formerly included extensions come back sooner than the update check.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(3))
+            await self?.installMovedExtensions()
+        }
         let storeTimer = Timer(timeInterval: 6 * 3600, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { _ = Task { await self?.checkStoreUpdates() } }
+            MainActor.assumeIsolated { _ = Task { await self?.installMovedExtensions(); await self?.checkStoreUpdates() } }
         }
         storeTimer.tolerance = 600
         RunLoop.main.add(storeTimer, forMode: .common)
@@ -297,7 +306,7 @@ final class AppModel {
                                        developing: developmentEntries)
         let included = scan.extensions.filter { $0.origin == .bundled }
         if installedIncludedIDs == nil {
-            let used = included.map(\.id).filter { FileManager.default.fileExists(atPath: storageURL(for: $0).path) }
+            let used = (included.map(\.id) + Self.movedToStore.keys).filter(hasBeenUsed)
             installedIncludedIDs = Self.defaultIncludedIDs.union(used)
         }
         let installed = scan.extensions.filter { $0.origin != .bundled || installedIncludedIDs?.contains($0.id) == true }
@@ -493,6 +502,45 @@ final class AppModel {
         let store = preferenceStore, manifest = record.manifest
         try await Task.detached(priority: .userInitiated) { try store.save(changes, for: manifest) }.value
         reloadExtensions(restarting: record.id)
+    }
+
+    /// Signs that an extension ran on this Mac before: saved data, an "Always
+    /// Allow" grant, or something a capability kept for it.
+    private func hasBeenUsed(_ id: String) -> Bool {
+        FileManager.default.fileExists(atPath: storageURL(for: id).path)
+            || !ConnectionGrantStore().grantedConnections(extensionID: id).isEmpty
+            || SystemCapabilities.hasSavedData(extensionID: id)
+    }
+
+    /// Installs the Store version of formerly included extensions for people who
+    /// had them. Runs with every Store check until it succeeds.
+    func installMovedExtensions() async {
+        // Got from the Store by hand meanwhile: nothing left to do for those.
+        for id in Self.movedToStore.keys where isInstalled(id) { installedIncludedIDs?.remove(id) }
+        let waiting = Self.movedToStore.filter { id, _ in
+            installedIncludedIDs?.contains(id) == true && !isInstalled(id) && !installingIDs.contains(id)
+        }
+        guard !waiting.isEmpty, let client = store.client else { return }
+        await store.open()
+        guard let catalog = store.catalog else { return }
+        for (id, handle) in waiting.sorted(by: { $0.key < $1.key }) {
+            guard let entry = catalog.extensions.first(where: { $0.id == id && $0.handle == handle }),
+                  appVersion.map(entry.runs(onApp:)) ?? true else { continue }
+            do {
+                let file = try await client.download(entry)
+                defer { try? FileManager.default.removeItem(at: file) }
+                let package = try await reviewInstall(file)
+                defer { ExtensionStore.discardStaged(package) }
+                try entry.verifyContents(package)
+                guard !isInstalled(id) else { continue }
+                try await installExtension(package)
+                recordInstall(id, storeHandle: handle)
+                installedIncludedIDs?.remove(id)
+                appendLog(id, "\(entry.manifest.name) now comes from the Store. Installed \(entry.manifest.version).", level: .info)
+            } catch {
+                appendLog(id, "Couldn’t install \(entry.manifest.name) from the Store: \(error.localizedDescription)", level: .error)
+            }
+        }
     }
 
     func isInstalled(_ id: String) -> Bool { installedExtensions.contains { $0.id == id } }

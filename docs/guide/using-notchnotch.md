@@ -26,7 +26,7 @@ When several activities are running, the notch shows one of them. Switch to anot
 
 ## Music
 
-Shows what's playing in Spotify or Apple Music, with playback controls.
+Shows what's playing in Spotify or Apple Music, with playback controls. It comes with NotchNotch.
 
 1. Open **Settings & Extensions…** from the menu bar and choose **Music**.
 2. In **Setup**, choose **Connect Spotify** or **Connect Apple Music**.
@@ -34,10 +34,10 @@ Shows what's playing in Spotify or Apple Music, with playback controls.
 
 ## Calendar
 
-Shows your next event with a countdown, and a button to join the meeting.
+Shows your next event with a countdown, and a button to join the meeting. Get it from the **Store**. If you had it before NotchNotch 0.9, it's installed from the Store for you, with your chosen calendars.
 
 1. Open **Settings & Extensions…** and choose **Calendar**.
-2. In **Setup**, choose **Connect Calendar** and allow access when macOS asks.
+2. In **Setup**, choose **Connect Calendar**. Allow Calendar to read your calendars, then allow access when macOS asks.
 3. Choose which calendars to show.
 
 It uses the accounts already in the Calendar app. NotchNotch only reads your calendars.
@@ -57,9 +57,9 @@ Each extension has a page with these tabs:
 - **Setup:** what it needs from you, such as connecting an app or entering an API token. An extension marked **Needs setup** starts once you fill in its required fields and choose **Save**.
 - **About:** what it does and what changed in each version, when the extension includes them.
 - **Access:** what it can connect to, which access you chose to always allow, and the secrets it saved in your Keychain. **Forget** makes it ask again.
-- **Developer:** its console, package details and **Remove…**.
+- **Developer:** its console and package details.
 
-Use the switch at the top of the page to turn an extension off. Its activities disappear and its connections close.
+Use the switch at the top of the page to turn an extension off. Its activities disappear and its connections close. **Uninstall…** beside it, or in the sidebar's right-click menu, removes the extension with its settings and data. Music goes back to the Store, where you can get it again.
 
 ### The Store
 

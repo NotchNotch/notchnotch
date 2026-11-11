@@ -8,7 +8,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ### Added
 - **Uninstall** on every extension's page and in the sidebar's right-click menu. It used to hide under Developer, and only for extensions installed from a file or the Store.
-- The Store lists the extensions included with NotchNotch. Only Music is installed on a new Mac; get Calendar from the Store. Uninstalling an included extension puts it back in the Store. Calendar stays installed on Macs where it already saved data.
+- The Store lists Music, which comes with NotchNotch. Uninstalling it puts it back in the Store.
+- [Capabilities](docs/extensions/capabilities.md): NotchNotch reads calendars (`calendar`) and what's playing in Spotify or Apple Music (`now-playing`) for extensions that list them in `permissions`, with `capability(name)` in the SDK. No native helper is needed, so these extensions can be in the Store. The first use asks, like a connection, and the install review lists them.
 - `@notchnotch/protocol` exports a name for every protocol type, such as `NodeProps`, `SurfaceKind`, `ConnectionOperation`, `HTTPMethod`, `SecretRequest` and `UserEvent`.
 - `@notchnotch/protocol` exports the manifest's types: `ExtensionManifest`, `ExtensionPreference`, `ConnectionDefinition` and the category names, for tools that read or write `notchnotch.json`.
 
@@ -17,6 +18,7 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ### Changed
 - Calendar moved to the Store and no longer comes with NotchNotch. If you used it, NotchNotch installs it from the Store for you and keeps your chosen calendars.
+- Music and Calendar no longer use helper programs: NotchNotch reads them itself. Connect each once more after updating. macOS doesn't ask again.
 - Music and Calendar have new icons in the macOS 26 style, like the Store's extensions.
 - Extensions have one icon for light and dark mode. `icon@dark.png` is no longer read or checked, and the Store catalog no longer lists `iconDark`.
 - **About** links to the new website, [notchnotch.github.io](https://notchnotch.github.io), for release notes, extension docs and privacy.

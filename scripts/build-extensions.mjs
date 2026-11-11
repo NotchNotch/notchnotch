@@ -1,13 +1,17 @@
-import { mkdir, readdir, rm } from "node:fs/promises";
+import { access, mkdir, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildExtension } from "../packages/cli/src/index.mjs";
 
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-/** Folder names of the extensions bundled with the app. */
+/** Folder names of the extensions bundled with the app: those with a manifest, so a leftover folder doesn't count. */
 export async function bundledExtensionNames() {
-  return (await readdir(path.join(root, "extensions"), { withFileTypes: true }))
-    .filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+  const folders = (await readdir(path.join(root, "extensions"), { withFileTypes: true })).filter((entry) => entry.isDirectory());
+  const names = [];
+  for (const { name } of folders) {
+    if (await access(path.join(root, "extensions", name, "notchnotch.json")).then(() => true, () => false)) names.push(name);
+  }
+  return names.sort();
 }
 
 /** Builds `extensions/*` (and `examples/*` when requested) into dist/extensions. */

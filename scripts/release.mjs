@@ -48,8 +48,8 @@ run("lipo", ["-archs", path.join(app, "Contents/MacOS/NotchNotch")]);
 // to evaluate a bundle (JIT entitlement) and answer a liveness ping.
 {
   const runner = path.join(app, "Contents/Helpers/ExtensionRunner");
-  const bundle = path.join(app, "Contents/Resources/extensions/calendar/bundle.js");
-  const result = spawnSync(runner, [bundle, "dev.notchnotch.calendar"], {
+  const bundle = path.join(app, "Contents/Resources/extensions/music/bundle.js");
+  const result = spawnSync(runner, [bundle, "dev.notchnotch.music"], {
     input: JSON.stringify({ protocolVersion: 1, type: "ping", id: 1 }) + "\n", timeout: 10_000, encoding: "utf8",
   });
   const messages = result.stdout.split("\n").filter(Boolean).map((line) => JSON.parse(line));
