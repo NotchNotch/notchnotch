@@ -6,6 +6,13 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- An extension's [color](docs/extensions/components.md#color): `accent` in the manifest names one of nine shades tuned for the black notch. Progress bars, the main button and anything with `tone="accent"` use it. Without one, accents stay white.
+
+### Changed
+- Progress bars are thicker and fill with a gradient from a neighboring hue into the extension's color.
+- Times, prices and other short numbers roll digit by digit when they change, and progress slides to its new value. Reduce Motion turns both off.
+
 ## [0.9.0] - 2026-11-12
 
 ### Added

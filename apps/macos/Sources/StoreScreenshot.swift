@@ -85,6 +85,7 @@ private struct StoreScreenshotView: View {
             VStack(spacing: 14) {
                 if item.surface.kind == .prompt { promptHeader }
                 NativeNodeView(node: item.surface.expanded) { _, _ in }
+                    .environment(\.notchAccent, NotchTheme.accent(named: record.manifest.accent))
             }
             .padding(.horizontal, 28)
             Color.clear.frame(height: NotchGeometry.expandedBottomPadding + 6)

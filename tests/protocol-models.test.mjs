@@ -44,8 +44,9 @@ test("names, defaults, constants and optional JSON come from the schema's annota
 
 test("the CLI's manifest lists match the schema", async () => {
   const schema = JSON.parse(await readFile(path.join(root, "schemas/manifest.schema.json"), "utf8"));
-  const { categories, allowedPermissions, preferenceTypes } = await import("../packages/cli/src/manifest.mjs");
+  const { categories, accents, allowedPermissions, preferenceTypes } = await import("../packages/cli/src/manifest.mjs");
   assert.deepEqual(categories, schema.properties.categories.items.enum);
+  assert.deepEqual(accents, schema.properties.accent.enum);
   assert.deepEqual([...allowedPermissions], schema.properties.permissions.items.enum);
   assert.deepEqual([...preferenceTypes], schema.properties.preferences.items.properties.type.enum);
 });

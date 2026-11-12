@@ -196,6 +196,7 @@ export interface ExtensionManifest {
   permissions: ("local-network" | "process" | "calendar" | "now-playing")[];
   /** Named local destinations: loopback HTTP or WebSocket services and native helpers. */
   connections?: Record<string, ConnectionDefinition>;
+  accent?: AccentColorName;
   /** An SF Symbol name, or the file name of a 512×512 PNG in the package's assets/ folder (such as icon.png). */
   icon?: string;
   description?: string;
@@ -214,6 +215,9 @@ export interface ExtensionManifest {
   /** An SPDX license expression, such as MIT. */
   license?: string;
 }
+
+/** The extension's color in the notch: progress bars, its main button and anything with tone "accent". The app draws each name in a shade tuned for the black notch. Without one, accents are white. */
+export type AccentColorName = "orange" | "yellow" | "green" | "mint" | "cyan" | "blue" | "purple" | "pink" | "red";
 
 /** One setting declared in the manifest. The app stores its value, draws the field in Setup and hands the values to the extension when it starts. */
 export interface ExtensionPreference {

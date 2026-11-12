@@ -22,15 +22,46 @@ public enum NotchTheme {
     public static let danger = rgb(AccessibilityRules.danger)
     private static func rgb(_ value: (Double, Double, Double)) -> Color { Color(red: value.0, green: value.1, blue: value.2) }
 
-    public static func color(_ tone: Tone?) -> Color {
+    /// An extension's color and the neighboring hue its progress gradients start from.
+    public struct Accent: Equatable, Sendable {
+        public let color: Color
+        public let gradientStart: Color
+    }
+
+    /// The shades for a manifest's `accent`; nil for no accent or a name this app doesn't know.
+    public static func accent(named name: String?) -> Accent? {
+        guard let name, let color = AccessibilityRules.accents[name],
+              let start = AccessibilityRules.accentGradientStarts[name] else { return nil }
+        return Accent(color: rgb(color), gradientStart: rgb(start))
+    }
+
+    /// A progress fill: the accent's two hues, or a tone fading in from dim.
+    public static func progressGradient(_ tone: Tone?, accent: Accent?) -> [Color] {
+        if tone == .accent || tone == nil, let accent { return [accent.gradientStart, accent.color] }
+        let color = color(tone ?? .accent)
+        return [color.opacity(0.7), color]
+    }
+    public static let progressHeight: CGFloat = 8
+
+    /// `accent` is the extension's color from the environment; without one, accents are white.
+    public static func color(_ tone: Tone?, accent: Color? = nil) -> Color {
         switch tone {
         case .secondary: Ink.secondary
         case .success: success
         case .warning: warning
         case .danger: danger
-        case .accent, .primary, nil: Ink.primary
+        case .accent: accent ?? Ink.primary
+        case .primary, nil: Ink.primary
         }
     }
+
+    // MARK: Motion
+    /// Short readings such as "17:38", "$2,046" or "82 mmhg" roll digit by
+    /// digit when they change; sentences just change.
+    public static func rollsDigits(_ text: String) -> Bool {
+        text.count <= 24 && text.contains(where: \.isNumber)
+    }
+    public static let valueChange = Animation.snappy(duration: 0.35)
 
     // MARK: Typography
     public static func font(_ size: TextSize?, compact: Bool = false) -> Font {
@@ -77,6 +108,11 @@ public enum NotchTheme {
     public static let controlRadius: CGFloat = 9
     public static let groupRadius: CGFloat = 12
     public static let iconTile: CGFloat = 26
+}
+
+extension EnvironmentValues {
+    /// The shown extension's accent shade, set by the host from its manifest.
+    @Entry public var notchAccent: NotchTheme.Accent? = nil
 }
 
 extension LayoutAlignment {

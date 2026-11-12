@@ -96,11 +96,12 @@ test("checkPackage rejects a README or CHANGELOG that is not UTF-8 text", async 
 test("validateManifest accepts store metadata and rejects what the app rejects", () => {
   const base = { id: "dev.test.meta", name: "Meta", version: "1", apiVersion: 1, entry: "bundle.js", permissions: [] };
   validateManifest({ ...base, author: "jane-doe", categories: ["Media", "Productivity"], license: "MIT OR Apache-2.0",
-    homepage: "https://example.com", repository: "https://github.com/example/repo" });
+    homepage: "https://example.com", repository: "https://github.com/example/repo", accent: "orange" });
   for (const extra of [
     { author: "Jane Doe" }, { author: "-jane" }, { categories: [] }, { categories: ["Games"] }, { categories: ["Fun", "Fun"] },
     { categories: ["Fun", "Media", "News", "System"] }, { homepage: "http://example.com" }, { homepage: "javascript:alert(1)" },
     { repository: "https://user:secret@example.com" }, { license: "MIT; rm -rf" }, { license: "" },
+    { accent: "Orange" }, { accent: "#ff8800" },
   ]) assert.throws(() => validateManifest({ ...base, ...extra }), /Unsupported manifest/, JSON.stringify(extra));
 });
 

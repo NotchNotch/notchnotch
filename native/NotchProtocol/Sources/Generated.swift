@@ -430,6 +430,7 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
     public var permissions: [String]
     /// Named local destinations: loopback HTTP or WebSocket services and native helpers.
     public var connections: [String: ConnectionDefinition]?
+    public var accent: String?
     /// An SF Symbol name, or the file name of a 512×512 PNG in the package's assets/ folder (such as icon.png).
     public var icon: String?
     public var description: String?
@@ -448,12 +449,13 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
     /// An SPDX license expression, such as MIT.
     public var license: String?
 
-    public init(id: String, name: String, version: String, permissions: [String], connections: [String: ConnectionDefinition]? = nil, icon: String? = nil, description: String? = nil, imageHosts: [String]? = nil, network: [String]? = nil, preferences: [ExtensionPreference]? = nil, author: String? = nil, categories: [String]? = nil, homepage: String? = nil, repository: String? = nil, license: String? = nil) {
+    public init(id: String, name: String, version: String, permissions: [String], connections: [String: ConnectionDefinition]? = nil, accent: String? = nil, icon: String? = nil, description: String? = nil, imageHosts: [String]? = nil, network: [String]? = nil, preferences: [ExtensionPreference]? = nil, author: String? = nil, categories: [String]? = nil, homepage: String? = nil, repository: String? = nil, license: String? = nil) {
         self.id = id
         self.name = name
         self.version = version
         self.permissions = permissions
         self.connections = connections
+        self.accent = accent
         self.icon = icon
         self.description = description
         self.imageHosts = imageHosts
@@ -465,6 +467,21 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
         self.repository = repository
         self.license = license
     }
+}
+
+/// The extension's color in the notch: progress bars, its main button and anything with tone "accent". The app draws each name in a shade tuned for the black notch. Without one, accents are white.
+public enum AccentColor {
+    public static let all = [
+        "orange",
+        "yellow",
+        "green",
+        "mint",
+        "cyan",
+        "blue",
+        "purple",
+        "pink",
+        "red",
+    ]
 }
 
 /// One setting declared in the manifest. The app stores its value, draws the field in Setup and hands the values to the extension when it starts.

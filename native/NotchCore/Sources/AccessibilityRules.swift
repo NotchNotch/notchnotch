@@ -41,4 +41,32 @@ public enum AccessibilityRules {
         public static let increased = Inks(primary: 1, secondary: 0.8, tertiary: 0.68, separator: 0.35, fill: 0.12, fillStrong: 0.18)
     }
     public static let success = (0.48, 0.85, 0.62), warning = (1.0, 0.74, 0.38), danger = (1.0, 0.45, 0.43)
+
+    /// The shades behind a manifest's `accent` names. Each is light enough to
+    /// read on black and to carry black text, as on an accent button.
+    public static let accents: [String: (Double, Double, Double)] = [
+        "orange": (1.0, 0.62, 0.30),
+        "yellow": (1.0, 0.82, 0.32),
+        "green": (0.45, 0.86, 0.55),
+        "mint": (0.40, 0.88, 0.80),
+        "cyan": (0.38, 0.80, 0.98),
+        "blue": (0.47, 0.65, 1.0),
+        "purple": (0.70, 0.58, 1.0),
+        "pink": (1.0, 0.52, 0.72),
+        "red": (1.0, 0.45, 0.43),
+    ]
+
+    /// Where an accent's progress gradient starts: a neighboring hue, so a
+    /// bar reads green to yellow or blue to cyan as it fills. Shapes need 3:1.
+    public static let accentGradientStarts: [String: (Double, Double, Double)] = [
+        "orange": (1.0, 0.40, 0.36),
+        "yellow": (0.52, 0.86, 0.45),
+        "green": (0.34, 0.80, 0.76),
+        "mint": (0.38, 0.70, 0.98),
+        "cyan": (0.45, 0.52, 1.0),
+        "blue": (0.64, 0.50, 1.0),
+        "purple": (0.45, 0.56, 1.0),
+        "pink": (0.74, 0.50, 1.0),
+        "red": (1.0, 0.60, 0.30),
+    ]
 }

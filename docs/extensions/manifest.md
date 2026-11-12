@@ -11,6 +11,7 @@
   "entry": "bundle.js",
   "permissions": [],
   "icon": "icon.png",
+  "accent": "cyan",
   "description": "Today's forecast at a glance.",
   "author": "jane",
   "categories": ["Weather"],
@@ -37,6 +38,7 @@
 | --- | --- |
 | `icon` | The file name of a 512×512 PNG in `assets/`, such as `"icon.png"`, or an SF Symbol name. See [Icons](publishing.md#icon) |
 | `description` | One sentence, up to 512 characters (160 or fewer reads best) |
+| `accent` | Your extension's color in the notch: one of `orange`, `yellow`, `green`, `mint`, `cyan`, `blue`, `purple`, `pink`, `red`. See [Color](components.md#color). Without one, accents are white |
 
 ## Store information
 

@@ -14,10 +14,14 @@ public struct NativeNodeView: View {
 
     /// Read so the tree redraws when Increase Contrast changes; the inks follow it.
     @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.notchAccent) private var accent
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public var body: some View {
-        content.foregroundStyle(NotchTheme.color(node.props.tone))
+        content.foregroundStyle(NotchTheme.color(node.props.tone, accent: accent?.color))
     }
+
+    private var valueChange: Animation? { reduceMotion ? nil : NotchTheme.valueChange }
 
     private func child(_ node: UINode) -> NativeNodeView {
         NativeNodeView(node: node, compact: compact, cameraHeight: cameraHeight, onEvent: onEvent)
@@ -34,9 +38,12 @@ public struct NativeNodeView: View {
             HStack(alignment: (node.props.align ?? .center).vertical,
                    spacing: NotchTheme.spacing(node.props.spacing, compact: compact, fallback: compact ? .regular : .loose)) { children }
         case .text:
-            Text(node.props.text ?? "")
+            let text = node.props.text ?? ""
+            Text(text)
                 .font(NotchTheme.font(node.props.size, compact: compact))
                 .monospacedDigit()
+                .contentTransition(NotchTheme.rollsDigits(text) && !reduceMotion ? .numericText() : .identity)
+                .animation(valueChange, value: text)
                 .tracking(NotchTheme.tracking(node.props.size, compact: compact))
                 .lineLimit(compact ? 1 : nil)
                 .fixedSize(horizontal: false, vertical: true)
@@ -51,10 +58,16 @@ public struct NativeNodeView: View {
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Capsule().fill(NotchTheme.Ink.fillStrong)
-                    Capsule().fill(NotchTheme.color(node.props.tone))
-                        .frame(width: geometry.size.width * (node.props.value ?? 0))
+                    // The gradient runs across the fill, so its leading tip is always
+                    // the extension's own color. Untoned bars use the extension's color.
+                    Capsule()
+                        .fill(LinearGradient(colors: NotchTheme.progressGradient(node.props.tone, accent: accent),
+                                             startPoint: .leading, endPoint: .trailing))
+                        .frame(width: max(geometry.size.height, geometry.size.width * (node.props.value ?? 0)))
+                        .opacity((node.props.value ?? 0) > 0 ? 1 : 0)
                 }
-            }.frame(height: 4)
+                .animation(valueChange, value: node.props.value)
+            }.frame(height: NotchTheme.progressHeight)
                 .accessibilityElement()
                 .accessibilityLabel(node.props.label ?? "Progress")
                 .accessibilityValue("\(Int((node.props.value ?? 0) * 100)) percent")
@@ -73,8 +86,8 @@ public struct NativeNodeView: View {
             Text(node.props.text ?? "")
                 .font(.system(size: 10, weight: .semibold)).monospacedDigit()
                 .padding(.horizontal, 7).frame(height: 18)
-                .foregroundStyle(NotchTheme.color(node.props.tone ?? .secondary))
-                .background(NotchTheme.color(node.props.tone ?? .secondary).opacity(0.16), in: Capsule())
+                .foregroundStyle(NotchTheme.color(node.props.tone ?? .secondary, accent: accent?.color))
+                .background(NotchTheme.color(node.props.tone ?? .secondary, accent: accent?.color).opacity(0.16), in: Capsule())
                 .fixedSize()
         case .section:
             VStack(alignment: .leading, spacing: 6) {
@@ -129,6 +142,7 @@ struct NotchPressStyle: ButtonStyle {
 struct NotchButton: View {
     let node: UINode
     let onEvent: (String, String?) -> Void
+    @Environment(\.notchAccent) private var accent
     private var foreground: Color {
         switch node.props.tone {
         case .accent: .black
@@ -140,7 +154,7 @@ struct NotchButton: View {
     }
     private var background: Color {
         switch node.props.tone {
-        case .accent: .white
+        case .accent: accent?.color ?? .white
         case .danger: NotchTheme.danger.opacity(0.16)
         default: NotchTheme.Ink.fillStrong
         }
@@ -275,12 +289,13 @@ private struct NotchListItem: View {
     let compact: Bool
     let cameraHeight: CGFloat
     let onEvent: (String, String?) -> Void
+    @Environment(\.notchAccent) private var accent
     private var row: some View {
         HStack(spacing: 10) {
             if let symbol = node.props.name {
                 Image(systemName: symbol)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(NotchTheme.color(node.props.tone))
+                    .foregroundStyle(NotchTheme.color(node.props.tone, accent: accent?.color))
                     .frame(width: NotchTheme.iconTile, height: NotchTheme.iconTile)
                     .background(NotchTheme.Ink.fillStrong, in: RoundedRectangle(cornerRadius: 7))
             }

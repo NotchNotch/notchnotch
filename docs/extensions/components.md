@@ -44,6 +44,21 @@ Fields, toggles and pickers are controlled: keep their value in React state.
 | `Section` | `title`, `footer`, `spacing`, children |
 | `ListItem` | `title`, `subtitle`, SF Symbol `icon`, `tone`, optional `onPress`, trailing children |
 
+## Color
+
+Set an [`accent`](manifest.md#identity) in the manifest, ideally the color of your icon. NotchNotch draws it in a shade tuned for the black notch and uses it for:
+
+- every `Progress` without a `tone`, as a gradient from a neighboring hue into your color
+- anything with `tone="accent"`: give it to your main number, symbol or button
+
+```tsx
+<Text size="timer" tone="accent">{clock(remaining)}</Text>
+<Progress value={done} />
+<Button title="Pause" icon="pause.fill" tone="accent" onPress={pause} />
+```
+
+Keep `success`, `warning` and `danger` for status. Short text with digits, such as a time or a price, rolls digit by digit when it changes, and progress slides to its new value.
+
 ## Accessibility
 
 NotchNotch draws every component natively, so VoiceOver, Increase Contrast and Reduce Motion work without extra code. A few things only you know:

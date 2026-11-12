@@ -10,6 +10,9 @@ export const categories = [
   "News", "Productivity", "Sports", "System", "Weather", "Other",
 ];
 
+/** The `accent` names the app draws in shades tuned for the notch. A test keeps this in step with schemas/manifest.schema.json. */
+export const accents = ["orange", "yellow", "green", "mint", "cyan", "blue", "purple", "pink", "red"];
+
 export const preferenceTypes = new Set(["text", "password", "toggle", "dropdown"]);
 
 /** Same rules as ExtensionPreference.validate in the app. */
@@ -82,6 +85,9 @@ export function validateManifest(manifest) {
       manifest.permissions.some((permission) => !allowedPermissions.has(permission))) invalid();
   if ((manifest.icon !== undefined && (typeof manifest.icon !== "string" || manifest.icon.length > 128)) ||
       (manifest.description !== undefined && (typeof manifest.description !== "string" || manifest.description.length > 512))) invalid();
+  if (manifest.accent !== undefined && !accents.includes(manifest.accent)) {
+    throw new Error(`Unsupported manifest: ${manifest.id}: accent must be one of: ${accents.join(", ")}`);
+  }
   validatePreferences(manifest);
   validateStoreMetadata(manifest);
   if (manifest.icon?.endsWith(".png") && !/^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}\.png$/.test(manifest.icon)) {

@@ -59,6 +59,23 @@
       },
       "description": "Named local destinations: loopback HTTP or WebSocket services and native helpers."
     },
+    "accent": {
+      "x-swift-type": "String",
+      "enum": [
+        "orange",
+        "yellow",
+        "green",
+        "mint",
+        "cyan",
+        "blue",
+        "purple",
+        "pink",
+        "red"
+      ],
+      "x-ts-name": "AccentColorName",
+      "x-swift-list": "AccentColor.all",
+      "description": "The extension's color in the notch: progress bars, its main button and anything with tone \"accent\". The app draws each name in a shade tuned for the black notch. Without one, accents are white."
+    },
     "icon": {
       "type": "string",
       "maxLength": 128,

@@ -9,6 +9,12 @@ struct NotchView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var geometry: NotchGeometry { model.geometry }
+
+    /// The accent shade from the manifest of the extension that owns `surface`.
+    private func accent(of surface: HostedSurface?) -> NotchTheme.Accent? {
+        guard let id = surface?.key.extensionID else { return nil }
+        return NotchTheme.accent(named: model.installedExtensions.first { $0.id == id }?.manifest.accent)
+    }
     private var silhouette: NotchSilhouette {
         let size = geometry.bodySize(presentation: model.presentation)
         return .init(bodyWidth: size.width, bodyHeight: size.height,
@@ -114,6 +120,7 @@ struct NotchView: View {
                         .font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.8))
                 } else if let compact = model.wingSurface?.surface.compact {
                     ForEach(compact.leading) { node in NativeNodeView(node: node, compact: true) { _, _ in } }
+                        .environment(\.notchAccent, accent(of: model.wingSurface))
                 } else if model.presentation == .hovered || model.platform.pendingCount > 0 {
                     Image(systemName: model.wingSurface?.surface.kind == .prompt ? "bubble.left.fill" : "square.grid.2x2.fill")
                         .font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.65))
@@ -123,6 +130,7 @@ struct NotchView: View {
             HStack(spacing: 3) {
                 if let compact = model.wingSurface?.surface.compact {
                     ForEach(compact.trailing) { node in NativeNodeView(node: node, compact: true) { _, _ in } }
+                        .environment(\.notchAccent, accent(of: model.wingSurface))
                 } else if model.presentation == .hovered || model.platform.pendingCount > 0 {
                     Image(systemName: "chevron.down")
                         .font(.system(size: 10, weight: .semibold)).foregroundStyle(.white.opacity(0.45))
@@ -215,6 +223,7 @@ struct NotchView: View {
                 onInteraction()
                 model.send(extensionID: selected.key.extensionID, action: action, value: value)
             }
+            .environment(\.notchAccent, accent(of: selected))
             .padding(.horizontal, 27).padding(.top, 14)
             .frame(width: geometry.expandedWidth)
         } else { standardExpandedContent }
@@ -230,6 +239,7 @@ struct NotchView: View {
                         onInteraction()
                         model.send(extensionID: selected.key.extensionID, action: action, value: value)
                     }
+                    .environment(\.notchAccent, accent(of: selected))
                 } else {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("No activities.").font(.system(size: 17, weight: .semibold))
