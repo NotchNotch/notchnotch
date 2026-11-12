@@ -3,14 +3,14 @@
   <channel>
     <title>NotchNotch</title>
     <item>
-      <title>NotchNotch 0.10.0</title>
-      <pubDate>Thu, 12 Nov 2026 17:44:45 GMT</pubDate>
-      <sparkle:version>13</sparkle:version>
-      <sparkle:shortVersionString>0.10.0</sparkle:shortVersionString>
+      <title>NotchNotch 0.11.0</title>
+      <pubDate>Thu, 12 Nov 2026 20:52:05 GMT</pubDate>
+      <sparkle:version>14</sparkle:version>
+      <sparkle:shortVersionString>0.11.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <link>https://github.com/NotchNotch/notchnotch/releases/tag/v0.10.0</link>
-      <description><![CDATA[<h3>Added</h3><ul><li>An extension's [color](docs/extensions/components.md#color): <code>accent</code> in the manifest names one of nine shades tuned for the black notch. Progress bars, the main button and anything with <code>tone=&quot;accent&quot;</code> use it. Without one, accents stay white.</li></ul><h3>Changed</h3><ul><li>Progress bars are thicker and fill with a gradient from a neighboring hue into the extension's color.</li><li>Times, prices and other short numbers roll digit by digit when they change, and progress slides to its new value. Reduce Motion turns both off.</li></ul>]]></description>
-      <enclosure url="https://github.com/NotchNotch/notchnotch/releases/download/v0.10.0/NotchNotch-0.10.0.zip" length="5748836" type="application/octet-stream" sparkle:edSignature="zFc/8qpoJoV2C4Pi0qQKL8atAv61DMqZfb8NKJYkOlFGdH1x1rZMU5xS9LpHl/Ak8wwTjIp1VKXGeEpqAQnNBg=="/>
+      <link>https://github.com/NotchNotch/notchnotch/releases/tag/v0.11.0</link>
+      <description><![CDATA[<h3>Added</h3><ul><li>[<code>Value</code>](docs/extensions/components.md#text-and-symbols): a reading, with a big number in the extension's color and a small unit beside it, such as <code>45 min</code>.</li><li>[<code>Ring</code>](docs/extensions/components.md#text-and-symbols): circular progress with the same gradient as progress bars, with a symbol or short text inside. It fits in the compact wings too.</li><li>The Focus Timer example shows its session as a ring and the time left as a <code>Value</code>.</li><li>[Capabilities](docs/extensions/capabilities.md) <code>battery</code> (charge, charging, time remaining, Low Power Mode) and <code>system</code> (CPU, memory, disk, network, thermal state). They're readings, so NotchNotch doesn't ask; the install review lists them under &quot;See your Mac's status&quot;.</li></ul><h3>Changed</h3><ul><li>The wings beside the camera grow to fit what they show, up to 96 points each, so a time like <code>1:02:45</code> or a price is no longer cut off. Icons hug the outer left edge and readings the outer right, in a rounded type. Icons in the default tone take the extension's color.</li><li>NotchNotch leaves out a component it doesn't know, from a newer SDK, and draws the rest of the extension. Before, the whole snapshot was rejected.</li></ul><h3>Fixed</h3><ul><li>Connecting Spotify or Apple Music no longer waits forever when macOS doesn't answer the Automation request, which happens when its stored decision belongs to an older signature of NotchNotch or of the player, such as a patched Spotify. After 20 seconds Music says so and names the command that resets the decision. It also says to open the player when it isn't running.</li></ul>]]></description>
+      <enclosure url="https://github.com/NotchNotch/notchnotch/releases/download/v0.11.0/NotchNotch-0.11.0.zip" length="5869027" type="application/octet-stream" sparkle:edSignature="CoGwEaqGgq9QvZnT69teM2yw2qpdJYHMk8YPTaQAE5Jz6NtzZrcxzdFdbfACYv6xVWuRMtIn5nw8lhoxMfj3BA=="/>
     </item>
   </channel>
 </rss>
