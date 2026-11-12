@@ -6,6 +6,11 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- [`Value`](docs/extensions/components.md#text-and-symbols): a reading, with a big number in the extension's color and a small unit beside it, such as `45 min`.
+- [`Ring`](docs/extensions/components.md#text-and-symbols): circular progress with the same gradient as progress bars, with a symbol or short text inside. It fits in the compact wings too.
+- The Focus Timer example shows its session as a ring and the time left as a `Value`.
+
 ## [0.10.0] - 2026-11-12
 
 ### Added

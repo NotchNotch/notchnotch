@@ -10,6 +10,17 @@ Import components from `@notchnotch/sdk`. NotchNotch draws them natively and con
 | `Symbol` | SF Symbol `name`, `tone`, `size` (follows the text sizes), `label` when it carries meaning |
 | `Badge` | short text children, `tone` |
 | `Progress` | `value` from 0 to 1, `tone`, `label` |
+| `Value` | a number as children, `unit` (up to 32 characters), `tone` (default `accent`), `size` (default `timer`). Draws the number large with the unit small beside it |
+| `Ring` | `value` from 0 to 1, `tone`, `size` (default `headline`), `label`. Children, such as a `Symbol`, sit inside. Fits in `Activity.Compact` too |
+
+```tsx
+<Row spacing="loose">
+  <Ring value={done} size="title" label="Focus session"><Symbol name="timer" tone="accent" /></Ring>
+  <Value unit="left">{clock(remaining)}</Value>
+</Row>
+```
+
+`Value` and `Ring` need NotchNotch 0.11 or later. Older versions can't show an extension that uses them.
 
 Text sizes: `caption`, `body`, `headline`, `title`, `timer`.
 

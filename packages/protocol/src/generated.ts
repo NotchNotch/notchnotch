@@ -50,14 +50,14 @@ export interface UINode {
   children: UINode[];
 }
 
-export type NodeType = "column" | "row" | "text" | "symbol" | "progress" | "button" | "textField" | "artwork" | "waveform" | "player" | "spacer" | "divider" | "toggle" | "section" | "listItem" | "badge" | "picker";
+export type NodeType = "column" | "row" | "text" | "symbol" | "progress" | "button" | "textField" | "artwork" | "waveform" | "player" | "spacer" | "divider" | "toggle" | "section" | "listItem" | "badge" | "picker" | "value" | "ring";
 
 export interface NodeProps {
   text?: string;
   name?: string;
   tone?: Tone;
   size?: TextSize;
-  /** Progress, from zero to one. */
+  /** Progress or a Ring's fill, from zero to one. */
   value?: number;
   action?: string;
   placeholder?: string;
@@ -66,6 +66,8 @@ export interface NodeProps {
   media?: NowPlayingState;
   /** Secondary line: list item subtitle or section footer. */
   detail?: string;
+  /** What a Value's number counts, drawn small beside it: min, %, mmhg. */
+  unit?: string;
   spacing?: Spacing;
   align?: Alignment;
   /** Picker choices; `selection` holds the chosen value. */

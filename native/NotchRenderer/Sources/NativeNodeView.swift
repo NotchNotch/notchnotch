@@ -110,6 +110,10 @@ public struct NativeNodeView: View {
             NotchSegmentedPicker(node: node, onEvent: onEvent)
         case .listItem:
             NotchListItem(node: node, compact: compact, cameraHeight: cameraHeight, onEvent: onEvent)
+        case .value:
+            NotchValue(node: node, compact: compact)
+        case .ring:
+            NotchRing(node: node, compact: compact, cameraHeight: cameraHeight, onEvent: onEvent)
         case .artwork:
             AlbumArtwork(source: node.props.source, size: compact ? 18 : 60)
         case .waveform:

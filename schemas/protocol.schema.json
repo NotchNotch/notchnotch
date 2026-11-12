@@ -267,7 +267,9 @@
             "section",
             "listItem",
             "badge",
-            "picker"
+            "picker",
+            "value",
+            "ring"
           ],
           "x-ts-name": "NodeType"
         },
@@ -308,7 +310,7 @@
               "type": "number",
               "minimum": 0,
               "maximum": 1,
-              "description": "Progress, from zero to one."
+              "description": "Progress or a Ring's fill, from zero to one."
             },
             "action": {
               "type": "string",
@@ -331,6 +333,11 @@
               "type": "string",
               "maxLength": 4096,
               "description": "Secondary line: list item subtitle or section footer."
+            },
+            "unit": {
+              "type": "string",
+              "maxLength": 32,
+              "description": "What a Value's number counts, drawn small beside it: min, %, mmhg."
             },
             "spacing": {
               "x-name": "Spacing",

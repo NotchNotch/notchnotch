@@ -76,6 +76,26 @@ public enum NotchTheme {
         case .body, nil: return .system(size: 13, weight: .regular)
         }
     }
+    /// A Value's unit: about half its number, so the reading leads.
+    public static func unitFont(_ size: TextSize?, compact: Bool = false) -> Font {
+        if compact { return .system(size: 10, weight: .semibold) }
+        switch size {
+        case .timer: return .system(size: 15, weight: .semibold)
+        case .title: return .system(size: 12, weight: .semibold)
+        case .headline, .body, .caption, nil: return .system(size: 11, weight: .semibold)
+        }
+    }
+    /// A Ring's diameter along the text scale; compact wings hold a small one.
+    public static func ringDiameter(_ size: TextSize?, compact: Bool = false) -> CGFloat {
+        if compact { return 13 }
+        switch size {
+        case .caption: return 16
+        case .body: return 22
+        case .headline, nil: return 30
+        case .title: return 44
+        case .timer: return 64
+        }
+    }
     public static func tracking(_ size: TextSize?, compact: Bool = false) -> CGFloat {
         switch size {
         case .caption: compact ? 0 : 0.4

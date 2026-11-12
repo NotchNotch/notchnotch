@@ -6,6 +6,7 @@
   "entry": "bundle.js",
   "permissions": [],
   "icon": "icon.png",
+  "accent": "orange",
   "description": "Example extension: a focus timer that asks before starting a break.",
   "author": "sadeqi-ah",
   "categories": ["Productivity"],

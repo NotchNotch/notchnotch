@@ -67,3 +67,31 @@ import NotchCore
     #expect(throws: ProtocolError.self) { try snapshot(nil, options: options + [options[0]]).validate(expectedExtensionID: "test.picker") }
     #expect(throws: ProtocolError.self) { try snapshot(nil, options: []).validate(expectedExtensionID: "test.picker") }
 }
+
+@Test func valuesAndRingsAreReadingsForTheNotchOnly() throws {
+    func activity(_ expanded: UINode) -> Snapshot {
+        .init(extensionID: "test.readings", revision: 1, surfaces: [
+            .init(id: "a", kind: .activity, title: "A", initialView: .expanded, expanded: expanded),
+        ])
+    }
+    let reading = UINode(id: "root", type: .row, children: [
+        .init(id: "ring", type: .ring, props: .init(value: 0.4, label: "Session"), children: [
+            .init(id: "icon", type: .symbol, props: .init(name: "timer")),
+        ]),
+        .init(id: "time", type: .value, props: .init(text: "17:38", unit: "left")),
+    ])
+    try activity(reading).validate(expectedExtensionID: "test.readings")
+    #expect(throws: ProtocolError.self) {
+        try activity(.init(id: "v", type: .value, props: .init(text: "1"), children: [.init(id: "x", type: .text)]))
+            .validate(expectedExtensionID: "test.readings")
+    }
+    #expect(throws: ProtocolError.self) {
+        try activity(.init(id: "v", type: .value, props: .init(text: "1", unit: String(repeating: "m", count: 33))))
+            .validate(expectedExtensionID: "test.readings")
+    }
+    #expect(throws: ProtocolError.self) {
+        try activity(.init(id: "r", type: .ring, props: .init(value: 1.5))).validate(expectedExtensionID: "test.readings")
+    }
+    let inSettings = Snapshot(extensionID: "test.readings", revision: 1, surfaces: [], settings: .init(id: "r", type: .ring))
+    #expect(throws: ProtocolError.self) { try inSettings.validate(expectedExtensionID: "test.readings") }
+}

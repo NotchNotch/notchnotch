@@ -239,8 +239,12 @@ test("Focus Timer example renders settings components and starts a session", asy
     runner.send(action({ expanded: shorter.settings }, "Start Focus"));
     const running = await runner.wait((message) => message.surfaces[0]?.id === "session");
     assert.equal(running.surfaces[0].compact.trailing[0].props.text, "15:00");
-    const timer = nodes(running.surfaces[0].expanded).find((node) => node.props.size === "timer");
-    assert.equal(timer.props.text, "15:00");
+    const timer = nodes(running.surfaces[0].expanded).find((node) => node.type === "value");
+    assert.deepEqual([timer.props.text, timer.props.unit], ["15:00", "left"]);
+    const ring = nodes(running.surfaces[0].expanded).find((node) => node.type === "ring");
+    assert.equal(ring.props.value, 0);
+    assert.equal(ring.children[0].type, "symbol");
+    assert.equal(running.surfaces[0].compact.leading[0].type, "ring");
   } finally { await runner.stop(); }
 });
 

@@ -117,6 +117,8 @@ public enum NodeKind: String, Codable, Equatable, Sendable {
     case listItem
     case badge
     case picker
+    case value
+    case ring
 }
 
 public struct NodeProps: Codable, Equatable, Sendable {
@@ -124,7 +126,7 @@ public struct NodeProps: Codable, Equatable, Sendable {
     public var name: String?
     public var tone: Tone?
     public var size: TextSize?
-    /// Progress, from zero to one.
+    /// Progress or a Ring's fill, from zero to one.
     public var value: Double?
     public var action: String?
     public var placeholder: String?
@@ -133,6 +135,8 @@ public struct NodeProps: Codable, Equatable, Sendable {
     public var media: NowPlayingState?
     /// Secondary line: list item subtitle or section footer.
     public var detail: String?
+    /// What a Value's number counts, drawn small beside it: min, %, mmhg.
+    public var unit: String?
     public var spacing: Spacing?
     public var align: LayoutAlignment?
     /// Picker choices; `selection` holds the chosen value.
@@ -141,7 +145,7 @@ public struct NodeProps: Codable, Equatable, Sendable {
     /// What VoiceOver says for a symbol, an icon-only button, a progress bar or a field.
     public var label: String?
 
-    public init(text: String? = nil, name: String? = nil, tone: Tone? = nil, size: TextSize? = nil, value: Double? = nil, action: String? = nil, placeholder: String? = nil, disabled: Bool? = nil, source: String? = nil, media: NowPlayingState? = nil, detail: String? = nil, spacing: Spacing? = nil, align: LayoutAlignment? = nil, options: [PickerOption]? = nil, selection: String? = nil, label: String? = nil) {
+    public init(text: String? = nil, name: String? = nil, tone: Tone? = nil, size: TextSize? = nil, value: Double? = nil, action: String? = nil, placeholder: String? = nil, disabled: Bool? = nil, source: String? = nil, media: NowPlayingState? = nil, detail: String? = nil, unit: String? = nil, spacing: Spacing? = nil, align: LayoutAlignment? = nil, options: [PickerOption]? = nil, selection: String? = nil, label: String? = nil) {
         self.text = text
         self.name = name
         self.tone = tone
@@ -153,6 +157,7 @@ public struct NodeProps: Codable, Equatable, Sendable {
         self.source = source
         self.media = media
         self.detail = detail
+        self.unit = unit
         self.spacing = spacing
         self.align = align
         self.options = options

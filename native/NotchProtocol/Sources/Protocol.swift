@@ -33,6 +33,7 @@ extension Snapshot {
                   identifiers.insert(node.id).inserted,
                   (node.props.text?.count ?? 0) <= 4096,
                   (node.props.detail?.count ?? 0) <= 4096,
+                  (node.props.unit?.count ?? 0) <= 32,
                   (node.props.name?.count ?? 0) <= 128,
                   (node.props.action?.count ?? 0) <= 128,
                   (node.props.label?.count ?? 0) <= 256 else {
@@ -42,7 +43,7 @@ extension Snapshot {
                 throw ProtocolError.invalid("Compact content cannot contain interactive controls")
             }
             if settings && !NodeKind.settingsKinds.contains(node.type) {
-                throw ProtocolError.invalid("Settings cannot contain media components")
+                throw ProtocolError.invalid("Settings cannot contain media components, values or rings")
             }
             if let options = node.props.options {
                 guard node.type == .picker, (1...32).contains(options.count),
@@ -57,8 +58,8 @@ extension Snapshot {
                     throw ProtocolError.invalid("A picker selection must match one of its options")
                 }
             }
-            if [.spacer, .divider, .picker].contains(node.type), !node.children.isEmpty {
-                throw ProtocolError.invalid("Spacers, dividers and pickers cannot have children")
+            if [.spacer, .divider, .picker, .value].contains(node.type), !node.children.isEmpty {
+                throw ProtocolError.invalid("Spacers, dividers, pickers and values cannot have children")
             }
             if let source = node.props.source, !NowPlayingState.isArtworkSource(source, imageHosts: imageHosts) {
                 throw ProtocolError.invalid("Artwork must use a host declared in the manifest's imageHosts or bounded image data")
@@ -68,7 +69,7 @@ extension Snapshot {
                 throw ProtocolError.invalid("A music player requires now-playing state")
             }
             if let value = node.props.value, !value.isFinite || !(0...1).contains(value) {
-                throw ProtocolError.invalid("Progress must be between zero and one")
+                throw ProtocolError.invalid("Progress and rings must be between zero and one")
             }
             for child in node.children { try visit(child, depth: depth + 1, compact: compact, settings: settings) }
         }

@@ -88,9 +88,9 @@ const reconciler = Reconciler({
 });
 
 const nodeTypes = new Set(["column", "row", "text", "symbol", "progress", "button", "textField", "artwork", "waveform", "player",
-  "spacer", "divider", "toggle", "section", "listItem", "badge", "picker"]);
+  "spacer", "divider", "toggle", "section", "listItem", "badge", "picker", "value", "ring"]);
 /** Leaf nodes whose React children are flattened into the `text` prop. */
-const textNodes = new Set(["text", "badge"]);
+const textNodes = new Set(["text", "badge", "value"]);
 function plainText(node: Instance): string {
   return node.type === "#text" ? node.text ?? "" : node.children.map(plainText).join("");
 }
@@ -101,7 +101,7 @@ export function createRenderer(extensionID: string, send: (snapshot: Snapshot) =
   function serialize(node: Instance, registry: typeof actions): UINode {
     if (!nodeTypes.has(node.type)) throw new Error(`Unsupported component: ${node.type}`);
     const props: UINode["props"] = {};
-    for (const key of ["text", "name", "tone", "size", "value", "placeholder", "disabled", "source", "media", "detail", "spacing", "align", "options", "selection", "label"] as const) {
+    for (const key of ["text", "name", "tone", "size", "value", "placeholder", "disabled", "source", "media", "detail", "unit", "spacing", "align", "options", "selection", "label"] as const) {
       if (node.props[key] !== undefined) Object.assign(props, { [key]: node.props[key] });
     }
     if (textNodes.has(node.type)) props.text = plainText(node);

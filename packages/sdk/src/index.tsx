@@ -80,6 +80,24 @@ export function Progress({ value, tone = "accent", label }: { value: number; ton
   return createElement("progress", { value, tone, label });
 }
 
+/**
+ * A reading: a big number with a small unit beside it, such as 45 min or
+ * 82 mmhg. It takes the extension's accent, and its digits roll when it changes.
+ */
+export function Value({ children, unit, tone = "accent", size = "timer" }: Children & { unit?: string; tone?: Tone; size?: TextSize }) {
+  return createElement("value", { unit, tone, size }, children);
+}
+/**
+ * Circular progress, filled with the extension's accent. Children, such as a
+ * Symbol or a short Text, sit inside it. `size` follows the text scale.
+ * `label` says what is progressing; VoiceOver reads it with the percentage.
+ */
+export function Ring({ value, tone = "accent", size = "headline", label, children }: Children & {
+  value: number; tone?: Tone; size?: TextSize; label?: string;
+}) {
+  return createElement("ring", { value, tone, size, label }, children);
+}
+
 type ButtonProps = {
   onPress: () => void;
   /** `accent` is the single primary action; `danger` is destructive. */
