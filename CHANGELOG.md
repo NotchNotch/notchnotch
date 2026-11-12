@@ -6,6 +6,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-13
+
 ### Changed
 - Music shows what's playing in any app macOS's Now Playing shows: Spotify, Apple Music, your browser, Plex, VLC and more, with play, pause, skip and seek. It needs no Automation access, so a modified Spotify works too, and one **Connect** replaces connecting each player. Where Now Playing can't be read, Music connects Spotify and Apple Music one by one as before.
 
@@ -183,7 +185,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/NotchNotch/notchnotch/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/NotchNotch/notchnotch/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/NotchNotch/notchnotch/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/NotchNotch/notchnotch/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/NotchNotch/notchnotch/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/NotchNotch/notchnotch/compare/v0.8.1...v0.9.0
