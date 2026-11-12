@@ -6,9 +6,6 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
-### Fixed
-- The cover in Music no longer flickers when you play or pause, and the progress bar keeps the cover's color. macOS reports each change once without the picture first; Music now keeps the picture through that.
-
 ## [0.12.0] - 2026-11-13
 
 ### Changed
