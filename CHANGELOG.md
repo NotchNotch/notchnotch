@@ -6,6 +6,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-13
+
 ### Added
 - [`Value`](docs/extensions/components.md#text-and-symbols): a reading, with a big number in the extension's color and a small unit beside it, such as `45 min`.
 - [`Ring`](docs/extensions/components.md#text-and-symbols): circular progress with the same gradient as progress bars, with a symbol or short text inside. It fits in the compact wings too.
@@ -14,7 +16,6 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ### Changed
 - The wings beside the camera grow to fit what they show, up to 96 points each, so a time like `1:02:45` or a price is no longer cut off. Icons hug the outer left edge and readings the outer right, in a rounded type. Icons in the default tone take the extension's color.
-
 - NotchNotch leaves out a component it doesn't know, from a newer SDK, and draws the rest of the extension. Before, the whole snapshot was rejected.
 
 ### Fixed
@@ -176,7 +177,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/NotchNotch/notchnotch/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/NotchNotch/notchnotch/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/NotchNotch/notchnotch/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/NotchNotch/notchnotch/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/NotchNotch/notchnotch/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/NotchNotch/notchnotch/compare/v0.8.0...v0.8.1
