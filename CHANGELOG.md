@@ -11,6 +11,9 @@ All notable changes to NotchNotch are listed here. The format follows
 - [`Ring`](docs/extensions/components.md#text-and-symbols): circular progress with the same gradient as progress bars, with a symbol or short text inside. It fits in the compact wings too.
 - The Focus Timer example shows its session as a ring and the time left as a `Value`.
 
+### Fixed
+- Connecting Spotify or Apple Music no longer waits forever when macOS doesn't answer the Automation request, which happens when its stored decision belongs to an older signature of NotchNotch or of the player, such as a patched Spotify. After 20 seconds Music says so and names the command that resets the decision. It also says to open the player when it isn't running.
+
 ## [0.10.0] - 2026-11-12
 
 ### Added

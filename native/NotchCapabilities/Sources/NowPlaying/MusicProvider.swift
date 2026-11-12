@@ -12,13 +12,79 @@ enum MediaPlayer: String, Codable, Sendable, CaseIterable {
     static let imageHosts = ["i.scdn.co", "mosaic.scdn.co", "*.mzstatic.com"]
 }
 
-/// Permission dialogs have their own actor so a slow metadata read cannot queue
-/// an explicit Connect request behind the player.
-private actor MusicPermissions {
-    func permission(for player: MediaPlayer, ask: Bool) -> Bool {
-        let target = NSAppleEventDescriptor(bundleIdentifier: player.rawValue)
-        return AEDeterminePermissionToAutomateTarget(target.aeDesc, AEEventClass(typeWildCard),
-                                                    AEEventID(typeWildCard), ask) == noErr
+/// What macOS said when asked whether NotchNotch may control a player.
+enum AutomationPermission: Equatable {
+    case granted, denied, playerNotRunning, needsConsent
+    /// macOS never answered. This happens when its stored decision belongs
+    /// to an older signature of NotchNotch or of the player, such as a
+    /// Spotify that a patcher re-signed.
+    case noAnswer
+    case failed(OSStatus)
+
+    init(status: OSStatus?) {
+        switch status.map(Int.init) {
+        case nil: self = .noAnswer
+        case Int(noErr): self = .granted
+        case errAEEventNotPermitted: self = .denied
+        case procNotFound: self = .playerNotRunning
+        case errAEEventWouldRequireUserConsent: self = .needsConsent
+        case let other?: self = .failed(OSStatus(other))
+        }
+    }
+
+    /// What Connect shows when access wasn't granted.
+    func problem(for player: MediaPlayer, appID: String) -> String? {
+        switch self {
+        case .granted: nil
+        case .denied, .needsConsent:
+            "Allow NotchNotch to control \(player.name) in System Settings → Privacy & Security → Automation"
+        case .playerNotRunning: "Open \(player.name), then connect again"
+        case .noAnswer:
+            "macOS didn’t answer the request to control \(player.name). If \(player.name) was updated or modified, " +
+            "run tccutil reset AppleEvents \(appID) in Terminal, then connect again."
+        case .failed(let status): "Couldn’t ask macOS for access to \(player.name) (error \(status))"
+        }
+    }
+}
+
+/// The permission call blocks while macOS decides, and sometimes never
+/// returns. Each check runs on its own thread with a deadline, so a stuck
+/// one can't hold up Connect or the playback poll behind it. At most one
+/// call per player and kind is outstanding, so a stuck macOS can't pile up
+/// a blocked thread every poll.
+private enum MusicPermissions {
+    static let askTimeout: TimeInterval = 20
+    static let checkTimeout: TimeInterval = 3
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var outstanding: Set<String> = []
+
+    static func permission(for player: MediaPlayer, ask: Bool) async -> AutomationPermission {
+        let key = "\(player.rawValue)|\(ask)"
+        let started = lock.withLock { outstanding.insert(key).inserted }
+        guard started else { return .noAnswer }
+        let status: OSStatus? = await withCheckedContinuation { continuation in
+            let answer = Answer(continuation)
+            DispatchQueue.global(qos: .userInitiated).async {
+                let target = NSAppleEventDescriptor(bundleIdentifier: player.rawValue)
+                let status = AEDeterminePermissionToAutomateTarget(target.aeDesc, AEEventClass(typeWildCard),
+                                                                  AEEventID(typeWildCard), ask)
+                lock.withLock { _ = outstanding.remove(key) }
+                answer.give(status)
+            }
+            DispatchQueue.global().asyncAfter(deadline: .now() + (ask ? askTimeout : checkTimeout)) { answer.give(nil) }
+        }
+        return AutomationPermission(status: status)
+    }
+
+    /// Resumes its continuation with whichever comes first, the answer or the deadline.
+    private final class Answer: @unchecked Sendable {
+        private let lock = NSLock()
+        private var continuation: CheckedContinuation<OSStatus?, Never>?
+        init(_ continuation: CheckedContinuation<OSStatus?, Never>) { self.continuation = continuation }
+        func give(_ status: OSStatus?) {
+            lock.lock(); let waiting = continuation; continuation = nil; lock.unlock()
+            waiting?.resume(returning: status)
+        }
     }
 }
 
@@ -82,7 +148,6 @@ final class MusicProvider {
     private(set) var authorized: Set<MediaPlayer> = []
     var onChange: ((NowPlayingState?) -> Void)?
     private let automation = MusicAutomation()
-    private let permissions = MusicPermissions()
     private let playerCommands = PlayerCommands()
     private var feedback = PlaybackFeedback()
     private var confirmedState: NowPlayingState?
@@ -134,12 +199,13 @@ final class MusicProvider {
             errors[player] = "\(player.name) is not installed"
             return
         }
-        if await permissions.permission(for: player, ask: true) {
+        let permission = await MusicPermissions.permission(for: player, ask: true)
+        if permission == .granted {
             authorized.insert(player)
             errors[player] = nil
             await refresh()
         } else {
-            errors[player] = "Allow NotchNotch to control \(player.name) in System Settings → Privacy & Security → Automation"
+            errors[player] = permission.problem(for: player, appID: Bundle.main.bundleIdentifier ?? "dev.notchnotch.app")
         }
     }
 
@@ -213,7 +279,9 @@ final class MusicProvider {
         var candidates: [NowPlayingState] = []
         for player in MediaPlayer.allCases {
             guard NSRunningApplication.runningApplications(withBundleIdentifier: player.rawValue).contains(where: { !$0.isTerminated }) else { continue }
-            if !authorized.contains(player), await permissions.permission(for: player, ask: false) { authorized.insert(player) }
+            if !authorized.contains(player), await MusicPermissions.permission(for: player, ask: false) == .granted {
+                authorized.insert(player)
+            }
             guard authorized.contains(player) else { continue }
             do {
                 if let sample = try await automation.read(player) {
