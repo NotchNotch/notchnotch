@@ -2,7 +2,7 @@
 
 Some apps can only be reached from native code: through Apple events, a framework such as EventKit, or a command-line tool. A **helper** is a program your extension runs and talks to over a `stdio` [connection](connections.md).
 
-For calendars and what's playing in Spotify or Apple Music, use a [capability](capabilities.md) instead: NotchNotch reads the data itself, so there's no program to build or sign, and the extension can be in the Store. The Store doesn't accept helpers yet.
+For calendars and what's playing on the Mac, use a [capability](capabilities.md) instead: NotchNotch reads the data itself, so there's no program to build or sign, and the extension can be in the Store. The Store doesn't accept helpers yet.
 
 The other app doesn't have to be yours, but it needs some interface a helper can use: a documented CLI, a local API, Apple events or a system framework. A helper can't reach into an app's private state.
 

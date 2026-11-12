@@ -7,6 +7,7 @@ let package = Package(
     products: [
         .executable(name: "NotchNotch", targets: ["NotchNotch"]),
         .executable(name: "ExtensionRunner", targets: ["ExtensionRunner"]),
+        .library(name: "NowPlayingAdapter", type: .dynamic, targets: ["NowPlayingAdapter"]),
     ],
     dependencies: [
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.10.1"),
@@ -19,6 +20,9 @@ let package = Package(
         .target(name: "NotchExtensions", dependencies: ["NotchProtocol"], path: "native/NotchExtensions/Sources"),
         .target(name: "NotchRenderer", dependencies: ["NotchProtocol", "NotchCore"], path: "native/NotchRenderer/Sources"),
         .executableTarget(name: "ExtensionRunner", dependencies: ["NotchRuntime"], path: "native/ExtensionRunner/Sources"),
+        // Loaded into /usr/bin/perl to read Now Playing (see NowPlayingAdapter.m); not linked into the app.
+        .target(name: "NowPlayingAdapter", path: "native/NowPlayingAdapter/Sources",
+                linkerSettings: [.linkedFramework("Foundation")]),
         .target(name: "NotchCapabilities", dependencies: ["NotchProtocol", "NotchCore", "NotchConnections"], path: "native/NotchCapabilities/Sources"),
         .testTarget(name: "NotchCapabilitiesTests", dependencies: ["NotchCapabilities"], path: "native/NotchCapabilities/Tests"),
         .executableTarget(name: "NotchNotch", dependencies: ["NotchCore", "NotchRenderer", "NotchConnections", "NotchExtensions", "NotchCapabilities",

@@ -6,6 +6,9 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- Music shows what's playing in any app macOS's Now Playing shows: Spotify, Apple Music, your browser, Plex, VLC and more, with play, pause, skip and seek. It needs no Automation access, so a modified Spotify works too, and one **Connect** replaces connecting each player. Where Now Playing can't be read, Music connects Spotify and Apple Music one by one as before.
+
 ### Fixed
 - When macOS doesn't answer for a modified Spotify, Music now says what helps: install the original Spotify, connect once, then modify it again. macOS keeps honoring that decision; it only hangs making a new one for a re-signed Spotify.
 

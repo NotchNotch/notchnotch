@@ -7,6 +7,8 @@ import type { JSONValue, MediaRequest, NowPlayingState } from "@notchnotch/proto
 import { start } from "@notchnotch/runtime";
 
 interface MusicStatus {
+  /** "system": whatever macOS's Now Playing shows, no access per player. "players": Spotify and Apple Music, connected one by one. */
+  source?: "system" | "players";
   state?: NowPlayingState | null;
   authorized: string[];
   errors: Record<string, string>;
@@ -91,17 +93,24 @@ function Music() {
 
   const state = connected ? status?.state : null;
   const problem = (error || status?.commandError || Object.values(status?.errors ?? {})[0] || "").slice(0, 1024);
+  const everyApp = status?.source === "system";
   return <>
     <Settings>
-      <Text tone="secondary">Connect a player to show its playback and controls in the notch.</Text>
-      <Row>{players.map((player, index) => <Button key={player.id}
-        title={`${status?.authorized.includes(player.id) ? "Reconnect" : "Connect"} ${player.name}`}
-        tone={index === 0 ? "accent" : "secondary"} disabled={busy}
-        onPress={() => { void connect(player.id); }} />)}</Row>
-      {busy ? <Text tone="secondary">Waiting for player access…</Text> : null}
-      {players.filter((player) => status?.authorized.includes(player.id)).map((player) =>
-        <Text key={player.id} tone="secondary">{`${player.name} access granted`}</Text>)}
-      {connected && !state ? <Text tone="secondary">Play a track in a connected player to see it in the notch.</Text> : null}
+      {everyApp || !connected ? <>
+        <Text tone="secondary">Shows what’s playing in the notch, with controls: Spotify, Apple Music, your browser and any app in macOS’s Now Playing.</Text>
+        {connected ? <Text tone="secondary">{state ? `Playing from ${state.playerName ?? state.player}.` : "Play something to see it in the notch."}</Text>
+          : <Row><Button title="Connect" tone="accent" disabled={busy} onPress={() => { void connect(); }} /></Row>}
+      </> : <>
+        <Text tone="secondary">Connect a player to show its playback and controls in the notch.</Text>
+        <Row>{players.map((player, index) => <Button key={player.id}
+          title={`${status?.authorized.includes(player.id) ? "Reconnect" : "Connect"} ${player.name}`}
+          tone={index === 0 ? "accent" : "secondary"} disabled={busy}
+          onPress={() => { void connect(player.id); }} />)}</Row>
+        {players.filter((player) => status?.authorized.includes(player.id)).map((player) =>
+          <Text key={player.id} tone="secondary">{`${player.name} access granted`}</Text>)}
+        {!state ? <Text tone="secondary">Play a track in a connected player to see it in the notch.</Text> : null}
+      </>}
+      {busy ? <Text tone="secondary">Waiting for access…</Text> : null}
       {problem ? <Text tone="warning">{problem}</Text> : null}
     </Settings>
     {state ? <Activity idlePreview id="now-playing" title={state.title.slice(0, 128)}

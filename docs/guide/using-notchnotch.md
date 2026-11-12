@@ -26,11 +26,13 @@ When several activities are running, the notch shows one of them. Switch to anot
 
 ## Music
 
-Shows what's playing in Spotify or Apple Music, with playback controls. It comes with NotchNotch.
+Shows what's playing on your Mac, with playback controls: Spotify, Apple Music, your browser, and any other app in macOS's Now Playing. It comes with NotchNotch.
 
 1. Open **Settings & Extensions…** from the menu bar and choose **Music**.
-2. In **Setup**, choose **Connect Spotify** or **Connect Apple Music**.
-3. Allow Music to see and control what's playing, then allow NotchNotch to control the player when macOS asks.
+2. In **Setup**, choose **Connect**.
+3. Allow Music to see and control what's playing.
+
+If NotchNotch can't read Now Playing on your Mac, Music asks you to connect Spotify or Apple Music one by one instead, and macOS asks before NotchNotch controls each.
 
 ## Calendar
 

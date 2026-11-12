@@ -43,6 +43,8 @@ export async function packageApp() {
   await mkdir(path.join(contents, "Resources"), { recursive: true });
   await cp(productPath(root, "NotchNotch"), path.join(contents, "MacOS/NotchNotch"));
   await cp(productPath(root, "ExtensionRunner"), path.join(contents, "Helpers/ExtensionRunner"));
+  // Loaded into /usr/bin/perl to read Now Playing (native/NowPlayingAdapter).
+  await cp(productPath(root, "libNowPlayingAdapter.dylib"), path.join(contents, "Helpers/NowPlayingAdapter.dylib"));
   await chmod(path.join(contents, "MacOS/NotchNotch"), 0o755);
   await chmod(path.join(contents, "Helpers/ExtensionRunner"), 0o755);
   await embedSparkle(contents);
@@ -99,12 +101,13 @@ export async function packageApp() {
   <key>UTTypeIconFile</key><string>AppIcon</string>
   <key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>notchext</string></array></dict>
 </dict></array>
-<key>NSAppleEventsUsageDescription</key><string>Read the current song and control Spotify or Apple Music for the Music extension.</string>
+<key>NSAppleEventsUsageDescription</key><string>Read the current song and control Spotify or Apple Music for the Music extension when macOS's Now Playing isn't available.</string>
 <key>NSCalendarsFullAccessUsageDescription</key><string>Read your selected calendars to show the next event and its countdown in the notch. The Calendar extension does not change your events.</string>
 <key>NSCalendarsUsageDescription</key><string>Read your selected calendars to show upcoming events in the notch.</string>
 ${store}${updates}</dict></plist>
 `);
-  // Inside out: the runner first, then the app.
+  // Inside out: the helpers first, then the app.
+  codesign(path.join(contents, "Helpers/NowPlayingAdapter.dylib"));
   codesign(path.join(contents, "Helpers/ExtensionRunner"),
     { entitlements: path.join(root, "native/ExtensionRunner/ExtensionRunner.entitlements") });
   codesign(app, { entitlements: path.join(root, "apps/macos/NotchNotch.entitlements") });

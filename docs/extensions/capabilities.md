@@ -5,7 +5,7 @@ Some data on a Mac is behind a privacy prompt and can only be read from native c
 | Capability | What it gives you | macOS asks for |
 | --- | --- | --- |
 | `calendar` | The next week's events from the calendars the person chooses | Calendars (full access, read-only use) |
-| `now-playing` | The song playing in Spotify or Apple Music, and playback controls | Automation, once per player |
+| `now-playing` | What's playing in any app macOS's Now Playing shows, and playback controls | Nothing; Automation per player only in the fallback |
 | `battery` | Charge, charging and power state | Nothing |
 | `system` | CPU, memory, disk and network activity, thermal state | Nothing |
 
@@ -65,11 +65,13 @@ Each extension has its own calendar selection. It holds identifiers only, and it
 | `music/command` | `{ "command", "value"? }` | `null` once queued; failures show up in status |
 | `music/state` | Status, as a notification | Sent when anything changes |
 
-Status has an optional `state` (a `NowPlayingState`), `authorized` (player ids with Automation access), `errors` (by player id) and an optional `commandError`. Each notification is a complete status.
+Status has `source`, an optional `state` (a `NowPlayingState`), `authorized` (player ids with Automation access), `errors` (by player id) and an optional `commandError`. Each notification is a complete status.
+
+`source` is `system` when NotchNotch reads macOS's Now Playing: `state` then comes from any app there, `state.player` is that app's bundle identifier, `music/connect` isn't needed, and `volume`, `shuffle` and `repeat` aren't available (they answer with a `commandError`). It's `players` when Now Playing can't be read on that Mac, and Spotify and Apple Music are read through Automation after `music/connect`.
 
 Commands are `playPause`, `previous`, `next`, `seek`, `volume`, `shuffle`, `repeat` and `openPlayer`. `seek` and `volume` take a `value` from 0 to 1; the others take none. There's no way to run a script.
 
-NotchNotch reads only players that are already running, never opens one to look, and reads them only after `music/connect` was allowed. `state.artwork` is a Spotify CDN address or a small inline JPEG from Apple Music. To show it, list `i.scdn.co`, `mosaic.scdn.co` and `*.mzstatic.com` in your manifest's `imageHosts`. Pass `state` to the `MusicPlayer` component to get the same player as the Music extension.
+NotchNotch never opens a player to look. With `players`, it reads only after `music/connect` was allowed. `state.artwork` is a small inline JPEG, or with `players` a Spotify CDN address. To show it, list `i.scdn.co`, `mosaic.scdn.co` and `*.mzstatic.com` in your manifest's `imageHosts`. Pass `state` to the `MusicPlayer` component to get the same player as the Music extension.
 
 ## `battery`
 

@@ -49,7 +49,7 @@ public enum PermissionSummary {
         result[.personalData] = capabilities.filter(\.asksFirst).map { capability in
             switch capability {
             case .calendar: "Your calendars: the next week’s events"
-            case .nowPlaying: "What’s playing in Spotify or Apple Music, and playback controls"
+            case .nowPlaying: "What’s playing on your Mac, and playback controls"
             case .battery, .system: ""
             }
         }

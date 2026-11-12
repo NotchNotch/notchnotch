@@ -114,7 +114,7 @@ private actor MusicAutomation {
         if player == .spotify { source = try? text("aUrl") }
         else if let artwork = try? PlayerEvents.element("cArt", index: 1, of: track),
                 let data = try? events.get("pRaw", of: artwork).data,
-                let jpg = Self.thumbnail(data) {
+                let jpg = artworkThumbnail(data) {
             source = "data:image/jpeg;base64," + jpg.base64EncodedString()
         }
         if let value = source, !NowPlayingState.isArtworkSource(value, imageHosts: MediaPlayer.imageHosts) { source = nil }
@@ -126,19 +126,6 @@ private actor MusicAutomation {
         return state
     }
 
-    private static func thumbnail(_ data: Data) -> Data? {
-        guard let image = CGImageSourceCreateWithData(data as CFData, nil),
-              let thumb = CGImageSourceCreateThumbnailAtIndex(image, 0, [
-                kCGImageSourceCreateThumbnailFromImageAlways: true,
-                kCGImageSourceThumbnailMaxPixelSize: 240,
-                kCGImageSourceCreateThumbnailWithTransform: true,
-              ] as CFDictionary) else { return nil }
-        let output = NSMutableData()
-        guard let destination = CGImageDestinationCreateWithData(output, "public.jpeg" as CFString, 1, nil) else { return nil }
-        CGImageDestinationAddImage(destination, thumb, [kCGImageDestinationLossyCompressionQuality: 0.72] as CFDictionary)
-        guard CGImageDestinationFinalize(destination), output.length < 36_000 else { return nil }
-        return output as Data
-    }
 }
 
 @MainActor
@@ -313,4 +300,19 @@ final class MusicProvider {
         state = feedback.receive(next)
         onChange?(state)
     }
+}
+
+/// A small JPEG of player artwork: 240 px, under 36 KB, so it fits a now-playing message.
+func artworkThumbnail(_ data: Data) -> Data? {
+    guard let image = CGImageSourceCreateWithData(data as CFData, nil),
+          let thumb = CGImageSourceCreateThumbnailAtIndex(image, 0, [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceThumbnailMaxPixelSize: 240,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+          ] as CFDictionary) else { return nil }
+    let output = NSMutableData()
+    guard let destination = CGImageDestinationCreateWithData(output, "public.jpeg" as CFString, 1, nil) else { return nil }
+    CGImageDestinationAddImage(destination, thumb, [kCGImageDestinationLossyCompressionQuality: 0.72] as CFDictionary)
+    guard CGImageDestinationFinalize(destination), output.length < 36_000 else { return nil }
+    return output as Data
 }

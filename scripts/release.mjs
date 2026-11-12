@@ -33,6 +33,7 @@ const { version } = JSON.parse(await readFile(path.join(root, "package.json"), "
 await buildExtensions();
 swiftBuild(root, "NotchNotch");
 swiftBuild(root, "ExtensionRunner");
+swiftBuild(root, "NowPlayingAdapter");
 const app = await packageApp();
 
 run("codesign", ["--verify", "--strict", "--verbose=2", app]);

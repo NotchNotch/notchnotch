@@ -123,7 +123,7 @@ private struct ConsentView: View {
     private var explanation: String {
         switch request.capability {
         case .calendar: "It sees the next week’s events from the calendars you choose: titles, times, locations and meeting links. Not notes or attendees, and it can’t change anything."
-        case .nowPlaying: "It sees the song playing in Spotify or Apple Music and can play, pause and skip. macOS asks separately before NotchNotch controls each app."
+        case .nowPlaying: "It sees what’s playing on your Mac, in Spotify, Apple Music, your browser or any other app, and can play, pause and skip."
         case .battery: "It sees the charge level and whether your Mac is charging."
         case .system: "It sees CPU, memory, disk and network activity."
         case nil: request.runsTool
