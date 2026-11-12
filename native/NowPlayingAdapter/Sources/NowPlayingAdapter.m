@@ -7,7 +7,7 @@
 //            "duration":…,"elapsed":…,"timestamp":…,"rate":…,"playing":…,
 //            "shuffle":…,"repeat":…,"artwork":"<base64>"?}
 //           or {"type":"state","bundle":null} when nothing is playing.
-//           "artwork" is present only when the picture changed.
+//           "artwork" is present only when the picture changed; "" clears it.
 //   stdin   one JSON command per line: {"command":"togglePlayPause"|"next"|
 //           "previous"|"seek","value":seconds}
 //
@@ -31,14 +31,19 @@ static Register registerNotifications;
 static SendCommand sendCommand;
 static SetElapsed setElapsedTime;
 static NSUInteger lastArtworkHash;
+static NSString *lastTrack;
 static BOOL emitting, emitAgain;
 
 // MRMediaRemoteCommand values.
 enum { CommandTogglePlayPause = 2, CommandNextTrack = 4, CommandPreviousTrack = 5 };
 
+static NSData *lastLine;
+
 static void writeLine(NSDictionary *object) {
-    NSData *json = [NSJSONSerialization dataWithJSONObject:object options:0 error:nil];
-    if (!json) return;
+    NSData *json = [NSJSONSerialization dataWithJSONObject:object options:NSJSONWritingSortedKeys error:nil];
+    // A burst of notifications often reads the same state; send it once.
+    if (!json || [json isEqualToData:lastLine]) return;
+    lastLine = json;
     fwrite(json.bytes, 1, json.length, stdout);
     fputc('\n', stdout);
     fflush(stdout);
@@ -61,7 +66,9 @@ static void emit(void) {
             NSString *title = info[@"kMRMediaRemoteNowPlayingInfoTitle"];
             if (!info.count || !title.length) {
                 line[@"bundle"] = [NSNull null];
+                if (lastArtworkHash) line[@"artwork"] = @"";
                 lastArtworkHash = 0;
+                lastTrack = nil;
             } else {
                 double rate = [info[@"kMRMediaRemoteNowPlayingInfoPlaybackRate"] doubleValue];
                 NSDate *timestamp = info[@"kMRMediaRemoteNowPlayingInfoTimestamp"];
@@ -76,12 +83,19 @@ static void emit(void) {
                 line[@"playing"] = rate > 0 ? @YES : @NO;
                 line[@"shuffle"] = [info[@"kMRMediaRemoteNowPlayingInfoShuffleMode"] intValue] > 1 ? @YES : @NO;
                 line[@"repeat"] = [info[@"kMRMediaRemoteNowPlayingInfoRepeatMode"] intValue] > 1 ? @YES : @NO;
+                // Every change arrives twice, first without the picture. Keep the
+                // picture through that; clear it only when a new track has none.
                 NSData *artwork = info[@"kMRMediaRemoteNowPlayingInfoArtworkData"];
                 NSUInteger hash = artwork.length ? artwork.hash ^ artwork.length : 0;
-                if (hash != lastArtworkHash) {
+                NSString *track = [NSString stringWithFormat:@"%@\n%@\n%@", line[@"bundle"], title, line[@"artist"]];
+                if (hash && hash != lastArtworkHash) {
                     lastArtworkHash = hash;
-                    line[@"artwork"] = artwork.length ? [artwork base64EncodedStringWithOptions:0] : @"";
+                    line[@"artwork"] = [artwork base64EncodedStringWithOptions:0];
+                } else if (!hash && lastArtworkHash && ![track isEqualToString:lastTrack]) {
+                    lastArtworkHash = 0;
+                    line[@"artwork"] = @"";
                 }
+                lastTrack = track;
             }
             writeLine(line);
             emitting = NO;
