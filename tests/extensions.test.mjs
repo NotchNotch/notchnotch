@@ -153,13 +153,14 @@ test("Unknown action identifiers do not execute extension callbacks", async () =
 });
 
 
-test("Music connects through the generic SDK, receives state, and sends playback RPCs", async () => {
+test("Music connects once through the generic SDK, receives state, and sends playback RPCs", async () => {
   const runner = launch("music", "dev.notchnotch.music");
   const state = { id: "spotify:track:example", eventID: "playback-1", player: "com.spotify.client", playerName: "Spotify",
     title: "Thisavros Mou", artist: "Katerina", album: "Thisavros Mou", duration: 204,
     position: 12, isPlaying: true, volume: 0.6, shuffle: false, repeating: false,
     updatedAt: Date.now() / 1000 };
-  const status = (state) => ({ state, authorized: ["com.spotify.client"], errors: {} });
+  // "system": macOS's Now Playing, every app, no access per player.
+  const status = (state, source = "system") => ({ source, state, authorized: source === "players" ? ["com.spotify.client"] : [], errors: {} });
   function acknowledge(command) {
     runner.message({ type: "connectionResponse", requestID: command.requestID, result: null });
   }
@@ -169,19 +170,15 @@ test("Music connects through the generic SDK, receives state, and sends playback
   try {
     const initial = await runner.wait((message) => !!message.settings);
     assert.deepEqual(initial.surfaces, []);
-    assert.ok(nodes(initial.settings).some((node) => node.props.text === "Connect Spotify"));
+    assert.ok(nodes(initial.settings).some((node) => node.props.text === "Connect"));
     await denySilentOpen(runner);
-    runner.send(action({ expanded: initial.settings }, "Connect Spotify"));
+    runner.send(action({ expanded: initial.settings }, "Connect"));
     const open = await runner.waitMessage((message) => message.type === "connectionCommand" && message.operation === "open" && message.interactive !== false);
     assert.equal(open.connectionID, "capability:now-playing");
     acknowledge(open);
     const get = await runner.waitMessage((message) => message.message?.method === "music/getState");
     acknowledge(get);
     incoming(open.sessionID, { jsonrpc: "2.0", id: get.message.id, result: status(state) });
-    const connect = await runner.waitMessage((message) => message.message?.method === "music/connect");
-    assert.deepEqual(connect.message.params, { player: "com.spotify.client" });
-    acknowledge(connect);
-    incoming(open.sessionID, { jsonrpc: "2.0", id: connect.message.id, result: status(state) });
     const playing = await runner.wait((message) => message.surfaces[0]?.phase === "active");
     const surface = playing.surfaces[0];
     assert.equal(surface.idlePreview, true);
@@ -192,7 +189,10 @@ test("Music connects through the generic SDK, receives state, and sends playback
     const player = nodes(surface.expanded).find((node) => node.type === "player");
     assert.equal(player.props.media.title, state.title);
     assert.equal(nodes(surface.expanded).some((node) => /Connect|Players/.test(node.props.text ?? "")), false);
-    assert.ok(nodes(playing.settings).some((node) => node.props.text === "Connect Apple Music"));
+    assert.ok(nodes(playing.settings).some((node) => node.props.text === "Playing from Spotify."));
+    assert.equal(nodes(playing.settings).some((node) => /^Connect/.test(node.props.text ?? "")), false);
+    // Now Playing needs no access per player, so connecting never asks for one.
+    assert.equal(runner.messages.some((message) => message.message?.method === "music/connect"), false);
     runner.send(player.props.action, JSON.stringify({ command: "seek", value: 0.5 }));
     const command = await runner.waitMessage((message) => message.message?.method === "music/command");
     assert.equal(command.type, "connectionCommand");
@@ -214,9 +214,13 @@ test("Music connects through the generic SDK, receives state, and sends playback
     incoming(open.sessionID, { method: "music/state", params: { ...status(state), commandError: "Player unavailable" } });
     await runner.wait((message) => message.revision > art.revision &&
       nodes(message.surfaces[0].expanded).some((node) => node.props.text === "Player unavailable"));
+    // Where Now Playing can't be read, players are connected one by one again.
+    incoming(open.sessionID, { method: "music/state", params: status(state, "players") });
+    await runner.wait((message) => message.revision > art.revision &&
+      nodes(message.settings).some((node) => node.props.text === "Connect Apple Music"));
     runner.message({ type: "connectionEvent", connectionID: "capability:now-playing", sessionID: open.sessionID, event: "closed" });
     await runner.wait((message) => message.revision > art.revision &&
-      message.surfaces.length === 0 && nodes(message.settings).some((node) => node.props.text === "Connect Spotify"));
+      message.surfaces.length === 0 && nodes(message.settings).some((node) => node.props.text === "Connect"));
     assert.equal(runner.messages.filter((message) => message.operation === "open" && message.interactive !== false).length, 1);
     assert.equal(runner.messages.some((message) => message.type === "mediaCommand"), false);
   } finally { await runner.stop(); }
