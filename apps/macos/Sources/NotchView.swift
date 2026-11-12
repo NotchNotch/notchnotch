@@ -112,33 +112,59 @@ struct NotchView: View {
         .help(model.platform.pendingCount > 0 ? "A question is waiting" : "Open activities")
     }
 
+    /// Leading content hugs the outer left edge and trailing content the
+    /// outer right edge. Both wings are as wide as the wider content (see
+    /// NotchGeometry.wingWidth), and a reading too long for the widest wing
+    /// is shortened rather than cut off.
     private var compactWings: some View {
         HStack(spacing: 0) {
-            HStack(spacing: 3) {
-                if model.greeting != nil, model.platform.activePeek == nil {
-                    Image(systemName: "hand.wave.fill")
-                        .font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.8))
-                } else if let compact = model.wingSurface?.surface.compact {
-                    ForEach(compact.leading) { node in NativeNodeView(node: node, compact: true) { _, _ in } }
-                        .environment(\.notchAccent, accent(of: model.wingSurface))
-                } else if model.presentation == .hovered || model.platform.pendingCount > 0 {
-                    Image(systemName: model.wingSurface?.surface.kind == .prompt ? "bubble.left.fill" : "square.grid.2x2.fill")
-                        .font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.65))
-                }
-            }.frame(maxWidth: .infinity).clipped()
+            wing(leadingWing, alignment: .leading)
             Color.clear.frame(width: model.notchWidth)
-            HStack(spacing: 3) {
-                if let compact = model.wingSurface?.surface.compact {
-                    ForEach(compact.trailing) { node in NativeNodeView(node: node, compact: true) { _, _ in } }
-                        .environment(\.notchAccent, accent(of: model.wingSurface))
-                } else if model.presentation == .hovered || model.platform.pendingCount > 0 {
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 10, weight: .semibold)).foregroundStyle(.white.opacity(0.45))
-                }
-                if model.platform.pendingCount > 0, model.wingSurface?.surface.kind != .prompt {
-                    pendingBadge
-                }
-            }.frame(maxWidth: .infinity).clipped()
+            wing(trailingWing, alignment: .trailing)
+        }
+        .background {
+            // Measure each wing at its natural size, independent of the space it has now.
+            HStack(spacing: 0) { leadingWing.fixedSize().measuredWidth(); trailingWing.fixedSize().measuredWidth() }
+                .hidden()
+                .onPreferenceChange(WingWidthKey.self) { width in model.measureWings(width) }
+        }
+    }
+
+    private func wing(_ content: some View, alignment: Alignment) -> some View {
+        content
+            .padding(.leading, alignment == .leading ? NotchGeometry.wingOuterInset : NotchGeometry.wingInnerInset)
+            .padding(.trailing, alignment == .leading ? NotchGeometry.wingInnerInset : NotchGeometry.wingOuterInset)
+            .frame(maxWidth: .infinity, alignment: alignment)
+            .clipped()
+    }
+
+    private var leadingWing: some View {
+        HStack(spacing: 3) {
+            if model.greeting != nil, model.platform.activePeek == nil {
+                Image(systemName: "hand.wave.fill")
+                    .font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.8))
+            } else if let compact = model.wingSurface?.surface.compact {
+                ForEach(compact.leading) { node in NativeNodeView(node: node, compact: true) { _, _ in } }
+                    .environment(\.notchAccent, accent(of: model.wingSurface))
+            } else if model.presentation == .hovered || model.platform.pendingCount > 0 {
+                Image(systemName: model.wingSurface?.surface.kind == .prompt ? "bubble.left.fill" : "square.grid.2x2.fill")
+                    .font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.65))
+            }
+        }
+    }
+
+    private var trailingWing: some View {
+        HStack(spacing: 3) {
+            if let compact = model.wingSurface?.surface.compact {
+                ForEach(compact.trailing) { node in NativeNodeView(node: node, compact: true) { _, _ in } }
+                    .environment(\.notchAccent, accent(of: model.wingSurface))
+            } else if model.presentation == .hovered || model.platform.pendingCount > 0 {
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold)).foregroundStyle(.white.opacity(0.45))
+            }
+            if model.platform.pendingCount > 0, model.wingSurface?.surface.kind != .prompt {
+                pendingBadge
+            }
         }
     }
 
@@ -357,5 +383,16 @@ struct NotchView: View {
             .accessibilityLabel("Activities")
             .help("Swipe left or right with two fingers to switch activities")
         }
+    }
+}
+
+private struct WingWidthKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
+
+private extension View {
+    func measuredWidth() -> some View {
+        background { GeometryReader { proxy in Color.clear.preference(key: WingWidthKey.self, value: proxy.size.width) } }
     }
 }

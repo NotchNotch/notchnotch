@@ -18,7 +18,14 @@ public struct NativeNodeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public var body: some View {
-        content.foregroundStyle(NotchTheme.color(node.props.tone, accent: accent?.color))
+        content.foregroundStyle(NotchTheme.color(tone, accent: accent?.color))
+    }
+
+    /// In the wings an icon in the default tone takes the extension's color,
+    /// so an activity is recognizable at a glance beside the camera.
+    private var tone: Tone? {
+        guard compact, node.type == .symbol, node.props.tone == nil || node.props.tone == .primary else { return node.props.tone }
+        return .accent
     }
 
     private var valueChange: Animation? { reduceMotion ? nil : NotchTheme.valueChange }

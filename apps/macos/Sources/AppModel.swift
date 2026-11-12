@@ -217,7 +217,14 @@ final class AppModel {
     var geometry: NotchGeometry {
         .init(cameraWidth: notchWidth, cameraHeight: topHeight, attached: hasNotch,
               contentHeight: contentHeight, hasActivity: platform.compact != nil || platform.pendingCount > 0,
-              reservedCanvasHeight: reservedCanvasHeight, expandedHeaderHeight: 0)
+              reservedCanvasHeight: reservedCanvasHeight, expandedHeaderHeight: 0,
+              wingWidth: NotchGeometry.wingWidth(fitting: wingContentWidth))
+    }
+    /// The wider compact wing's natural content width, measured by the view.
+    private(set) var wingContentWidth: CGFloat = 0
+    func measureWings(_ width: CGFloat) {
+        guard abs(width - wingContentWidth) >= 0.5 else { return }
+        wingContentWidth = width
     }
     var extensionRoot: URL {
         if let value = ProcessInfo.processInfo.environment["NOTCHNOTCH_EXTENSIONS"] { return URL(fileURLWithPath: value) }

@@ -65,8 +65,10 @@ public enum NotchTheme {
 
     // MARK: Typography
     public static func font(_ size: TextSize?, compact: Bool = false) -> Font {
+        // Wing readings: rounded like the system's own live activities, and
+        // sized to sit centered in the 32 pt bar beside the camera.
         if compact {
-            return size == .caption ? .system(size: 11, weight: .semibold) : .system(size: 12, weight: .semibold)
+            return .system(size: size == .caption ? 12 : 13, weight: .semibold, design: .rounded)
         }
         switch size {
         case .caption: return .system(size: 11, weight: .semibold)

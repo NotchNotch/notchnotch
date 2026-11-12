@@ -86,3 +86,18 @@ import Testing
     let music = NotchGeometry(contentHeight: 172, expandedHeaderHeight: 0)
     #expect(music.expandedHeight == 186)
 }
+
+@Test func wingsGrowToFitTheirReadingAndStayCentered() {
+    // Before: a fixed 30 pt wing clipped a 36 pt "24:57".
+    #expect(NotchGeometry.wingWidth(fitting: 0) == 30)
+    #expect(NotchGeometry.wingWidth(fitting: 14) == 30)
+    #expect(NotchGeometry.wingWidth(fitting: 35.4) == 52)
+    #expect(NotchGeometry.wingWidth(fitting: 400) == NotchGeometry.maximumWingWidth)
+    let geometry = NotchGeometry(cameraWidth: 184, cameraHeight: 32, wingWidth: NotchGeometry.wingWidth(fitting: 35.4))
+    #expect(geometry.compactWidth == CGFloat(184 + 2 * 52))
+    #expect(geometry.hoveredWidth == geometry.compactWidth + 12)
+    // The body is centered on the camera whatever the wings hold.
+    let body = geometry.bodyFrame(presentation: .compact)
+    #expect(body.midX == geometry.canvasSize.width / 2)
+    #expect(NotchGeometry(cameraWidth: 184, cameraHeight: 32, hasActivity: false, wingWidth: 80).compactWidth == 184)
+}

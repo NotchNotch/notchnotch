@@ -12,10 +12,24 @@ public struct NotchGeometry: Equatable, Sendable {
     public var hasActivity: Bool
     public var reservedCanvasHeight: CGFloat
     public var expandedHeaderHeight: CGFloat?
+    /// Each compact wing's width beside the camera; see `wingWidth(fitting:)`.
+    public var wingWidth: CGFloat
+
+    /// Wings hold an icon and a short reading. Both are as wide as the wider
+    /// content so the notch stays centered on the camera, with room for the
+    /// rounded outer corner and a gap beside the camera.
+    public static let minimumWingWidth: CGFloat = 30
+    public static let maximumWingWidth: CGFloat = 96
+    public static let wingOuterInset: CGFloat = 10
+    public static let wingInnerInset: CGFloat = 6
+    public static func wingWidth(fitting contentWidth: CGFloat) -> CGFloat {
+        let needed = ceil(max(0, contentWidth)) + wingOuterInset + wingInnerInset
+        return min(maximumWingWidth, max(minimumWingWidth, needed))
+    }
 
     public init(cameraWidth: CGFloat = 184, cameraHeight: CGFloat = 32, attached: Bool = true,
                 contentHeight: CGFloat = 156, hasActivity: Bool = true, reservedCanvasHeight: CGFloat = 0,
-                expandedHeaderHeight: CGFloat? = nil) {
+                expandedHeaderHeight: CGFloat? = nil, wingWidth: CGFloat = NotchGeometry.minimumWingWidth) {
         self.cameraWidth = max(0, cameraWidth)
         self.cameraHeight = max(24, cameraHeight)
         self.attached = attached
@@ -23,11 +37,12 @@ public struct NotchGeometry: Equatable, Sendable {
         self.hasActivity = hasActivity
         self.reservedCanvasHeight = reservedCanvasHeight
         self.expandedHeaderHeight = expandedHeaderHeight
+        self.wingWidth = min(Self.maximumWingWidth, max(Self.minimumWingWidth, wingWidth))
     }
 
     public var expandedWidth: CGFloat { max(384, cameraWidth + 148) }
-    public var compactWidth: CGFloat { cameraWidth + (hasActivity ? 60 : 0) }
-    public var hoveredWidth: CGFloat { cameraWidth + 72 }
+    public var compactWidth: CGFloat { cameraWidth + (hasActivity ? 2 * wingWidth : 0) }
+    public var hoveredWidth: CGFloat { max(cameraWidth + 72, compactWidth + 12) }
     public var hoveredHeight: CGFloat { cameraHeight + (hasActivity ? 4 : 10) }
     public var peekWidth: CGFloat { max(320, cameraWidth + 112) }
     public var peekHeight: CGFloat { cameraHeight + 46 }
