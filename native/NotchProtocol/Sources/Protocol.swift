@@ -298,6 +298,17 @@ public enum ProtocolError: Error, LocalizedError, Sendable {
 public enum SystemCapability: String, CaseIterable, Sendable {
     case calendar
     case nowPlaying = "now-playing"
+    case battery
+    case system
+
+    /// Personal data and control ask the person before the first stream.
+    /// Battery and system readings say nothing private, so they don't.
+    public var asksFirst: Bool {
+        switch self {
+        case .calendar, .nowPlaying: true
+        case .battery, .system: false
+        }
+    }
 
     public static let connectionPrefix = "capability:"
     public var connectionID: String { Self.connectionPrefix + rawValue }

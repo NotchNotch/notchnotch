@@ -295,7 +295,7 @@ public final class ConnectionBroker {
             return .null
         case .open:
             guard let sessionID = command.sessionID, !sessionID.isEmpty else { throw ProtocolError.invalid("Stream requires a session identifier") }
-            if !granted.contains(id) {
+            if capability.asksFirst, !granted.contains(id) {
                 try await authorizeOnce(ConnectionAuthorizationRequest(connectionID: id, target: capability.rawValue,
                     fingerprint: id, interactive: command.interactive ?? true, capability: capability))
             }

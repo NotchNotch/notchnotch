@@ -207,3 +207,33 @@ private func manifest(permissions: [String] = ["process"], connections: String =
     #expect(sessions.count == 1 && sessions[0].stopped)
     allowed.stop()
 }
+
+@Test @MainActor func statusCapabilitiesOpenWithoutAskingButStillNeedTheirPermission() async throws {
+    var messages: [[String: Any]] = []
+    var asked: [ConnectionAuthorizationRequest] = []
+    var opened: [SystemCapability] = []
+    func broker(_ permissions: [String]) throws -> ConnectionBroker {
+        ConnectionBroker(manifest: try manifest(permissions: permissions, connections: "{}"), directory: URL(fileURLWithPath: "/tmp"),
+                         capabilities: { capability, _, send in opened.append(capability); return EchoCapability(send: send) },
+                         authorize: { request in asked.append(request); return true }, emit: { json in
+            if let value = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any] { messages.append(value) }
+        })
+    }
+    func response(_ id: String) async throws -> [String: Any]? {
+        for _ in 0..<100 where !messages.contains(where: { $0["requestID"] as? String == id }) { try await Task.sleep(for: .milliseconds(10)) }
+        return messages.first { $0["requestID"] as? String == id }
+    }
+    let undeclared = try broker([])
+    undeclared.receive(.init(extensionID: "dev.test.bridge", requestID: "no", connectionID: "capability:battery", operation: .open, sessionID: "a"))
+    #expect((try await response("no"))?["error"] as? String != nil)
+    undeclared.stop()
+
+    let status = try broker(["battery", "system"])
+    status.receive(.init(extensionID: "dev.test.bridge", requestID: "battery", connectionID: "capability:battery", operation: .open, sessionID: "b"))
+    status.receive(.init(extensionID: "dev.test.bridge", requestID: "system", connectionID: "capability:system", operation: .open, sessionID: "c"))
+    #expect((try await response("battery"))?["error"] == nil)
+    #expect((try await response("system"))?["error"] == nil)
+    #expect(asked.isEmpty)
+    #expect(Set(opened) == [.battery, .system])
+    status.stop()
+}

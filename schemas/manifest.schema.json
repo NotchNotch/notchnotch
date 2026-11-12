@@ -35,7 +35,7 @@
     },
     "permissions": {
       "type": "array",
-      "maxItems": 4,
+      "maxItems": 6,
       "uniqueItems": true,
       "items": {
         "x-swift-type": "String",
@@ -43,10 +43,12 @@
           "local-network",
           "process",
           "calendar",
-          "now-playing"
+          "now-playing",
+          "battery",
+          "system"
         ]
       },
-      "description": "`local-network` for loopback HTTP and WebSocket connections, `process` for native helpers, `calendar` and `now-playing` for the app's system capabilities."
+      "description": "`local-network` for loopback HTTP and WebSocket connections, `process` for native helpers, `calendar`, `now-playing`, `battery` and `system` for the app's system capabilities."
     },
     "connections": {
       "type": "object",

@@ -7,7 +7,7 @@ import NotchProtocol
 /// asking for more.
 public enum PermissionSummary {
     public enum Kind: Int, Comparable, Sendable {
-        case runPrograms, personalData, internet, localApps, pictures, settings
+        case runPrograms, personalData, internet, localApps, pictures, settings, deviceStatus
         public static func < (lhs: Kind, rhs: Kind) -> Bool { lhs.rawValue < rhs.rawValue }
     }
 
@@ -45,10 +45,19 @@ public enum PermissionSummary {
                 ([connection.executable ?? ""] + (connection.arguments ?? [])).joined(separator: " ")
             }
         }
-        result[.personalData] = SystemCapability.allCases.filter { manifest.permissions.contains($0.rawValue) }.map { capability in
+        let capabilities = SystemCapability.allCases.filter { manifest.permissions.contains($0.rawValue) }
+        result[.personalData] = capabilities.filter(\.asksFirst).map { capability in
             switch capability {
             case .calendar: "Your calendars: the next week’s events"
             case .nowPlaying: "What’s playing in Spotify or Apple Music, and playback controls"
+            case .battery, .system: ""
+            }
+        }
+        result[.deviceStatus] = capabilities.filter { !$0.asksFirst }.map { capability in
+            switch capability {
+            case .battery: "Battery charge and whether it’s charging"
+            case .system: "CPU, memory, disk and network activity"
+            case .calendar, .nowPlaying: ""
             }
         }
         result[.internet] = manifest.network ?? []
@@ -70,6 +79,7 @@ public enum PermissionSummary {
         case .localApps: "Talk to apps on this Mac"
         case .pictures: "Show pictures from these websites"
         case .settings: "Ask you for settings"
+        case .deviceStatus: "See your Mac’s status"
         }
     }
 
@@ -81,6 +91,7 @@ public enum PermissionSummary {
         case .localApps: "NotchNotch asks before it connects."
         case .pictures: "NotchNotch downloads the pictures itself."
         case .settings: "You fill these in under Setup."
+        case .deviceStatus: "Readings only, nothing personal, so NotchNotch doesn’t ask."
         }
     }
 }

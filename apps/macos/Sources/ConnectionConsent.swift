@@ -114,6 +114,8 @@ private struct ConsentView: View {
         switch request.capability {
         case .calendar: "read your calendars"
         case .nowPlaying: "see and control what’s playing"
+        case .battery: "see your battery"
+        case .system: "see your Mac’s activity"
         case nil: request.runsTool ? "run a local tool" : "connect to a local app"
         }
     }
@@ -122,6 +124,8 @@ private struct ConsentView: View {
         switch request.capability {
         case .calendar: "It sees the next week’s events from the calendars you choose: titles, times, locations and meeting links. Not notes or attendees, and it can’t change anything."
         case .nowPlaying: "It sees the song playing in Spotify or Apple Music and can play, pause and skip. macOS asks separately before NotchNotch controls each app."
+        case .battery: "It sees the charge level and whether your Mac is charging."
+        case .system: "It sees CPU, memory, disk and network activity."
         case nil: request.runsTool
             ? "The tool runs with your user account and can access your files and network. Allow only tools you trust."
             : "The extension can exchange data with this local service on your Mac."

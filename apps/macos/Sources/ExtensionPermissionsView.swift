@@ -51,6 +51,7 @@ struct ExtensionPermissionsView: View {
         case .localApps: "network"
         case .pictures: "photo"
         case .settings: "slider.horizontal.3"
+        case .deviceStatus: "gauge.with.dots.needle.33percent"
         }
     }
 
@@ -62,6 +63,7 @@ struct ExtensionPermissionsView: View {
         case .localApps: .teal
         case .pictures: .purple
         case .settings: .secondary
+        case .deviceStatus: .green
         }
     }
 }

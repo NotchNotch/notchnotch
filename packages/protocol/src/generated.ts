@@ -194,8 +194,8 @@ export interface ExtensionManifest {
   version: string;
   apiVersion: 1;
   entry: "bundle.js";
-  /** `local-network` for loopback HTTP and WebSocket connections, `process` for native helpers, `calendar` and `now-playing` for the app's system capabilities. */
-  permissions: ("local-network" | "process" | "calendar" | "now-playing")[];
+  /** `local-network` for loopback HTTP and WebSocket connections, `process` for native helpers, `calendar`, `now-playing`, `battery` and `system` for the app's system capabilities. */
+  permissions: ("local-network" | "process" | "calendar" | "now-playing" | "battery" | "system")[];
   /** Named local destinations: loopback HTTP or WebSocket services and native helpers. */
   connections?: Record<string, ConnectionDefinition>;
   accent?: AccentColorName;

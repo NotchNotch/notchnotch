@@ -38,3 +38,11 @@ private func manifest(_ extra: String, permissions: String = "[]") throws -> Ext
     #expect(items.first { $0.kind == .pictures }?.isNew == true)
     #expect(PermissionSummary.items(for: installed, comparedTo: installed).allSatisfy { !$0.isNew })
 }
+
+@Test func statusCapabilitiesAreListedApartFromPersonalData() throws {
+    let both = try manifest("", permissions: #"["calendar","battery","system"]"#)
+    let items = PermissionSummary.items(for: both)
+    #expect(items.map(\.kind) == [.personalData, .deviceStatus])
+    #expect(items[0].details.map(\.text) == ["Your calendars: the next week’s events"])
+    #expect(items[1].details.map(\.text) == ["Battery charge and whether it’s charging", "CPU, memory, disk and network activity"])
+}

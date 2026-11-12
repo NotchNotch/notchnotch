@@ -6,8 +6,10 @@ Some data on a Mac is behind a privacy prompt and can only be read from native c
 | --- | --- | --- |
 | `calendar` | The next week's events from the calendars the person chooses | Calendars (full access, read-only use) |
 | `now-playing` | The song playing in Spotify or Apple Music, and playback controls | Automation, once per player |
+| `battery` | Charge, charging and power state | Nothing |
+| `system` | CPU, memory, disk and network activity, thermal state | Nothing |
 
-Capabilities need NotchNotch 0.9 or later. The Store marks extensions that use one, and older versions don't install them.
+Capabilities need NotchNotch 0.9 or later; `battery` and `system` need 0.11. The Store marks extensions that use one, and older versions don't install them.
 
 ## Use one
 
@@ -29,7 +31,7 @@ rpc.onNotification(({ method, params }) => {
 const status = await rpc.request("calendar/getState");
 ```
 
-The first `open` (or the first `request`, which opens the stream) asks the person, the same way a [connection](connections.md) does: **Allow Once**, **Always Allow** or **Don't Allow**. Pass `{ interactive: false }` to `rpc.connect` to reconnect silently at launch after **Always Allow**. The install review and the Store page list each capability you ask for, and **Forget** under Access clears the grant.
+For `calendar` and `now-playing`, the first `open` (or the first `request`, which opens the stream) asks the person, the same way a [connection](connections.md) does: **Allow Once**, **Always Allow** or **Don't Allow**. Pass `{ interactive: false }` to `rpc.connect` to reconnect silently at launch after **Always Allow**. The install review and the Store page list each capability you ask for, and **Forget** under Access clears the grant.
 
 macOS asks NotchNotch, not your extension, for the underlying access. It asks once, the first time any extension needs it. NotchNotch still gives the data only to extensions that list the capability and that the person allowed.
 
@@ -68,3 +70,31 @@ Status has an optional `state` (a `NowPlayingState`), `authorized` (player ids w
 Commands are `playPause`, `previous`, `next`, `seek`, `volume`, `shuffle`, `repeat` and `openPlayer`. `seek` and `volume` take a `value` from 0 to 1; the others take none. There's no way to run a script.
 
 NotchNotch reads only players that are already running, never opens one to look, and reads them only after `music/connect` was allowed. `state.artwork` is a Spotify CDN address or a small inline JPEG from Apple Music. To show it, list `i.scdn.co`, `mosaic.scdn.co` and `*.mzstatic.com` in your manifest's `imageHosts`. Pass `state` to the `MusicPlayer` component to get the same player as the Music extension.
+
+## `battery`
+
+Readings only, so NotchNotch doesn't ask. The install review lists it under "See your Mac's status".
+
+| Method | Parameters | Result |
+| --- | --- | --- |
+| `battery/getState` | None | Status |
+| `battery/state` | Status, as a notification | Sent when macOS reports a change, not on a timer |
+
+Status has `present` (false on a Mac without a battery), `level` from 0 to 1, `charging`, `pluggedIn`, `charged`, `lowPowerMode`, and `minutesToEmpty` or `minutesToFull` once macOS has an estimate.
+
+```tsx
+const rpc = new JSONRPCClient(capability("battery"));
+const battery = await rpc.request("battery/getState");
+<Ring value={battery.level} label="Battery"><Symbol name="bolt.fill" /></Ring>
+```
+
+## `system`
+
+Readings only, so NotchNotch doesn't ask. It samples every two seconds while your stream is open, and stops when it closes.
+
+| Method | Parameters | Result |
+| --- | --- | --- |
+| `system/getState` | None | The latest status |
+| `system/state` | Status, as a notification | Every two seconds |
+
+Status has `cpu` (busy share of all cores, 0 to 1), `memory` and `disk` (`used` and `total` in bytes; memory as Activity Monitor's "Memory Used", disk for the startup disk), `network` (`received` and `sent` in bytes per second, every interface but loopback), `thermal` (`nominal`, `fair`, `serious` or `critical`) and `uptime` in seconds. `cpu` and `network` are missing until two samples exist, about two seconds after opening.

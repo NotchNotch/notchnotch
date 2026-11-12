@@ -189,13 +189,14 @@ export class ConnectionStream {
 }
 
 /** A system capability the app serves itself; list its name in the manifest's `permissions`. */
-export type SystemCapability = "calendar" | "now-playing";
+export type SystemCapability = "calendar" | "now-playing" | "battery" | "system";
 
 /**
- * The JSON-RPC stream of a system capability, such as your calendars or the
- * song playing in Spotify or Apple Music. NotchNotch reads the data itself, so
- * no native helper is needed. Wrap it in a `JSONRPCClient`. The first `open`
- * asks the person, like a connection.
+ * The JSON-RPC stream of a system capability, such as your calendars, the
+ * song playing in Spotify or Apple Music, the battery or the Mac's activity.
+ * NotchNotch reads the data itself, so no native helper is needed. Wrap it in
+ * a `JSONRPCClient`. For `calendar` and `now-playing` the first `open` asks
+ * the person, like a connection; `battery` and `system` don't ask.
  */
 export function capability(name: SystemCapability): ConnectionStream {
   return new ConnectionStream(`capability:${name}`);

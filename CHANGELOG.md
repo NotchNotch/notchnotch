@@ -10,6 +10,7 @@ All notable changes to NotchNotch are listed here. The format follows
 - [`Value`](docs/extensions/components.md#text-and-symbols): a reading, with a big number in the extension's color and a small unit beside it, such as `45 min`.
 - [`Ring`](docs/extensions/components.md#text-and-symbols): circular progress with the same gradient as progress bars, with a symbol or short text inside. It fits in the compact wings too.
 - The Focus Timer example shows its session as a ring and the time left as a `Value`.
+- [Capabilities](docs/extensions/capabilities.md) `battery` (charge, charging, time remaining, Low Power Mode) and `system` (CPU, memory, disk, network, thermal state). They're readings, so NotchNotch doesn't ask; the install review lists them under "See your Mac's status".
 
 ### Changed
 - The wings beside the camera grow to fit what they show, up to 96 points each, so a time like `1:02:45` or a price is no longer cut off. Icons hug the outer left edge and readings the outer right, in a rounded type. Icons in the default tone take the extension's color.

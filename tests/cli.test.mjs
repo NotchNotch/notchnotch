@@ -182,12 +182,15 @@ test("the app carries the privacy entitlement and usage description of every cap
   const needs = {
     calendar: ["com.apple.security.personal-information.calendars", "NSCalendarsFullAccessUsageDescription"],
     "now-playing": ["com.apple.security.automation.apple-events", "NSAppleEventsUsageDescription"],
+    // Power sources and host statistics aren't behind a privacy prompt.
+    battery: null,
+    system: null,
   };
   const { capabilities } = await import("../packages/cli/src/manifest.mjs");
   assert.deepEqual(Object.keys(needs).sort(), [...capabilities].sort());
   const entitlements = await readFile("apps/macos/NotchNotch.entitlements", "utf8");
   const packaging = await readFile("scripts/package-app.mjs", "utf8");
-  for (const [name, [entitlement, usage]] of Object.entries(needs)) {
+  for (const [name, [entitlement, usage]] of Object.entries(needs).filter(([, need]) => need)) {
     assert.ok(entitlements.includes(`<key>${entitlement}</key>`), `NotchNotch.entitlements is missing ${entitlement} for ${name}`);
     assert.ok(packaging.includes(`<key>${usage}</key>`), `The app's Info.plist is missing ${usage} for ${name}`);
   }

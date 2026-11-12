@@ -73,7 +73,7 @@ function validateStoreMetadata(manifest) {
 }
 
 /** Capabilities are permissions too; each one is also a stream named `capability:<name>`. */
-export const capabilities = ["calendar", "now-playing"];
+export const capabilities = ["calendar", "now-playing", "battery", "system"];
 export const allowedPermissions = new Set(["local-network", "process", ...capabilities]);
 
 export function validateManifest(manifest) {

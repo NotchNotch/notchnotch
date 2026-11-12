@@ -11,6 +11,8 @@ public enum SystemCapabilities {
         switch capability {
         case .calendar: CalendarCapability(extensionID: extensionID, send: send)
         case .nowPlaying: NowPlayingCapability(send: send)
+        case .battery: BatteryCapability(send: send)
+        case .system: SystemStatusCapability(send: send)
         }
     }
 
