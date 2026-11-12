@@ -16,6 +16,7 @@ import Testing
     #expect(AutomationPermission.playerNotRunning.problem(for: .spotify, appID: "dev.notchnotch.app") == "Open Spotify, then connect again")
     // A stuck request names the reset for this app's own identifier, so a dev build gets its own.
     let stuck = AutomationPermission.noAnswer.problem(for: .spotify, appID: "dev.notchnotch.app.dev") ?? ""
+    #expect(stuck.contains("install the original, connect here once"))
     #expect(stuck.contains("tccutil reset AppleEvents dev.notchnotch.app.dev"))
     #expect(AutomationPermission.denied.problem(for: .music, appID: "dev.notchnotch.app")?.contains("Automation") == true)
 }

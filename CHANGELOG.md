@@ -6,6 +6,9 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- When macOS doesn't answer for a modified Spotify, Music now says what helps: install the original Spotify, connect once, then modify it again. macOS keeps honoring that decision; it only hangs making a new one for a re-signed Spotify.
+
 ## [0.11.0] - 2026-11-13
 
 ### Added

@@ -15,9 +15,9 @@ enum MediaPlayer: String, Codable, Sendable, CaseIterable {
 /// What macOS said when asked whether NotchNotch may control a player.
 enum AutomationPermission: Equatable {
     case granted, denied, playerNotRunning, needsConsent
-    /// macOS never answered. This happens when its stored decision belongs
-    /// to an older signature of NotchNotch or of the player, such as a
-    /// Spotify that a patcher re-signed.
+    /// macOS never answered. It honors a stored decision even for a changed
+    /// player, but can hang making a new one for a player a patcher
+    /// re-signed, so the fix is to decide once with the original app.
     case noAnswer
     case failed(OSStatus)
 
@@ -40,8 +40,9 @@ enum AutomationPermission: Equatable {
             "Allow NotchNotch to control \(player.name) in System Settings → Privacy & Security → Automation"
         case .playerNotRunning: "Open \(player.name), then connect again"
         case .noAnswer:
-            "macOS didn’t answer the request to control \(player.name). If \(player.name) was updated or modified, " +
-            "run tccutil reset AppleEvents \(appID) in Terminal, then connect again."
+            "macOS didn’t answer the request to control \(player.name). This happens with a modified \(player.name): " +
+            "install the original, connect here once, then modify it again. If it still doesn’t answer, " +
+            "run tccutil reset AppleEvents \(appID) in Terminal and connect again."
         case .failed(let status): "Couldn’t ask macOS for access to \(player.name) (error \(status))"
         }
     }
