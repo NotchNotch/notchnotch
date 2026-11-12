@@ -77,7 +77,7 @@ public struct SettingsNodeView: View {
             .disabled(node.props.disabled ?? false)
         case .listItem:
             SettingsListItem(node: node, onEvent: onEvent)
-        case .artwork, .waveform, .player, .value, .ring:
+        case .artwork, .waveform, .player, .value, .ring, .unknown:
             EmptyView() // Excluded by the settings contract before rendering.
         }
     }

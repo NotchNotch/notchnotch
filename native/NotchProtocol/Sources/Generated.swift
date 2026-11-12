@@ -119,6 +119,13 @@ public enum NodeKind: String, Codable, Equatable, Sendable {
     case picker
     case value
     case ring
+    /// A value from a newer sender that this app doesn't know.
+    case unknown
+
+    public init(from decoder: Decoder) throws {
+        let value = try decoder.singleValueContainer().decode(String.self)
+        self = Self(rawValue: value) ?? .unknown
+    }
 }
 
 public struct NodeProps: Codable, Equatable, Sendable {

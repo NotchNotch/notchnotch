@@ -15,6 +15,8 @@ extension NodeKind {
     public static let settingsKinds: Set<NodeKind> = [
         .column, .row, .text, .symbol, .progress, .button, .textField,
         .spacer, .divider, .toggle, .section, .listItem, .badge, .picker,
+        // A newer settings component is left out, not a reason to reject the page.
+        .unknown,
     ]
 }
 

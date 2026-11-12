@@ -20,7 +20,7 @@ Import components from `@notchnotch/sdk`. NotchNotch draws them natively and con
 </Row>
 ```
 
-`Value` and `Ring` need NotchNotch 0.11 or later. Older versions can't show an extension that uses them.
+`Value` and `Ring` need NotchNotch 0.11 or later. Older versions can't show an extension that uses them. From 0.11 on, NotchNotch leaves out a component it doesn't know and draws the rest, so later components won't break an extension on an older app.
 
 Text sizes: `caption`, `body`, `headline`, `title`, `timer`.
 

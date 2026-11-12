@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 import NotchProtocol
 import NotchCore
@@ -94,4 +95,21 @@ import NotchCore
     }
     let inSettings = Snapshot(extensionID: "test.readings", revision: 1, surfaces: [], settings: .init(id: "r", type: .ring))
     #expect(throws: ProtocolError.self) { try inSettings.validate(expectedExtensionID: "test.readings") }
+}
+
+@Test func aComponentFromANewerSDKIsLeftOutInsteadOfRejectingTheSnapshot() throws {
+    let json = #"""
+    {"protocolVersion":1,"type":"snapshot","extensionID":"test.newer","revision":1,
+     "surfaces":[{"id":"a","kind":"activity","title":"A","initialView":"expanded","phase":"active",
+       "expanded":{"id":"root","type":"column","props":{},"children":[
+         {"id":"chart","type":"chart","props":{"value":0.5},"children":[]},
+         {"id":"label","type":"text","props":{"text":"Still here"},"children":[]}]}}],
+     "settings":{"id":"setup","type":"column","props":{},"children":[{"id":"x","type":"colorWell","props":{},"children":[]}]}}
+    """#
+    let snapshot = try JSONDecoder().decode(Snapshot.self, from: Data(json.utf8))
+    try snapshot.validate(expectedExtensionID: "test.newer")
+    let children = snapshot.surfaces[0].expanded.children
+    #expect(children.map(\.type) == [.unknown, .text])
+    #expect(children[1].props.text == "Still here")
+    #expect(snapshot.settings?.children.first?.type == .unknown)
 }

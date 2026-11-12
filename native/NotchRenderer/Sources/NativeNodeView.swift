@@ -117,6 +117,9 @@ public struct NativeNodeView: View {
             NotchSegmentedPicker(node: node, onEvent: onEvent)
         case .listItem:
             NotchListItem(node: node, compact: compact, cameraHeight: cameraHeight, onEvent: onEvent)
+        case .unknown:
+            // A component from a newer SDK: leave it out and draw the rest.
+            EmptyView()
         case .value:
             NotchValue(node: node, compact: compact)
         case .ring:

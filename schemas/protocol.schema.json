@@ -250,6 +250,7 @@
         },
         "type": {
           "x-swift-name": "NodeKind",
+          "x-swift-unknown": "unknown",
           "enum": [
             "column",
             "row",

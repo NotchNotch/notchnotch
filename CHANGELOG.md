@@ -15,6 +15,8 @@ All notable changes to NotchNotch are listed here. The format follows
 ### Changed
 - The wings beside the camera grow to fit what they show, up to 96 points each, so a time like `1:02:45` or a price is no longer cut off. Icons hug the outer left edge and readings the outer right, in a rounded type. Icons in the default tone take the extension's color.
 
+- NotchNotch leaves out a component it doesn't know, from a newer SDK, and draws the rest of the extension. Before, the whole snapshot was rejected.
+
 ### Fixed
 - Connecting Spotify or Apple Music no longer waits forever when macOS doesn't answer the Automation request, which happens when its stored decision belongs to an older signature of NotchNotch or of the player, such as a patched Spotify. After 20 seconds Music says so and names the command that resets the decision. It also says to open the player when it isn't running.
 

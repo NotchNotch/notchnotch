@@ -15,6 +15,8 @@
 //   x-swift-conforms   extra Swift protocols, such as Identifiable
 //   x-swift-external   the type is written by hand in Swift (JSONValue)
 //   x-swift-list       on an enum kept as String: also emit its values as `Namespace.name`
+//   x-swift-unknown    on an enum: add this Swift case and decode any value the app
+//                      doesn't know as it, so newer senders don't break older apps
 //   x-ts-type          the TypeScript type, written out (JSONValue)
 //   x-discriminator-name  on a `oneOf` of objects: they become one type with
 //                      every field, and the field each variant fixes with `const`
@@ -191,6 +193,13 @@ export function generateSwift(schemas) {
       for (const value of node.enum) {
         const name = swiftCase(value);
         lines.push(name.replace(/`/g, "") === value ? `    case ${name}` : `    case ${name} = ${JSON.stringify(value)}`);
+      }
+      const unknown = node["x-swift-unknown"];
+      if (unknown) {
+        lines.push(`    /// A value from a newer sender that this app doesn't know.`, `    case ${unknown}`, "",
+          "    public init(from decoder: Decoder) throws {",
+          "        let value = try decoder.singleValueContainer().decode(String.self)",
+          `        self = Self(rawValue: value) ?? .${unknown}`, "    }");
       }
       lines.push("}", "");
       continue;
