@@ -52,10 +52,11 @@ final class MenuBarScanner: @unchecked Sendable {
     }
 
     /// Asks only the apps that have items where they are now; cheap, for when the notch opens.
-    func refresh() {
+    func refresh(then done: (@MainActor @Sendable () -> Void)? = nil) {
         queue.async {
             for pid in self.apps.keys { self.apps[pid] = Self.items(of: pid) }
             self.publish()
+            if let done { DispatchQueue.main.async { MainActor.assumeIsolated { done() } } }
         }
     }
 

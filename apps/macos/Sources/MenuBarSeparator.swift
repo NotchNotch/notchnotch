@@ -23,6 +23,10 @@ import NotchCore
     private var hideTask: Task<Void, Never>?
     private var reason = Reason.press
     private(set) var isShown = false
+    /// Once the hidden items are back on the menu bar and have settled: the only
+    /// time their images can be captured, as ScreenCaptureKit can't see them off the screen.
+    var onRevealed: (() -> Void)?
+    private var revealTask: Task<Void, Never>?
 
     /// `covered` is the notch's band on its screen's menu bar: the first time,
     /// the divider goes right after the last item in it, so only those hide.
@@ -91,6 +95,9 @@ import NotchCore
     /// For a press: shows the hidden items until its menu closes.
     func show() { show(.press, grace: .milliseconds(600)) }
 
+    /// Shows the hidden items for a moment, to capture their images.
+    func peek() { show(.press, grace: .milliseconds(500)) }
+
     /// Shows the hidden items and the divider for a while, to drag them across with ⌘.
     func rearrange() { show(.rearrange, grace: .seconds(6)) }
 
@@ -103,8 +110,17 @@ import NotchCore
     /// let go or, for a press or rearranging, the pointer gone from the menu bar.
     private func show(_ reason: Reason, grace: Duration) {
         self.reason = reason
+        let wasShown = isShown
         isShown = true
         update()
+        if !wasShown, divider != nil {
+            revealTask?.cancel()
+            revealTask = Task { [weak self] in
+                try? await Task.sleep(for: .milliseconds(400))
+                guard let self, !Task.isCancelled, self.isShown else { return }
+                self.onRevealed?()
+            }
+        }
         hideTask?.cancel()
         hideTask = Task { [weak self] in
             try? await Task.sleep(for: grace)
@@ -127,6 +143,7 @@ import NotchCore
     func hide() {
         hideTask?.cancel()
         hideTask = nil
+        revealTask?.cancel()
         isShown = false
         update()
     }

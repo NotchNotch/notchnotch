@@ -361,11 +361,14 @@ final class AppModel {
         didSet {
             UserDefaults.standard.set(menuBarExactIcons, forKey: "menuBarExactIcons")
             if menuBarExactIcons, !MenuBarImages.isGranted { MenuBarImages.request() }
+            if menuBarExactIcons { menuBarPeeked = false }
             updateMenuBar()
         }
     }
     private(set) var menuBarCaptureGranted = MenuBarImages.isGranted
     let menuBarImages = MenuBarImages()
+    /// The menu bar shows its hidden items for a moment at most once a launch, or once when exact icons are turned on.
+    @ObservationIgnored private var menuBarPeeked = false
     @ObservationIgnored private var menuBarScanner: MenuBarScanner?
     @ObservationIgnored private var menuBarSeparator: MenuBarSeparator?
     @ObservationIgnored private var menuBarTrustTask: Task<Void, Never>?
@@ -382,6 +385,7 @@ final class AppModel {
         menuBarTrusted = MenuBarScanner.isTrusted
         menuBarCaptureGranted = MenuBarImages.isGranted
         if !menuBarExactIcons || !menuBarCaptureGranted { menuBarImages.clear() }
+        defer { peekForMenuBarImages() }
         if menuBarEnabled, menuBarTrusted {
             if menuBarScanner == nil {
                 let scanner = MenuBarScanner { [weak self] items in
@@ -392,7 +396,9 @@ final class AppModel {
                 scanner.start()
             }
             if menuBarSeparator == nil {
-                menuBarSeparator = MenuBarSeparator { [weak self] in self?.coveredMenuBar() }
+                let separator = MenuBarSeparator { [weak self] in self?.coveredMenuBar() }
+                separator.onRevealed = { [weak self] in self?.captureRevealedMenuBarItems() }
+                menuBarSeparator = separator
             }
         } else {
             menuBarScanner?.stop()
@@ -435,7 +441,32 @@ final class AppModel {
                                           screen: screen.frame.minX...screen.frame.maxX)
         if hidden != hiddenMenuBarItems { hiddenMenuBarItems = hidden }
         if hidden.isEmpty { menuBarShowsAll = false }
-        if menuBarExactIcons { menuBarImages.capture(hidden, windows: windows) }
+        if menuBarExactIcons {
+            menuBarImages.capture(hidden, windows: windows, visible: screen.frame.minX...screen.frame.maxX)
+        }
+    }
+
+    /// While the hidden items are back on the menu bar: where they are now, and their images.
+    private func captureRevealedMenuBarItems() {
+        guard menuBarExactIcons, menuBarCaptureGranted, let screen = notchScreen?() else { return }
+        menuBarScanner?.refresh { [weak self] in
+            guard let self else { return }
+            self.menuBarImages.capture(self.menuBarItems, windows: MenuBarScanner.windows(on: screen),
+                                       visible: screen.frame.minX...screen.frame.maxX)
+        }
+    }
+
+    /// With exact icons on and hidden items without an image: shows them for a moment to capture them.
+    private func peekForMenuBarImages() {
+        guard menuBarExactIcons, menuBarCaptureGranted, menuBarScanner != nil, !menuBarPeeked else { return }
+        menuBarPeeked = true
+        Task { [weak self] in
+            // The divider is placed a moment after it's made.
+            try? await Task.sleep(for: .seconds(2))
+            guard let self, !self.hiddenMenuBarItems.isEmpty,
+                  !self.menuBarImages.hasImages(for: self.hiddenMenuBarItems) else { return }
+            self.menuBarSeparator?.peek()
+        }
     }
 
     /// The band a live activity's wings cover on the notch's menu bar: what the divider hides at first.

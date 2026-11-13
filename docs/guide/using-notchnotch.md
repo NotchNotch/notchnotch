@@ -33,7 +33,7 @@ On a Mac with a notch, menu bar icons that don't fit beside the camera disappear
 NotchNotch needs **Accessibility** for this, to find the icons and open their menus; Settings asks for it.
 
 - **Choose which icons hide:** hold **⌘** with the pointer in the menu bar. The hidden icons come back with a thin divider; drag an icon across it, left to hide it, right to keep it in the menu bar. Let go of ⌘ and they hide again. **Rearrange Menu Bar…** in Settings, and at the bottom of **+N**, shows them for a few seconds too.
-- **Show exact icons** shows each icon's own image instead of its app's icon. It needs **Screen Recording**: NotchNotch takes one picture of each hidden icon when the notch opens, never of anything else, and keeps it only in memory.
+- **Show exact icons** shows each icon's own image instead of its app's icon. It needs **Screen Recording**: NotchNotch takes one picture of each menu bar icon while it is in view (the hidden ones come back for about a second to be captured), never of anything else, and keeps it only in memory.
 
 ## Shelf
 

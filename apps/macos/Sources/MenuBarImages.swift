@@ -28,17 +28,23 @@ import os
         images = [:]
     }
 
-    /// Captures `items` from their windows, which needn't be on the screen: those pushed off the menu bar still draw.
-    func capture(_ items: [MenuBarItem], windows: [MenuBarWindow]) {
+    /// Whether every one of `items` has its image.
+    func hasImages(for items: [MenuBarItem]) -> Bool { items.allSatisfy { images[$0.id] != nil } }
+
+    /// Captures the items that are on the menu bar now and have no image yet:
+    /// ScreenCaptureKit fails for a window off the screen, so the hidden items
+    /// are captured while they're shown, for a press, ⌘ or a peek.
+    func capture(_ items: [MenuBarItem], windows: [MenuBarWindow], visible: ClosedRange<CGFloat>) {
         guard Self.isGranted else { Self.log.notice("Exact icons: no Screen Recording"); return }
         // ScreenCaptureKit can stall; a capture that never ends mustn't stop every later one.
         if task != nil, Date().timeIntervalSince(started) < 8 { return }
         task?.cancel()
-        let wanted = items.compactMap { item in MenuBarLayout.window(of: item, in: windows).map { (item.id, $0.id) } }
-        guard !wanted.isEmpty else {
-            Self.log.notice("Exact icons: no window for \(items.count) items among \(windows.count)")
-            return
+        let wanted = items.filter { images[$0.id] == nil }.compactMap { item -> (String, UInt32)? in
+            guard let window = MenuBarLayout.window(of: item, in: windows), window.onScreen,
+                  window.frame.minX >= visible.lowerBound, window.frame.maxX <= visible.upperBound else { return nil }
+            return (item.id, window.id)
         }
+        guard !wanted.isEmpty else { return }
         let scale = NSScreen.screens.first?.backingScaleFactor ?? 2
         started = Date()
         task = Task { [weak self] in

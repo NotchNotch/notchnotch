@@ -11,7 +11,7 @@ All notable changes to NotchNotch are listed here. The format follows
 ### Added
 - **Hidden menu bar icons in the notch**: on a Mac with a notch, the icons under the camera and a live activity's wings move off the menu bar and show on the left of the open notch; click one to open its menu. More than five show four and **+N**, which shows every one. Turn it on in **Settings & Extensions → Notch**; it needs Accessibility.
 - Choose which icons hide by holding **⌘** with the pointer in the menu bar and dragging them across the divider, or with **Rearrange Menu Bar…** in Settings and under **+N**. NotchNotch's divider takes no space in the menu bar.
-- **Show exact icons**: with Screen Recording, each hidden icon's own image instead of its app's icon, captured once when the notch opens.
+- **Show exact icons**: with Screen Recording, each hidden icon's own image instead of its app's icon, captured once while it's in view.
 
 ## [0.14.1] - 2026-11-13
 
