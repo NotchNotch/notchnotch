@@ -24,8 +24,8 @@ globalThis.__notchnotchConnectionDispatch = (message) => {
   else request.resolve(message.result ?? null);
 };
 
-function command(connectionID: string, operation: ConnectionCommand["operation"],
-                 fields: Pick<ConnectionCommand, "request" | "fetch" | "secret" | "url" | "message" | "sessionID" | "interactive"> = {}, timeoutMs = 35_000): Promise<JSONValue> {
+export function command(connectionID: string, operation: ConnectionCommand["operation"],
+                 fields: Pick<ConnectionCommand, "request" | "fetch" | "secret" | "url" | "message" | "sessionID" | "interactive" | "files"> = {}, timeoutMs = 35_000): Promise<JSONValue> {
   if (pending.size >= 32) return Promise.reject(new Error("Too many pending connection operations"));
   const requestID = `connection-${++serial}`;
   return new Promise((resolve, reject) => {

@@ -123,6 +123,13 @@ public struct NativeNodeView: View {
             EmptyView()
         case .value:
             NotchValue(node: node, compact: compact)
+        case .fileItem:
+            if let file = node.props.file?.file { NotchFileItem(file: file, compact: compact) }
+        case .fileGrid:
+            if let files = node.props.files?.files, !files.isEmpty {
+                NotchFileGrid(files: files, selected: node.props.selected, removable: node.props.removable ?? false,
+                              action: node.props.action, onEvent: onEvent)
+            }
         case .ring:
             NotchRing(node: node, compact: compact, cameraHeight: cameraHeight, onEvent: onEvent)
         case .artwork:
@@ -305,7 +312,21 @@ private struct NotchListItem: View {
     let cameraHeight: CGFloat
     let onEvent: (String, String?) -> Void
     @Environment(\.notchAccent) private var accent
-    private var row: some View {
+    @Environment(\.notchFiles) private var files
+    @ViewBuilder private var row: some View {
+        if let drag = node.props.drag {
+            content.onDrag {
+                files?.draggingOut()
+                if let url = URL(string: drag), ["http", "https"].contains(url.scheme?.lowercased()) {
+                    return NSItemProvider(object: url as NSURL)
+                }
+                return NSItemProvider(object: drag as NSString)
+            }
+        } else {
+            content
+        }
+    }
+    private var content: some View {
         HStack(spacing: 10) {
             if let symbol = node.props.name {
                 Image(systemName: symbol)

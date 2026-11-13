@@ -1,7 +1,7 @@
 import Reconciler from "react-reconciler";
 import { DefaultEventPriority, DiscreteEventPriority } from "react-reconciler/constants";
 import { createContext, type ReactNode } from "react";
-import type { Snapshot, Surface, UINode, UserEvent } from "@notchnotch/protocol";
+import type { DropZone, Snapshot, Surface, UINode, UserEvent } from "@notchnotch/protocol";
 
 type Props = Record<string, unknown>;
 interface Instance { id: string; type: string; props: Props; children: Instance[]; text?: string }
@@ -88,7 +88,7 @@ const reconciler = Reconciler({
 });
 
 const nodeTypes = new Set(["column", "row", "text", "symbol", "progress", "button", "textField", "artwork", "waveform", "player",
-  "spacer", "divider", "toggle", "section", "listItem", "badge", "picker", "value", "ring"]);
+  "spacer", "divider", "toggle", "section", "listItem", "badge", "picker", "value", "ring", "fileItem", "fileGrid"]);
 /** Leaf nodes whose React children are flattened into the `text` prop. */
 const textNodes = new Set(["text", "badge", "value"]);
 function plainText(node: Instance): string {
@@ -101,7 +101,7 @@ export function createRenderer(extensionID: string, send: (snapshot: Snapshot) =
   function serialize(node: Instance, registry: typeof actions): UINode {
     if (!nodeTypes.has(node.type)) throw new Error(`Unsupported component: ${node.type}`);
     const props: UINode["props"] = {};
-    for (const key of ["text", "name", "tone", "size", "value", "placeholder", "disabled", "source", "media", "detail", "unit", "spacing", "align", "options", "selection", "label"] as const) {
+    for (const key of ["text", "name", "tone", "size", "value", "placeholder", "disabled", "source", "media", "detail", "unit", "spacing", "align", "options", "selection", "label", "file", "files", "selected", "removable", "drag"] as const) {
       if (node.props[key] !== undefined) Object.assign(props, { [key]: node.props[key] });
     }
     if (textNodes.has(node.type)) props.text = plainText(node);
@@ -157,6 +157,21 @@ export function createRenderer(extensionID: string, send: (snapshot: Snapshot) =
       expanded: { id: expanded.id, type: "column", props: {}, children: expanded.children.map((child) => serialize(child, registry)) },
     };
   }
+  function dropZone(node: Instance, registry: typeof actions): DropZone {
+    const { id, title, icon, accepts, multiple, opens, onDrop } = node.props as Record<string, unknown>;
+    if (typeof id !== "string" || !id || id.length > 128 || typeof title !== "string" || !title || title.length > 64 ||
+        (icon !== undefined && (typeof icon !== "string" || icon.length > 128)) ||
+        !Array.isArray(accepts) || !accepts.length || accepts.length > 16 ||
+        accepts.some((type) => typeof type !== "string" || !type || type.length > 128) || typeof onDrop !== "function" ||
+        (opens !== undefined && (typeof opens !== "string" || !opens || opens.length > 128))) {
+      throw new Error("A DropZone needs an id, a title of up to 64 characters, 1–16 accepted types and onDrop");
+    }
+    const action = `${node.id}:drop`;
+    // The app sends the dropped items as JSON in the event's value.
+    registry.set(action, (value) => (onDrop as (items: unknown[]) => void)(JSON.parse(value ?? "[]")));
+    return { id, title, ...(icon ? { icon } : {}), accepts: accepts as string[], multiple: multiple === true,
+      ...(opens ? { opens: opens as string } : {}), action };
+  }
   const container: Container = {
     children: [],
     commit() {
@@ -168,9 +183,13 @@ export function createRenderer(extensionID: string, send: (snapshot: Snapshot) =
         const settings: UINode | undefined = panel ? {
           id: panel.id, type: "column", props: {}, children: panel.children.map((node) => serialize(node, registry)),
         } : undefined;
-        const surfaces = container.children.filter((node) => node.type !== "settings").map((node) => surface(node, registry));
+        const zones = container.children.filter((node) => node.type === "dropZone");
+        if (zones.length > 2) throw new Error("An extension may have at most two drop zones");
+        const drops = zones.map((node) => dropZone(node, registry));
+        const surfaces = container.children.filter((node) => node.type !== "settings" && node.type !== "dropZone").map((node) => surface(node, registry));
         actions = registry;
-        send({ protocolVersion: 1, type: "snapshot", extensionID, revision: ++revision, surfaces, ...(settings ? { settings } : {}) });
+        send({ protocolVersion: 1, type: "snapshot", extensionID, revision: ++revision, surfaces,
+          ...(settings ? { settings } : {}), ...(drops.length ? { drops } : {}) });
       } catch (error) { reportError(error); }
     },
   };

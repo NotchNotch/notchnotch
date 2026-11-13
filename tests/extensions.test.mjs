@@ -12,14 +12,16 @@ import { root } from "../scripts/build-extensions.mjs";
 let fixtureDirectory;
 before(async () => {
   fixtureDirectory = await mkdtemp(path.join(tmpdir(), "notchnotch-runtime-"));
-  await build({
-    absWorkingDir: root,
-    entryPoints: ["tests/fixtures/runtime.tsx"],
-    outfile: path.join(fixtureDirectory, "bundle.js"),
-    bundle: true, format: "iife", platform: "neutral", target: "es2022",
-    mainFields: ["module", "main"], conditions: ["default"], jsx: "automatic",
-    define: { "process.env.NODE_ENV": '"production"' },
-  });
+  for (const [entry, output] of [["runtime.tsx", "bundle.js"], ["drop.tsx", "drop.js"]]) {
+    await build({
+      absWorkingDir: root,
+      entryPoints: [`tests/fixtures/${entry}`],
+      outfile: path.join(fixtureDirectory, output),
+      bundle: true, format: "iife", platform: "neutral", target: "es2022",
+      mainFields: ["module", "main"], conditions: ["default"], jsx: "automatic",
+      define: { "process.env.NODE_ENV": '"production"' },
+    });
+  }
 });
 after(async () => {
   if (fixtureDirectory) await rm(fixtureDirectory, { recursive: true, force: true });
@@ -27,6 +29,10 @@ after(async () => {
 function launchFixture() {
   return launchProcess(path.join(root, ".build/debug/ExtensionRunner"),
     [path.join(fixtureDirectory, "bundle.js"), "test.runtime"]);
+}
+
+function launchDropFixture() {
+  return launchProcess(path.join(root, ".build/debug/ExtensionRunner"), [path.join(fixtureDirectory, "drop.js"), "test.drop"]);
 }
 
 function launch(name, id, storage) {
@@ -356,3 +362,22 @@ test("the runner's sandbox blocks files, network and processes once it is entere
   assert.deepEqual(await readdir(directory), ["secret.txt"]);
 });
 
+
+test("A drop zone reaches the app in the snapshot, and dropped items reach onDrop", async () => {
+  const runner = launchDropFixture();
+  try {
+    const initial = await runner.wait((message) => message.surfaces.length === 1);
+    assert.deepEqual({ ...initial.drops[0], action: undefined },
+      { id: "keep", title: "Shelf", icon: "tray", accepts: ["public.item"], multiple: true, opens: "shelf", action: undefined });
+    assert.equal(initial.surfaces.length, 1, "a drop zone isn't a surface");
+    const file = { id: "h1", name: "Invoice.pdf", type: "com.adobe.pdf", size: 220_000, kind: "file" };
+    // Text past the old 4 KiB event limit: a drop carries up to 64 KiB of it.
+    const items = [{ kind: "file", file }, { kind: "text", text: "x".repeat(20_000) }];
+    runner.send(initial.drops[0].action, JSON.stringify(items));
+    const dropped = await runner.wait((message) => message.revision > initial.revision);
+    const shown = nodes(dropped.surfaces[0].expanded);
+    assert.ok(shown.some((node) => node.props.text === "2 items"));
+    assert.ok(shown.some((node) => node.props.text === "20000 characters"));
+    assert.deepEqual(shown.find((node) => node.type === "fileItem")?.props.file, file);
+  } finally { await runner.stop(); }
+});

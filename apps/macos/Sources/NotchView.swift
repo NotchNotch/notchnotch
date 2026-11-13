@@ -151,6 +151,7 @@ struct NotchView: View {
                 }
                 ForEach(compact.leading) { node in NativeNodeView(node: node, compact: true) { _, _ in } }
                     .environment(\.notchAccent, accent(of: model.wingSurface))
+                    .environment(\.notchFiles, model.notchFiles(for: model.wingSurface?.key.extensionID))
             } else if model.presentation == .hovered || model.platform.pendingCount > 0 {
                 Image(systemName: model.wingSurface?.surface.kind == .prompt ? "bubble.left.fill" : "square.grid.2x2.fill")
                     .font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.65))
@@ -163,6 +164,7 @@ struct NotchView: View {
             if let compact = model.wingSurface?.surface.compact {
                 ForEach(compact.trailing) { node in NativeNodeView(node: node, compact: true) { _, _ in } }
                     .environment(\.notchAccent, accent(of: model.wingSurface))
+                    .environment(\.notchFiles, model.notchFiles(for: model.wingSurface?.key.extensionID))
             } else if model.presentation == .hovered || model.platform.pendingCount > 0 {
                 Image(systemName: "chevron.down")
                     .font(.system(size: 10, weight: .semibold)).foregroundStyle(.white.opacity(0.45))
@@ -289,7 +291,18 @@ struct NotchView: View {
     }
 
     @ViewBuilder private var expandedPage: some View {
-        if model.showsHome {
+        if let session = model.dropSession {
+            VStack(spacing: 0) {
+                Color.clear.frame(height: model.topHeight + 8)
+                DropView(targets: model.dropTargets, items: session.items, showsAll: session.showsAll,
+                         width: geometry.expandedBodyWidth - 2 * HomeLayout.padding,
+                         accent: { id in NotchTheme.accent(named: model.installedExtensions.first { $0.id == id }?.manifest.accent) },
+                         onDrop: { target in model.deliver(from: NSPasteboard(name: .drag), to: target) },
+                         onShowAll: { model.showAllDropTargets() })
+                    .padding(.bottom, HomeLayout.padding)
+            }
+            .frame(width: geometry.expandedBodyWidth)
+        } else if model.showsHome {
             VStack(spacing: 0) {
                 Color.clear.frame(height: model.topHeight + 8)
                 HomeView(tiles: model.platform.homeTiles, arrangement: model.homeArrangement, focus: model.homeFocus,
@@ -299,6 +312,7 @@ struct NotchView: View {
                          onEditHome: { model.onOpenHomeSettings?() },
                          onMeasure: { key, width in model.measureTile(key, width: width) },
                          preferences: model.platform.homePreferences,
+                         files: { model.notchFiles(for: $0) },
                          onEdit: { key, edit in
                              model.editHome { preferences in
                                  switch edit {
@@ -316,6 +330,7 @@ struct NotchView: View {
                 model.send(extensionID: selected.key.extensionID, action: action, value: value)
             }
             .environment(\.notchAccent, accent(of: selected))
+            .environment(\.notchFiles, model.notchFiles(for: selected.key.extensionID))
             .padding(.horizontal, 27).padding(.top, 14)
             .frame(width: geometry.expandedWidth)
         } else { standardExpandedContent }
@@ -332,6 +347,7 @@ struct NotchView: View {
                         model.send(extensionID: selected.key.extensionID, action: action, value: value)
                     }
                     .environment(\.notchAccent, accent(of: selected))
+            .environment(\.notchFiles, model.notchFiles(for: selected.key.extensionID))
                 } else {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("No activities.").font(.system(size: 17, weight: .semibold))
@@ -350,10 +366,10 @@ struct NotchView: View {
                 }
             }
             .padding(.horizontal, 28)
-            .frame(width: geometry.expandedWidth)
+            .frame(width: geometry.expandedBodyWidth)
             .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(width: geometry.expandedWidth)
+        .frame(width: geometry.expandedBodyWidth)
         .fixedSize(horizontal: false, vertical: true)
     }
 

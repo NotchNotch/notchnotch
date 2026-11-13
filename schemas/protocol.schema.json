@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "NotchNotch snapshot v1",
-  "description": "A snapshot an extension sends after each render: everything it shows in the notch and its Settings page.",
+  "description": "A snapshot an extension sends after each render: everything it shows in the notch, its drop zones and its Settings page.",
   "x-name": "Snapshot",
   "type": "object",
   "required": [
@@ -35,6 +35,14 @@
     },
     "settings": {
       "$ref": "#/$defs/settingsNode"
+    },
+    "drops": {
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/dropZone"
+      },
+      "description": "Where files, links and text dragged onto the notch can go. The app draws them during a drag from the last snapshot."
     }
   },
   "additionalProperties": false,
@@ -313,7 +321,9 @@
             "badge",
             "picker",
             "value",
-            "ring"
+            "ring",
+            "fileItem",
+            "fileGrid"
           ],
           "x-ts-name": "NodeType"
         },
@@ -438,6 +448,39 @@
               "type": "string",
               "maxLength": 256,
               "description": "What VoiceOver says for a symbol, an icon-only button, a progress bar or a field."
+            },
+            "file": {
+              "$ref": "#/$defs/fileHandle",
+              "x-swift-type": "FileReference",
+              "description": "For `fileItem`."
+            },
+            "files": {
+              "type": "array",
+              "maxItems": 256,
+              "items": {
+                "$ref": "#/$defs/fileHandle"
+              },
+              "x-swift-type": "FileList",
+              "description": "For `fileGrid`."
+            },
+            "selected": {
+              "type": "array",
+              "maxItems": 256,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "description": "For `fileGrid`: the ids of the selected files."
+            },
+            "drag": {
+              "type": "string",
+              "maxLength": 65536,
+              "description": "For `listItem`: text or a link that drags out of the row to any app."
+            },
+            "removable": {
+              "type": "boolean",
+              "description": "For `fileGrid`: each file's menu has Remove, which the extension handles."
             }
           },
           "additionalProperties": false,
@@ -605,6 +648,139 @@
         },
         "value": {
           "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "dropZone": {
+      "x-name": "DropZone",
+      "description": "A target for a drag: what happens, what it accepts, and the action that receives the dropped items.",
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "accepts",
+        "action"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "icon": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "An SF Symbol name."
+        },
+        "accepts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": "Uniform type identifiers. The zone shows when every dragged item conforms to one of them."
+        },
+        "multiple": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether it takes more than one item at a time."
+        },
+        "action": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "The event action that receives the items as a JSON array of DropItem in `value`."
+        },
+        "opens": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "An activity of this extension to open after a drop, so the person can act on what they dropped. It stays open until they close it."
+        }
+      },
+      "additionalProperties": false
+    },
+    "fileHandle": {
+      "x-name": "FileHandle",
+      "description": "A file the person dropped, as the extension sees it: never a path. The app keeps the bookmark behind `id`.",
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "type",
+        "size",
+        "kind"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "type": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Its uniform type identifier."
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "kind": {
+          "x-name": "FileKind",
+          "x-swift-unknown": "unknown",
+          "enum": [
+            "file",
+            "folder"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "x-swift-name": "DroppedFile"
+    },
+    "dropItem": {
+      "x-name": "DropItem",
+      "description": "One thing dropped on a zone: a file, a link or text.",
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "x-name": "DropItemKind",
+          "x-swift-unknown": "unknown",
+          "enum": [
+            "file",
+            "url",
+            "text"
+          ]
+        },
+        "file": {
+          "$ref": "#/$defs/fileHandle"
+        },
+        "url": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 65536
         }
       },
       "additionalProperties": false

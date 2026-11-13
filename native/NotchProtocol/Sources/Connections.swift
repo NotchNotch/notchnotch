@@ -149,6 +149,39 @@ extension SecretRequest {
     }
 }
 
+/// An action on dropped files, which the app performs for the extension.
+extension FilesRequest {
+    public static let maximumReadBytes = 147_456
+
+    /// Whether it needs the `file-read` permission: anything that reads contents or writes a new file.
+    public var readsContents: Bool { action == .read || action == .save }
+
+    public func validate() throws {
+        let ids = ids ?? []
+        guard ids.count <= 256, ids.allSatisfy({ !$0.isEmpty && $0.count <= 128 }), (app?.count ?? 0) <= 256 else {
+            throw ProtocolError.invalid("Invalid files request")
+        }
+        switch action {
+        case .save:
+            guard ids.isEmpty, let name, !name.isEmpty, name.count <= 255, !name.contains("/"), name != ".", name != "..",
+                  let data, data.count <= 196_608, Data(base64Encoded: data) != nil else {
+                throw ProtocolError.invalid("files.save needs a file name and base64 contents of up to 144 KiB")
+            }
+        case .clipboard where text != nil:
+            guard ids.isEmpty, (text?.utf8.count ?? 0) <= 65_536 else {
+                throw ProtocolError.invalid("files.clipboard copies either files or up to 64 KiB of text")
+            }
+        case .read, .thumbnail:
+            guard ids.count == 1, (limit ?? 1) <= Self.maximumReadBytes, (limit ?? 1) >= 1, (offset ?? 0) >= 0,
+                  (16...512).contains(size ?? 64) else {
+                throw ProtocolError.invalid("files.\(action.rawValue) takes one file")
+            }
+        default:
+            guard !ids.isEmpty else { throw ProtocolError.invalid("files.\(action.rawValue) needs at least one file") }
+        }
+    }
+}
+
 /// An HTTPS request to a host the manifest lists in `network`.
 extension NetworkRequest {
 
@@ -183,7 +216,7 @@ public enum NetworkHosts {
 
 extension ConnectionOperation {
     /// Operations the app answers itself, without a declared connection.
-    public var usesConnection: Bool { ![.fetch, .secretGet, .secretSet, .secretDelete, .openURL].contains(self) }
+    public var usesConnection: Bool { ![.fetch, .secretGet, .secretSet, .secretDelete, .openURL, .files].contains(self) }
 }
 
 extension ConnectionCommand {
@@ -194,6 +227,10 @@ extension ConnectionCommand {
               !requestID.isEmpty, requestID.count <= 128, !operation.usesConnection || !connectionID.isEmpty, connectionID.count <= 64,
               (sessionID?.count ?? 0) <= 128 else {
             throw ProtocolError.invalid("Invalid connection command")
+        }
+        if operation == .files {
+            guard let files else { throw ProtocolError.invalid("A files command needs a request") }
+            try files.validate()
         }
         if let message, try JSONEncoder().encode(message).count > maximumConnectionPayloadBytes {
             throw ProtocolError.invalid("Connection message exceeds 64 KiB")

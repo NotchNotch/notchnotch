@@ -91,10 +91,11 @@ public final class JavaScriptRuntime {
                 context?.objectForKeyedSubscript("__notchnotchDispatch")?.call(withArguments: [json]); return
             }
         }
-        guard json.utf8.count <= 8192, let data = json.data(using: .utf8),
+        // Values are text typed in a field, or the items dropped on a zone as JSON.
+        guard json.utf8.count <= maximumMessageBytes, let data = json.data(using: .utf8),
               let event = try? JSONDecoder().decode(UserEvent.self, from: data),
               event.protocolVersion == 1, event.type == "event", event.action.count <= 128,
-              (event.value?.count ?? 0) <= 4096 else { return }
+              (event.value?.utf8.count ?? 0) <= UserEvent.maximumValueBytes else { return }
         context?.objectForKeyedSubscript("__notchnotchDispatch")?.call(withArguments: [json])
     }
 

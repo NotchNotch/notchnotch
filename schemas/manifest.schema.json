@@ -35,20 +35,21 @@
     },
     "permissions": {
       "type": "array",
-      "maxItems": 6,
+      "maxItems": 7,
       "uniqueItems": true,
       "items": {
         "x-swift-type": "String",
         "enum": [
           "local-network",
           "process",
+          "file-read",
           "calendar",
           "now-playing",
           "battery",
           "system"
         ]
       },
-      "description": "`local-network` for loopback HTTP and WebSocket connections, `process` for native helpers, `calendar`, `now-playing`, `battery` and `system` for the app's system capabilities."
+      "description": "`local-network` for loopback HTTP and WebSocket connections, `process` for native helpers, `calendar`, `now-playing`, `battery` and `system` for the app's system capabilities, `file-read` to read and save the files dropped on the extension."
     },
     "connections": {
       "type": "object",

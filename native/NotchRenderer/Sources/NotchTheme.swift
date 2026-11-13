@@ -151,6 +151,8 @@ extension EnvironmentValues {
     @Entry public var notchAccent: NotchTheme.Accent? = nil
     /// Drawing inside a Home tile: one line per text, mid-sized artwork.
     @Entry public var notchTile = false
+    /// Opens the tile's activity: a tile's drag source takes the click, so it passes it on.
+    @Entry public var notchTileOpen: (@MainActor () -> Void)? = nil
 }
 
 extension LayoutAlignment {

@@ -29,7 +29,7 @@ extension Snapshot {
         }
         var count = 0
         var identifiers = Set<String>()
-        func visit(_ node: UINode, depth: Int, compact: Bool = false, settings: Bool = false) throws {
+        func visit(_ node: UINode, depth: Int, compact: Bool = false, settings: Bool = false, tile: Bool = false) throws {
             count += 1
             guard depth <= 16, count <= 512, !node.id.isEmpty, node.id.count <= 128,
                   identifiers.insert(node.id).inserted,
@@ -60,8 +60,35 @@ extension Snapshot {
                     throw ProtocolError.invalid("A picker selection must match one of its options")
                 }
             }
-            if [.spacer, .divider, .picker, .value].contains(node.type), !node.children.isEmpty {
-                throw ProtocolError.invalid("Spacers, dividers, pickers and values cannot have children")
+            if [.spacer, .divider, .picker, .value, .fileItem, .fileGrid].contains(node.type), !node.children.isEmpty {
+                throw ProtocolError.invalid("Spacers, dividers, pickers, values and file items cannot have children")
+            }
+            if node.type == .fileItem {
+                guard let file = node.props.file else { throw ProtocolError.invalid("A file item requires a file") }
+                try file.file.validate()
+            } else if node.props.file != nil {
+                throw ProtocolError.invalid("Only a file item shows a file")
+            }
+            if node.type == .fileGrid {
+                guard let files = node.props.files?.files, files.count <= 256, !compact || tile, !settings else {
+                    throw ProtocolError.invalid("A file grid shows up to 256 files in expanded content or a tile")
+                }
+                for file in files { try file.validate() }
+            } else if node.props.files != nil {
+                throw ProtocolError.invalid("Only a file grid shows files")
+            }
+            if let selected = node.props.selected {
+                guard node.type == .fileGrid, selected.count <= 256, selected.allSatisfy({ !$0.isEmpty && $0.count <= 128 }) else {
+                    throw ProtocolError.invalid("Only a file grid has selected files, up to 256 ids")
+                }
+            }
+            if node.props.removable != nil, node.type != .fileGrid {
+                throw ProtocolError.invalid("Only a file grid has removable files")
+            }
+            if let drag = node.props.drag {
+                guard node.type == .listItem, !settings, !drag.isEmpty, drag.count <= 65_536 else {
+                    throw ProtocolError.invalid("Only a list item in an activity drags out text, up to 64 KiB")
+                }
             }
             if let source = node.props.source, !NowPlayingState.isArtworkSource(source, imageHosts: imageHosts) {
                 throw ProtocolError.invalid("Artwork must use a host declared in the manifest's imageHosts or bounded image data")
@@ -73,7 +100,7 @@ extension Snapshot {
             if let value = node.props.value, !value.isFinite || !(0...1).contains(value) {
                 throw ProtocolError.invalid("Progress and rings must be between zero and one")
             }
-            for child in node.children { try visit(child, depth: depth + 1, compact: compact, settings: settings) }
+            for child in node.children { try visit(child, depth: depth + 1, compact: compact, settings: settings, tile: tile) }
         }
         for surface in surfaces {
             guard !surface.id.isEmpty, surface.id.count <= 128, !surface.title.isEmpty, surface.title.count <= 128,
@@ -100,11 +127,69 @@ extension Snapshot {
                     throw ProtocolError.invalid("A tile belongs to an activity and holds at most 8 items")
                 }
                 // The whole tile opens the activity, so it holds readings only, like the wings.
-                for node in tile.content { try visit(node, depth: 0, compact: true) }
+                for node in tile.content { try visit(node, depth: 0, compact: true, tile: true) }
             }
         }
         if let settings { try visit(settings, depth: 0, settings: true) }
+        if let drops {
+            guard drops.count <= 2, Set(drops.map(\.id)).count == drops.count else {
+                throw ProtocolError.invalid("An extension has at most two drop zones, with different ids")
+            }
+            for zone in drops { try zone.validate() }
+        }
     }
+}
+
+extension DropZone {
+    public func validate() throws {
+        guard !id.isEmpty, id.count <= 128, !title.isEmpty, title.count <= 64, (icon?.count ?? 0) <= 128,
+              (1...16).contains(accepts.count), accepts.allSatisfy({ !$0.isEmpty && $0.count <= 128 }),
+              !action.isEmpty, action.count <= 128, opens.map({ !$0.isEmpty && $0.count <= 128 }) ?? true else {
+            throw ProtocolError.invalid("A drop zone needs an id, a title of up to 64 characters, 1–16 types and an action")
+        }
+    }
+}
+
+/// A dropped file in a node's props, kept out of line: every node of a deep
+/// tree decodes on the stack, so its props stay as small as they were.
+public struct FileReference: Codable, Equatable, Sendable {
+    private final class Storage: Sendable {
+        let file: DroppedFile
+        init(_ file: DroppedFile) { self.file = file }
+    }
+    private let storage: Storage
+    public var file: DroppedFile { storage.file }
+    public init(_ file: DroppedFile) { storage = Storage(file) }
+    public init(from decoder: Decoder) throws { storage = Storage(try DroppedFile(from: decoder)) }
+    public func encode(to encoder: Encoder) throws { try file.encode(to: encoder) }
+    public static func == (lhs: Self, rhs: Self) -> Bool { lhs.file == rhs.file }
+}
+
+/// A file grid's files, kept out of line like `FileReference`.
+public struct FileList: Codable, Equatable, Sendable {
+    private final class Storage: Sendable {
+        let files: [DroppedFile]
+        init(_ files: [DroppedFile]) { self.files = files }
+    }
+    private let storage: Storage
+    public var files: [DroppedFile] { storage.files }
+    public init(_ files: [DroppedFile]) { storage = Storage(files) }
+    public init(from decoder: Decoder) throws { storage = Storage(try [DroppedFile](from: decoder)) }
+    public func encode(to encoder: Encoder) throws { try files.encode(to: encoder) }
+    public static func == (lhs: Self, rhs: Self) -> Bool { lhs.files == rhs.files }
+}
+
+extension DroppedFile {
+    public func validate() throws {
+        guard !id.isEmpty, id.count <= 128, name.count <= 1024, type.count <= 128, size.isFinite, size >= 0 else {
+            throw ProtocolError.invalid("Invalid file")
+        }
+    }
+}
+
+extension UserEvent {
+    /// Room for a drop's items as JSON: 64 KiB of text, or a batch of file handles.
+    public static let maximumValueBytes = 196_608
 }
 
 /// Host-to-runner liveness check. The runner answers with `RunnerPong` from
@@ -155,7 +240,7 @@ extension ExtensionManifest {
         guard id.range(of: "^[a-z][a-z0-9.-]{2,79}$", options: .regularExpression) != nil,
               !name.isEmpty, name.count <= 128, !version.isEmpty, version.count <= 64,
               apiVersion == 1, entry == "bundle.js", Set(permissions).count == permissions.count,
-              permissions.allSatisfy({ ["local-network", "process"].contains($0) || SystemCapability(rawValue: $0) != nil }),
+              permissions.allSatisfy({ ["local-network", "process", "file-read"].contains($0) || SystemCapability(rawValue: $0) != nil }),
               (icon?.count ?? 0) <= 128, (description?.count ?? 0) <= 512,
               (connections?.count ?? 0) <= 8 else {
             throw ProtocolError.invalid("Invalid API v1 extension manifest or permissions")

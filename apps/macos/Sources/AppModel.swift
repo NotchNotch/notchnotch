@@ -1,6 +1,7 @@
 import AppKit
 import ServiceManagement
 import Observation
+import UniformTypeIdentifiers
 import NotchCore
 import NotchRenderer
 import NotchProtocol
@@ -204,13 +205,14 @@ final class AppModel {
     private var restartPolicy = RestartPolicy()
     private var restartTasks: [String: Task<Void, Never>] = [:]
 
-    var isExpanded: Bool { platform.isExpanded || idlePinned || hoverExpanded }
+    var isExpanded: Bool { platform.isExpanded || idlePinned || hoverExpanded || dropSession != nil }
     var displayedSurface: HostedSurface? {
         platform.isExpanded ? platform.selected : platform.hoverSurface
     }
     /// Home shows when it was opened, or when the notch opens with nothing to resume.
     var showsHome: Bool {
-        platform.isExpanded ? platform.showsHome : isExpanded && displayedSurface == nil
+        guard dropSession == nil else { return false }
+        return platform.isExpanded ? platform.showsHome : isExpanded && displayedSurface == nil
     }
     var wingSurface: HostedSurface? {
         presentation == .hovered ? platform.hoverSurface : platform.compact
@@ -237,9 +239,100 @@ final class AppModel {
             contentHeight: contentHeight, hasActivity: platform.compact != nil || platform.pendingCount > 0,
             reservedCanvasHeight: reservedCanvasHeight, expandedHeaderHeight: 0,
             wingWidth: NotchGeometry.wingWidth(fitting: wingContentWidth, roomy: showsLiveExtras))
-        geometry.homeWidth = showsHome ? homeArrangement.width : 0
+        geometry.homeWidth = showsHome ? homeArrangement.width
+            : dropSession != nil ? HomeLayout.width(columns: HomeLayout.minimumColumns)
+            : displayedSurface.map { Self.fileGridWidth(in: $0.surface.expanded) } ?? 0
         return geometry
     }
+    /// The open notch widens for a file grid, as for Home: its columns and the content margins.
+    private static func fileGridWidth(in node: UINode) -> CGFloat {
+        if node.type == .fileGrid, let count = node.props.files?.files.count, count > 0 {
+            return FileGridLayout.width(columns: FileGridLayout.columns(for: count)) + 56
+        }
+        return node.children.map(fileGridWidth).max() ?? 0
+    }
+
+    // MARK: Drop
+
+    /// A drag that came near the notch: what's being dragged, while the Drop view shows.
+    struct DropSession: Equatable {
+        var items: [DraggedItem]
+        /// Resting on More shows every zone.
+        var showsAll = false
+    }
+    private(set) var dropSession: DropSession?
+    /// A file from the notch is being dragged out; until the mouse is up, drags aren't drops.
+    @ObservationIgnored var draggingOut = false
+    let droppedFiles = DroppedFileStore(directory: AppModel.supportDirectory.appendingPathComponent("Dropped Files"))
+    @ObservationIgnored lazy var files = FilesService(store: droppedFiles)
+    /// How an extension's tree finds its dropped files: where they are, for
+    /// dragging them out, and their thumbnails.
+    func notchFiles(for extensionID: String?) -> NotchFiles? {
+        guard let extensionID else { return nil }
+        let store = droppedFiles, files = files
+        return NotchFiles(url: { store.url($0.id, for: extensionID) },
+                          thumbnail: { file, size in await files.thumbnail(file.id, for: extensionID, size: size) },
+                          draggingOut: { [weak self] in self?.draggingOut = true },
+                          perform: { action, chosen in
+                              Task { _ = try? await files.perform(.init(action: action, ids: chosen.map(\.id)), extensionID: extensionID, permissions: []) }
+                          })
+    }
+    /// Zones that take what's being dragged.
+    var dropTargets: [DropTarget] { dropSession.map { platform.dropTargets(for: $0.items) } ?? [] }
+    func dropTargets(for items: [DraggedItem]) -> [DropTarget] { platform.dropTargets(for: items) }
+
+    /// A drag reached the notch: open it on the zones. No extension runs for this.
+    func beginDrop(_ items: [DraggedItem]) {
+        guard dropSession == nil, !items.isEmpty else { return }
+        endGreeting()
+        hoverTask?.cancel()
+        hover.reset()
+        dropSession = DropSession(items: items)
+        selectContent()
+        onLayoutChange?()
+    }
+    func showAllDropTargets() { dropSession?.showsAll = true }
+    /// The drag left or ended without a drop.
+    func endDrop() {
+        guard dropSession != nil else { return }
+        dropSession = nil
+        suppressHover = pointerInside
+        selectContent()
+        onLayoutChange?()
+    }
+
+    /// Hands what was dropped on `target` to its extension: files become
+    /// handles kept for it, links and text go as they are. It reads the drag
+    /// pasteboard, which still holds the drag while the drop is handled: item
+    /// providers give a dropped photo as image data, not as the file.
+    func deliver(from board: NSPasteboard, to target: DropTarget) {
+        endDrop()
+        let id = target.extensionID
+        var items: [DropItem] = []
+        for item in (board.pasteboardItems ?? []).prefix(256) {
+            if let string = item.string(forType: .fileURL), let url = URL(string: string), url.isFileURL {
+                do { items.append(.init(kind: .file, file: try droppedFiles.add(url.standardizedFileURL, for: id))) }
+                catch { AppDelegate.debug("couldn't keep \(url.lastPathComponent): \(error)") }
+            } else if let string = item.string(forType: .URL), let url = URL(string: string), string.utf8.count <= 8192 {
+                let title = item.string(forType: NSPasteboard.PasteboardType("public.url-name")).map { String($0.prefix(1024)) }
+                items.append(.init(kind: .url, url: url.absoluteString, title: title))
+            } else if let text = item.string(forType: .string), !text.isEmpty {
+                items.append(.init(kind: .text, text: String(text.prefix(65_536))))
+            }
+        }
+        // The whole drop must fit one event; keep the items that do.
+        let encoder = JSONEncoder()
+        while !items.isEmpty, (try? encoder.encode(items))?.count ?? .max > UserEvent.maximumValueBytes { items.removeLast() }
+        AppDelegate.debug("delivering \(items.count) items to \(id)")
+        guard !items.isEmpty, let data = try? encoder.encode(items) else { return }
+        connections[id]?.send(action: target.zone.action, value: String(decoding: data, as: UTF8.self))
+        // The person dropped something to act on it: open the zone's activity and keep it open.
+        if let opens = target.zone.opens {
+            let key = SurfaceKey(extensionID: id, surfaceID: opens)
+            if platform.surfaces.contains(where: { $0.key == key && $0.surface.kind == .activity }) { open(key) }
+        }
+    }
+
     /// Natural content widths of Home's tiles, measured by the view.
     private var tileContentWidths: [SurfaceKey: CGFloat] = [:]
     func measureTile(_ key: SurfaceKey, width: CGFloat) {
@@ -450,6 +543,7 @@ final class AppModel {
                     guard let self, self.extensionSessionIDs[manifest.id] == sessionID else { return }
                     self.appendLog(manifest.id, message, level: level)
                 }
+                connection.files = files
                 connections[manifest.id] = connection
                 reloads[manifest.id] = revision
                 try connection.start(executable: runnerURL, bundle: bundle, storage: storageURL(for: manifest.id), preferences: preferenceStore)
@@ -638,6 +732,7 @@ final class AppModel {
         SystemCapabilities.forget(extensionID: record.id)
         storeInstalls[record.id] = nil
         try? FileManager.default.removeItem(at: storageURL(for: record.id))
+        droppedFiles.removeAll(for: record.id)
         let id = record.id
         let preferences = preferenceStore
         Task.detached {

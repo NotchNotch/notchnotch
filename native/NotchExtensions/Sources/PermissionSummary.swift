@@ -53,6 +53,9 @@ public enum PermissionSummary {
             case .battery, .system: ""
             }
         }
+        if manifest.permissions.contains("file-read") {
+            result[.personalData, default: []].append("The files you drop on it: their contents, and saving results where you choose")
+        }
         result[.deviceStatus] = capabilities.filter { !$0.asksFirst }.map { capability in
             switch capability {
             case .battery: "Battery charge and whether it’s charging"

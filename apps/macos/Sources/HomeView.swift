@@ -85,6 +85,7 @@ struct HomeView: View {
     let onMeasure: (SurfaceKey, CGFloat) -> Void
     /// The user's pins and sizes, for the tiles' menus.
     let preferences: HomePreferences
+    let files: (String) -> NotchFiles?
     let onEdit: (SurfaceKey, HomeEdit) -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -118,6 +119,7 @@ struct HomeView: View {
             ForEach(Array(tiles.prefix(shown).enumerated()), id: \.element.key) { index, item in
                 let place = arrangement.placements[index]
                 HomeTile(item: item, accent: accent(item), focused: focus == index, onMeasure: { onMeasure(item.key, $0) }) { onOpen(item.key) }
+                    .environment(\.notchFiles, files(item.key.extensionID))
                     .contextMenu { TileMenu(key: item.key, preferences: preferences, onEdit: onEdit, onEditHome: onEditHome) }
                     .frame(width: cell * CGFloat(place.span) + spacing * CGFloat(place.span - 1), height: HomeLayout.tileHeight)
                     .offset(x: CGFloat(place.column) * (cell + spacing), y: CGFloat(place.row) * (HomeLayout.tileHeight + spacing))
@@ -253,6 +255,7 @@ struct HomeTile: View {
             .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .environment(\.notchAccent, accent)
             .environment(\.notchTile, item.surface.tile != nil)
+            .environment(\.notchTileOpen, { [action] in action() })
         }
         .buttonStyle(TilePressStyle())
         .background {

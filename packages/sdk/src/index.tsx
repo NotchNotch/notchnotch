@@ -1,9 +1,11 @@
 import { createElement, type ReactNode } from "react";
-import type { Alignment, MediaRequest, NowPlayingState, PickerOption, Spacing, TextSize, Tone } from "@notchnotch/protocol";
+import type { Alignment, FileHandle, MediaRequest, NowPlayingState, PickerOption, Spacing, TextSize, Tone } from "@notchnotch/protocol";
+import type { DropItem } from "./files";
 export type { Alignment, PickerOption, Spacing, TextSize, Tone } from "@notchnotch/protocol";
 export * from "./connections";
 export * from "./storage";
 export * from "./preferences";
+export * from "./files";
 
 type Children = { children?: ReactNode };
 /** Extension-owned setup UI displayed in the management window, outside the notch. */
@@ -166,12 +168,73 @@ export function Section({ title, footer, spacing, children }: Children & { title
  * accessories (children such as `Badge`, `Toggle` or an icon `Button`).
  * With `onPress` the whole row becomes one button; don't also pass interactive children.
  */
-export function ListItem({ title, subtitle, icon, tone, onPress, disabled = false, children }: Children & {
+export function ListItem({ title, subtitle, icon, tone, onPress, disabled = false, drag, children }: Children & {
   title: string; subtitle?: string; icon?: string; tone?: Tone; onPress?: () => void; disabled?: boolean;
+  /** Text or a link (up to 64 KiB) that the row drags out to any app. Needs NotchNotch 0.14. */
+  drag?: string;
 }) {
-  return createElement("listItem", { text: title, detail: subtitle, name: icon, tone, onPress, disabled }, children);
+  return createElement("listItem", { text: title, detail: subtitle, name: icon, tone, onPress, disabled, drag }, children);
 }
 
+
+/**
+ * A place in the notch to drop files, links or text while dragging them. The
+ * app shows it during a drag when it `accepts` every dragged item (uniform
+ * type identifiers; see `DropTypes`), and calls `onDrop` when the person lets
+ * go on it. Render it at the top level, beside `Activity` and `Settings`; an
+ * extension has at most two. `opens` names one of your activities to open
+ * after the drop, so the person can act on what they dropped right away; it
+ * stays open until they close it. Needs NotchNotch 0.14; older versions leave it out.
+ */
+export function DropZone({ id, title, icon, accepts, multiple = false, opens, onDrop }: {
+  id: string; title: string; icon?: string; accepts: readonly string[]; multiple?: boolean; opens?: string;
+  onDrop: (items: DropItem[]) => void;
+}) {
+  return createElement("dropZone", { id, title, icon, accepts, multiple, opens, onDrop });
+}
+
+/**
+ * A dropped file: its real thumbnail, name and size, drawn by the app. In
+ * expanded content it can be dragged back out to Finder or any app.
+ */
+export function FileItem({ file }: { file: FileHandle }) { return createElement("fileItem", { file }); }
+
+/**
+ * Many files, laid out by the app so they always fit: up to six columns and
+ * three rows, and past 18 files, stacks by kind (Photos, PDFs, …) that open in
+ * place. Up to 256 files, in expanded content or a tile. Needs NotchNotch 0.14;
+ * older versions leave it out.
+ *
+ * Files select like in Finder: a click selects one, ⌘-click adds one, ⇧-click
+ * a range, and any click on a selected file deselects it; a double-click opens. Pass `selected` and `onSelect`
+ * to act on the selection, for example in `Actions`. Dragging a selected file
+ * drags the whole selection out to Finder or any app; `onDragOut` hears which
+ * files went. Each file's menu has Quick Look, Open, Show in Finder, Share and
+ * Copy, plus Remove with `onRemove`; on a selected file they act on the selection.
+ */
+export function FileGrid({ files, selected, onSelect, onRemove, onDragOut }: {
+  files: readonly FileHandle[];
+  selected?: readonly string[];
+  onSelect?: (ids: string[]) => void;
+  onRemove?: (files: FileHandle[]) => void;
+  onDragOut?: (files: FileHandle[]) => void;
+}) {
+  const shown = files.slice(0, 256);
+  const pick = (ids: unknown) => Array.isArray(ids) ? shown.filter((file) => ids.includes(file.id)) : [];
+  const handled = onSelect || onRemove || onDragOut;
+  // The app sends one event per gesture: {"select" | "remove" | "dragOut": [ids]}.
+  const onChange = handled && ((json?: string) => {
+    const event = JSON.parse(json ?? "{}") as Record<string, unknown>;
+    if (event.select) onSelect?.(pick(event.select).map((file) => file.id));
+    if (event.remove) { const removed = pick(event.remove); if (removed.length) onRemove?.(removed); }
+    if (event.dragOut) { const dragged = pick(event.dragOut); if (dragged.length) onDragOut?.(dragged); }
+  });
+  const ids = new Set(shown.map((file) => file.id));
+  return createElement("fileGrid", {
+    files: shown, selected: onSelect ? (selected ?? []).filter((id) => ids.has(id)) : undefined,
+    removable: onRemove ? true : undefined, onChange,
+  });
+}
 
 export function Artwork({ source }: { source?: string }) { return createElement("artwork", { source }); }
 export function Waveform({ playing, source }: { playing: boolean; source?: string }) {

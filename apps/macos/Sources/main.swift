@@ -17,6 +17,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     private var eventMonitors: [Any] = []
     private var pointerTimer: Timer?
     private var pagingGesture = ActivityPagingGesture()
+    /// The drag pasteboard's change count when the mouse went down: a new count
+    /// while it's still down means something is being dragged.
+    private var dragBaseline = NSPasteboard(name: .drag).changeCount
+    private var dropEndTask: Task<Void, Never>?
     private var managementController: ManagementWindowController?
     private var welcomeController: WelcomeWindowController?
 
@@ -53,8 +57,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         }
         makeMenu()
         NotificationCenter.default.addObserver(self, selector: #selector(screenChanged), name: NSApplication.didChangeScreenParametersNotification, object: nil)
-        if let monitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] _ in
-            MainActor.assumeIsolated { self?.closeIfOutsidePanel() }
+        if let monitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] event in
+            MainActor.assumeIsolated {
+                if event.type == .leftMouseDown { self?.dragBaseline = NSPasteboard(name: .drag).changeCount }
+                self?.closeIfOutsidePanel()
+            }
         }) { eventMonitors.append(monitor) }
         if let monitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged], handler: { [weak self] _ in
             MainActor.assumeIsolated { self?.refreshPointerRouting() }
@@ -63,6 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             let handled = MainActor.assumeIsolated {
                 guard let self else { return false }
                 if event.type == .scrollWheel { return self.handlePaging(event) }
+                if event.type == .leftMouseDown { self.dragBaseline = NSPasteboard(name: .drag).changeCount }
                 if event.type == .keyDown, event.keyCode == 53, event.window === self.panel { self.model.close(); return true }
                 if event.type == .keyDown, event.window === self.panel, let key = Self.homeKey(event.keyCode) {
                     return self.model.handleHomeKey(key)
@@ -245,11 +253,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
     private func refreshPointerRouting() {
         guard let panel else { return }
+        updateDrag()
         let mouse = NSEvent.mouseLocation
         let point = CGPoint(x: mouse.x - panel.frame.minX, y: panel.frame.maxY - mouse.y)
         let inside = model.geometry.activationFrame(presentation: model.presentation).contains(point)
         // The fixed animation canvas must never intercept clicks on transparent desktop space.
-        panel.ignoresMouseEvents = !pointerIsInsideSilhouette() || model.presentation == .idle
+        let ignores = !pointerIsInsideSilhouette() || model.presentation == .idle
+        panel.ignoresMouseEvents = ignores
         if !model.isExpanded, panel.isKeyWindow { panel.resignKey() }
         model.pointerChanged(inside: inside)
         // Compact wings stay put; only morphing or open states need fast sampling.
@@ -257,8 +267,70 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         schedulePointerSampling(interval: animating || pointerIsNearNotch() ? Self.fastSampling : Self.slowSampling)
     }
 
+    /// Opens the Drop view when a drag comes within reach of the notch, and
+    /// closes it when the drag moves away or ends without a drop.
+    private func updateDrag() {
+        let board = NSPasteboard(name: .drag)
+        guard NSEvent.pressedMouseButtons & 1 != 0 else {
+            dragBaseline = board.changeCount
+            model.draggingOut = false
+            // The drop itself closes the view; this is a release anywhere else.
+            if model.dropSession != nil, dropEndTask == nil {
+                Self.debug("released; closing in 250 ms unless a zone took it")
+                dropEndTask = Task { [weak self] in
+                    try? await Task.sleep(for: .milliseconds(250))
+                    self?.model.endDrop()
+                    self?.dropEndTask = nil
+                }
+            }
+            return
+        }
+        guard board.changeCount != dragBaseline, !model.draggingOut else { return }
+        if model.dropSession == nil {
+            guard pointerIsNear(distance: 60) else { return }
+            let items = Self.draggedItems(on: board)
+            guard !items.isEmpty else { return }
+            Self.debug("drag near the notch: \(items.map(\.type.identifier)); zones \(model.dropTargets(for: items).map(\.id))")
+            model.beginDrop(items)
+            panel?.orderFrontRegardless()
+        } else if !pointerIsNear(distance: 140) {
+            Self.debug("moved away; closing")
+            model.endDrop()
+        }
+    }
+
+    /// Development builds explain the drag on stderr.
+    nonisolated static func debug(_ message: @autoclosure () -> String) {
+        guard ProcessInfo.processInfo.environment["NOTCHNOTCH_DEV"] == "1" else { return }
+        FileHandle.standardError.write(Data("[drop] \(message())\n".utf8))
+    }
+
+    /// Whether the pointer is within `distance` of the closed notch.
+    private func pointerIsNear(distance: CGFloat) -> Bool {
+        guard let panel else { return false }
+        let geometry = model.geometry
+        let width = geometry.cameraWidth + 2 * NotchGeometry.maximumWingWidth
+        let notch = CGRect(x: panel.frame.midX - width / 2, y: panel.frame.maxY - geometry.cameraHeight,
+                           width: width, height: geometry.cameraHeight)
+        return notch.insetBy(dx: -distance, dy: -distance).contains(NSEvent.mouseLocation)
+    }
+
+    /// What's on the drag pasteboard, by kind and type, without reading any file.
+    private static func draggedItems(on board: NSPasteboard) -> [DraggedItem] {
+        (board.pasteboardItems ?? []).prefix(256).compactMap { item in
+            if let string = item.string(forType: .fileURL), let url = URL(string: string), url.isFileURL {
+                let values = try? url.resourceValues(forKeys: [.contentTypeKey, .isDirectoryKey, .isPackageKey])
+                let folder = values?.isDirectory == true && values?.isPackage != true
+                return DraggedItem(kind: folder ? .folder : .file, type: values?.contentType ?? (folder ? .folder : .data))
+            }
+            if item.types.contains(.URL) { return DraggedItem(kind: .url, type: .url) }
+            if item.types.contains(.string) { return DraggedItem(kind: .text, type: .plainText) }
+            return nil
+        }
+    }
+
     private func closeIfOutsidePanel() {
-        guard !pointerIsInsideSilhouette() else { return }
+        guard !pointerIsInsideSilhouette(), model.dropSession == nil else { return }
         model.close()
     }
 

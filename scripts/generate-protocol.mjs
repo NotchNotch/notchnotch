@@ -98,6 +98,8 @@ export function collect(schemas) {
 }
 
 function swiftType(context, schema, node) {
+  // On a property that refers to a type, x-swift-type replaces it for that property only.
+  if (node["x-swift-type"]) return node["x-swift-type"];
   const resolved = context.target(schema, node);
   if (resolved["x-swift-type"]) return resolved["x-swift-type"];
   const named = context.typeOf(schema, node);

@@ -36,6 +36,8 @@ public struct PlatformState: Sendable {
     private var recentActivities: [SurfaceKey] = []
     /// The user's order, pins, hidden tiles and sizes for Home.
     public var homePreferences = HomePreferences()
+    /// Each extension's drop zones, from its last snapshot.
+    public private(set) var dropZones: [String: [DropZone]] = [:]
 
     public init() {}
 
@@ -48,7 +50,7 @@ public struct PlatformState: Sendable {
             showsHome == other.showsHome &&
             activePeek == other.activePeek && compactSelection == other.compactSelection &&
             consumedPeeks == other.consumedPeeks && recentActivities == other.recentActivities &&
-            homePreferences == other.homePreferences
+            homePreferences == other.homePreferences && dropZones == other.dropZones
     }
 
     public var presentation: NotchPresentation {
@@ -97,6 +99,16 @@ public struct PlatformState: Sendable {
             .map(\.element)
     }
 
+    /// The zones that take these items, in the user's Home order of their
+    /// extensions (then by name), each extension's zones in its own order.
+    public func dropTargets(for items: [DraggedItem]) -> [DropTarget] {
+        let order = homePreferences.order.map { $0.split(separator: "/").first.map(String.init) ?? $0 }
+        func rank(_ id: String) -> Int { order.firstIndex(of: id) ?? order.count }
+        return dropZones.keys.sorted { (rank($0), $0) < (rank($1), $1) }.flatMap { id in
+            (dropZones[id] ?? []).map { DropTarget(extensionID: id, zone: $0) }.filter { $0.accepts(items) }
+        }
+    }
+
     /// Home's tiles: pinned ones first, then live activities, then the rest,
     /// each group in the user's order. Hidden ones are left out.
     public var homeTiles: [HostedSurface] {
@@ -143,6 +155,7 @@ public struct PlatformState: Sendable {
         try snapshot.validate(expectedExtensionID: expectedExtensionID, imageHosts: imageHosts)
         guard snapshot.revision > revisions[snapshot.extensionID, default: 0] else { return }
         revisions[snapshot.extensionID] = snapshot.revision
+        dropZones[snapshot.extensionID] = snapshot.drops?.isEmpty == false ? snapshot.drops : nil
         let oldIDs = Set(surfaces.filter { $0.key.extensionID == snapshot.extensionID }.map(\.key.surfaceID))
         let previousPhases = Dictionary(uniqueKeysWithValues: surfaces.map { ($0.key, $0.surface.phase) })
         let replacements = snapshot.surfaces.map {
@@ -242,6 +255,7 @@ public struct PlatformState: Sendable {
     public mutating func removeExtension(_ id: String) {
         surfaces.removeAll { $0.key.extensionID == id }
         revisions.removeValue(forKey: id)
+        dropZones.removeValue(forKey: id)
         consumedPeeks = consumedPeeks.filter { $0.key.extensionID != id }
         recentActivities.removeAll { $0.extensionID == id }
         if activePeek?.key.extensionID == id { activePeek = nil }

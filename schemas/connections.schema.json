@@ -89,7 +89,8 @@
             "secretGet",
             "secretSet",
             "secretDelete",
-            "openURL"
+            "openURL",
+            "files"
           ]
         },
         "sessionID": {
@@ -119,6 +120,10 @@
         "interactive": {
           "type": "boolean",
           "description": "`false` fails instead of asking the user when access was not granted before."
+        },
+        "files": {
+          "$ref": "#/$defs/filesRequest",
+          "description": "For `files`; `connectionID` is empty."
         }
       },
       "additionalProperties": false
@@ -299,6 +304,91 @@
         "value": {
           "type": "string",
           "maxLength": 8192
+        }
+      },
+      "additionalProperties": false
+    },
+    "filesRequest": {
+      "x-name": "FilesRequest",
+      "description": "An action on files the extension received in a drop, done by the app.",
+      "type": "object",
+      "required": [
+        "action"
+      ],
+      "properties": {
+        "action": {
+          "x-name": "FilesAction",
+          "enum": [
+            "airDrop",
+            "open",
+            "reveal",
+            "preview",
+            "thumbnail",
+            "copy",
+            "move",
+            "release",
+            "read",
+            "save",
+            "keepCopy",
+            "share",
+            "openWith",
+            "clipboard"
+          ]
+        },
+        "ids": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "app": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "For `open`: a bundle identifier; without one, the default app."
+        },
+        "as": {
+          "x-name": "FileEncoding",
+          "enum": [
+            "text",
+            "base64"
+          ],
+          "description": "For `read`."
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 147456,
+          "description": "For `read`: at most this many bytes (144 KiB), so the answer fits one message."
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 16,
+          "maximum": 512,
+          "description": "For `thumbnail`: the edge in points."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "For `save`: the file's name."
+        },
+        "data": {
+          "type": "string",
+          "maxLength": 196608,
+          "description": "For `save`: base64 contents, up to 144 KiB."
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "For `read`: where to start, to read a large file in parts."
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 65536,
+          "description": "For `clipboard`: text to copy instead of files."
         }
       },
       "additionalProperties": false

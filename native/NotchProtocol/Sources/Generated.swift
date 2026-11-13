@@ -2,7 +2,7 @@
 // Don't edit; change the schema and run `node scripts/generate-protocol.mjs`.
 import Foundation
 
-/// A snapshot an extension sends after each render: everything it shows in the notch and its Settings page.
+/// A snapshot an extension sends after each render: everything it shows in the notch, its drop zones and its Settings page.
 public struct Snapshot: Codable, Equatable, Sendable {
     public var protocolVersion = 1
     public var type = "snapshot"
@@ -11,12 +11,15 @@ public struct Snapshot: Codable, Equatable, Sendable {
     public var revision: Int
     public var surfaces: [Surface]
     public var settings: UINode?
+    /// Where files, links and text dragged onto the notch can go. The app draws them during a drag from the last snapshot.
+    public var drops: [DropZone]?
 
-    public init(extensionID: String, revision: Int, surfaces: [Surface], settings: UINode? = nil) {
+    public init(extensionID: String, revision: Int, surfaces: [Surface], settings: UINode? = nil, drops: [DropZone]? = nil) {
         self.extensionID = extensionID
         self.revision = revision
         self.surfaces = surfaces
         self.settings = settings
+        self.drops = drops
     }
 }
 
@@ -145,6 +148,8 @@ public enum NodeKind: String, Codable, Equatable, Sendable {
     case picker
     case value
     case ring
+    case fileItem
+    case fileGrid
     /// A value from a newer sender that this app doesn't know.
     case unknown
 
@@ -177,8 +182,18 @@ public struct NodeProps: Codable, Equatable, Sendable {
     public var selection: String?
     /// What VoiceOver says for a symbol, an icon-only button, a progress bar or a field.
     public var label: String?
+    /// For `fileItem`.
+    public var file: FileReference?
+    /// For `fileGrid`.
+    public var files: FileList?
+    /// For `fileGrid`: the ids of the selected files.
+    public var selected: [String]?
+    /// For `listItem`: text or a link that drags out of the row to any app.
+    public var drag: String?
+    /// For `fileGrid`: each file's menu has Remove, which the extension handles.
+    public var removable: Bool?
 
-    public init(text: String? = nil, name: String? = nil, tone: Tone? = nil, size: TextSize? = nil, value: Double? = nil, action: String? = nil, placeholder: String? = nil, disabled: Bool? = nil, source: String? = nil, media: NowPlayingState? = nil, detail: String? = nil, unit: String? = nil, spacing: Spacing? = nil, align: LayoutAlignment? = nil, options: [PickerOption]? = nil, selection: String? = nil, label: String? = nil) {
+    public init(text: String? = nil, name: String? = nil, tone: Tone? = nil, size: TextSize? = nil, value: Double? = nil, action: String? = nil, placeholder: String? = nil, disabled: Bool? = nil, source: String? = nil, media: NowPlayingState? = nil, detail: String? = nil, unit: String? = nil, spacing: Spacing? = nil, align: LayoutAlignment? = nil, options: [PickerOption]? = nil, selection: String? = nil, label: String? = nil, file: FileReference? = nil, files: FileList? = nil, selected: [String]? = nil, drag: String? = nil, removable: Bool? = nil) {
         self.text = text
         self.name = name
         self.tone = tone
@@ -196,6 +211,11 @@ public struct NodeProps: Codable, Equatable, Sendable {
         self.options = options
         self.selection = selection
         self.label = label
+        self.file = file
+        self.files = files
+        self.selected = selected
+        self.drag = drag
+        self.removable = removable
     }
 }
 
@@ -290,6 +310,92 @@ public struct UserEvent: Codable, Equatable, Sendable {
     }
 }
 
+/// A target for a drag: what happens, what it accepts, and the action that receives the dropped items.
+public struct DropZone: Codable, Equatable, Sendable {
+    public var id: String
+    public var title: String
+    /// An SF Symbol name.
+    public var icon: String?
+    /// Uniform type identifiers. The zone shows when every dragged item conforms to one of them.
+    public var accepts: [String]
+    /// Whether it takes more than one item at a time.
+    public var multiple: Bool?
+    /// The event action that receives the items as a JSON array of DropItem in `value`.
+    public var action: String
+    /// An activity of this extension to open after a drop, so the person can act on what they dropped. It stays open until they close it.
+    public var opens: String?
+
+    public init(id: String, title: String, icon: String? = nil, accepts: [String], multiple: Bool? = false, action: String, opens: String? = nil) {
+        self.id = id
+        self.title = title
+        self.icon = icon
+        self.accepts = accepts
+        self.multiple = multiple
+        self.action = action
+        self.opens = opens
+    }
+}
+
+/// A file the person dropped, as the extension sees it: never a path. The app keeps the bookmark behind `id`.
+public struct DroppedFile: Codable, Equatable, Sendable {
+    public var id: String
+    public var name: String
+    /// Its uniform type identifier.
+    public var type: String
+    public var size: Double
+    public var kind: FileKind
+
+    public init(id: String, name: String, type: String, size: Double, kind: FileKind) {
+        self.id = id
+        self.name = name
+        self.type = type
+        self.size = size
+        self.kind = kind
+    }
+}
+
+public enum FileKind: String, Codable, Equatable, Sendable {
+    case file
+    case folder
+    /// A value from a newer sender that this app doesn't know.
+    case unknown
+
+    public init(from decoder: Decoder) throws {
+        let value = try decoder.singleValueContainer().decode(String.self)
+        self = Self(rawValue: value) ?? .unknown
+    }
+}
+
+/// One thing dropped on a zone: a file, a link or text.
+public struct DropItem: Codable, Equatable, Sendable {
+    public var kind: DropItemKind
+    public var file: DroppedFile?
+    public var url: String?
+    public var title: String?
+    public var text: String?
+
+    public init(kind: DropItemKind, file: DroppedFile? = nil, url: String? = nil, title: String? = nil, text: String? = nil) {
+        self.kind = kind
+        self.file = file
+        self.url = url
+        self.title = title
+        self.text = text
+    }
+}
+
+public enum DropItemKind: String, Codable, Equatable, Sendable {
+    case file
+    case url
+    case text
+    /// A value from a newer sender that this app doesn't know.
+    case unknown
+
+    public init(from decoder: Decoder) throws {
+        let value = try decoder.singleValueContainer().decode(String.self)
+        self = Self(rawValue: value) ?? .unknown
+    }
+}
+
 public struct ConnectionCommand: Codable, Equatable, Sendable {
     public var protocolVersion = 1
     public var type = "connectionCommand"
@@ -309,8 +415,10 @@ public struct ConnectionCommand: Codable, Equatable, Sendable {
     public var message: JSONValue?
     /// `false` fails instead of asking the user when access was not granted before.
     public var interactive: Bool?
+    /// For `files`; `connectionID` is empty.
+    public var files: FilesRequest?
 
-    public init(extensionID: String, requestID: String, connectionID: String, operation: ConnectionOperation, sessionID: String? = nil, request: ConnectionHTTPRequest? = nil, fetch: NetworkRequest? = nil, secret: SecretRequest? = nil, url: String? = nil, message: JSONValue? = nil, interactive: Bool? = nil) {
+    public init(extensionID: String, requestID: String, connectionID: String, operation: ConnectionOperation, sessionID: String? = nil, request: ConnectionHTTPRequest? = nil, fetch: NetworkRequest? = nil, secret: SecretRequest? = nil, url: String? = nil, message: JSONValue? = nil, interactive: Bool? = nil, files: FilesRequest? = nil) {
         self.extensionID = extensionID
         self.requestID = requestID
         self.connectionID = connectionID
@@ -322,9 +430,10 @@ public struct ConnectionCommand: Codable, Equatable, Sendable {
         self.url = url
         self.message = message
         self.interactive = interactive
+        self.files = files
     }
 
-    private enum CodingKeys: String, CodingKey { case protocolVersion, type, extensionID, requestID, connectionID, operation, sessionID, request, fetch, secret, url, message, interactive }
+    private enum CodingKeys: String, CodingKey { case protocolVersion, type, extensionID, requestID, connectionID, operation, sessionID, request, fetch, secret, url, message, interactive, files }
 
     public init(from decoder: any Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -341,6 +450,7 @@ public struct ConnectionCommand: Codable, Equatable, Sendable {
         url = try values.decodeIfPresent(String.self, forKey: .url)
         message = values.contains(.message) ? try values.decode(JSONValue.self, forKey: .message) : nil
         interactive = try values.decodeIfPresent(Bool.self, forKey: .interactive)
+        files = try values.decodeIfPresent(FilesRequest.self, forKey: .files)
     }
 }
 
@@ -354,6 +464,7 @@ public enum ConnectionOperation: String, Codable, Equatable, Sendable {
     case secretSet
     case secretDelete
     case openURL
+    case files
 }
 
 public struct ConnectionResponse: Codable, Equatable, Sendable {
@@ -457,6 +568,63 @@ public struct SecretRequest: Codable, Equatable, Sendable {
     }
 }
 
+/// An action on files the extension received in a drop, done by the app.
+public struct FilesRequest: Codable, Equatable, Sendable {
+    public var action: FilesAction
+    public var ids: [String]?
+    /// For `open`: a bundle identifier; without one, the default app.
+    public var app: String?
+    public var `as`: FileEncoding?
+    /// For `read`: at most this many bytes (144 KiB), so the answer fits one message.
+    public var limit: Int?
+    /// For `thumbnail`: the edge in points.
+    public var size: Int?
+    /// For `save`: the file's name.
+    public var name: String?
+    /// For `save`: base64 contents, up to 144 KiB.
+    public var data: String?
+    /// For `read`: where to start, to read a large file in parts.
+    public var offset: Int?
+    /// For `clipboard`: text to copy instead of files.
+    public var text: String?
+
+    public init(action: FilesAction, ids: [String]? = nil, app: String? = nil, `as`: FileEncoding? = nil, limit: Int? = nil, size: Int? = nil, name: String? = nil, data: String? = nil, offset: Int? = nil, text: String? = nil) {
+        self.action = action
+        self.ids = ids
+        self.app = app
+        self.`as` = `as`
+        self.limit = limit
+        self.size = size
+        self.name = name
+        self.data = data
+        self.offset = offset
+        self.text = text
+    }
+}
+
+public enum FilesAction: String, Codable, Equatable, Sendable {
+    case airDrop
+    case open
+    case reveal
+    case preview
+    case thumbnail
+    case copy
+    case move
+    case release
+    case read
+    case save
+    case keepCopy
+    case share
+    case openWith
+    case clipboard
+}
+
+/// For `read`.
+public enum FileEncoding: String, Codable, Equatable, Sendable {
+    case text
+    case base64
+}
+
 /// notchnotch.json: what an extension is, what it may reach and the settings it asks for.
 public struct ExtensionManifest: Codable, Equatable, Sendable {
     public var id: String
@@ -464,7 +632,7 @@ public struct ExtensionManifest: Codable, Equatable, Sendable {
     public var version: String
     public var apiVersion = 1
     public var entry = "bundle.js"
-    /// `local-network` for loopback HTTP and WebSocket connections, `process` for native helpers, `calendar`, `now-playing`, `battery` and `system` for the app's system capabilities.
+    /// `local-network` for loopback HTTP and WebSocket connections, `process` for native helpers, `calendar`, `now-playing`, `battery` and `system` for the app's system capabilities, `file-read` to read and save the files dropped on the extension.
     public var permissions: [String]
     /// Named local destinations: loopback HTTP or WebSocket services and native helpers.
     public var connections: [String: ConnectionDefinition]?

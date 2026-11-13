@@ -133,6 +133,7 @@ final class RunnerConnection {
     private func handleConnection(_ command: ConnectionCommand) {
         if [.secretGet, .secretSet, .secretDelete].contains(command.operation) { handleSecret(command); return }
         if command.operation == .openURL { handleOpenURL(command); return }
+        if command.operation == .files { handleFiles(command); return }
         if broker == nil {
             let icon = ExtensionIcon(manifest: manifest, directory: directory)
             broker = ConnectionBroker(manifest: manifest, directory: directory, capabilities: SystemCapabilities.session) { [manifest] request in
@@ -183,6 +184,30 @@ final class RunnerConnection {
             response = ConnectionResponse(requestID: command.requestID, error: String(error.localizedDescription.prefix(2048)))
         }
         if let data = try? JSONEncoder().encode(response) { sendConnectionMessage(String(decoding: data, as: UTF8.self)) }
+    }
+
+    /// The app's service for dropped files, set by the model.
+    var files: FilesService?
+
+    private func handleFiles(_ command: ConnectionCommand) {
+        let permissions = manifest.permissions, extensionID = manifest.id
+        // Taken now: the click that allowed it must not outlast a slow request.
+        let activated = command.files.map { !FilesService.needsActivation($0.action) } ?? false || activation.consume()
+        Task { [weak self] in
+            let response: ConnectionResponse
+            do {
+                try command.validate(expectedExtensionID: extensionID)
+                guard let request = command.files, let files = self?.files else { throw ProtocolError.invalid("Files request is missing") }
+                guard activated else {
+                    throw ProtocolError.invalid("files.\(request.action.rawValue) works only in response to a click or key press.")
+                }
+                let result = try await files.perform(request, extensionID: extensionID, permissions: permissions)
+                response = ConnectionResponse(requestID: command.requestID, result: result)
+            } catch {
+                response = ConnectionResponse(requestID: command.requestID, error: String(error.localizedDescription.prefix(2048)))
+            }
+            if let data = try? JSONEncoder().encode(response) { self?.sendConnectionMessage(String(decoding: data, as: UTF8.self)) }
+        }
     }
 
     /// Keychain calls may wait for a macOS prompt, so they run off the main thread.
