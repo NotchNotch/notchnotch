@@ -1,0 +1,33 @@
+{
+  "id": "dev.notchnotch.shelf",
+  "name": "Shelf",
+  "version": "0.14.0",
+  "apiVersion": 1,
+  "entry": "bundle.js",
+  "permissions": [],
+  "icon": "tray.full.fill",
+  "accent": "orange",
+  "description": "Drop files, links and text on the notch to keep them for a moment, then drag them out where they go.",
+  "author": "sadeqi-ah",
+  "categories": [
+    "Productivity"
+  ],
+  "license": "GPL-3.0-only",
+  "repository": "https://github.com/NotchNotch/notchnotch/tree/main/extensions/shelf",
+  "preferences": [
+    {
+      "name": "keepCopy",
+      "type": "toggle",
+      "title": "Keep a copy of dropped files",
+      "default": false,
+      "description": "The Shelf keeps its own copy, so a file stays even if the original is moved or deleted. Copies are deleted when you remove them from the Shelf."
+    },
+    {
+      "name": "removeAfterDrag",
+      "type": "toggle",
+      "title": "Remove files after dragging them out",
+      "default": false,
+      "description": "A file you drag from the Shelf to Finder or any app leaves the Shelf, so it empties as you go."
+    }
+  ]
+}
