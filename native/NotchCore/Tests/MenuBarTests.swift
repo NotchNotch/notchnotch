@@ -73,3 +73,16 @@ private let windows = [
     #expect(MenuBarImageTone.visibleBounds(rgba: rgba, width: 3, height: 2) == CGRect(x: 1, y: 1, width: 1, height: 1))
     #expect(MenuBarImageTone.visibleBounds(rgba: [UInt8](repeating: 0, count: 8), width: 2, height: 1) == nil)
 }
+
+@Test func itemsTheDividerPushedOffTheMenuBarAreHidden() {
+    // Off the left end of a 1512 pt menu bar, with no window list entry for it.
+    let pushed = item("Throne", x: -4097, width: 24)
+    #expect(MenuBarLayout.hidden([pushed], windows: [], covered: 567...944, screen: 0...1512).map(\.id) == ["Throne"])
+}
+
+@Test func anItemsWindowIsTheNarrowestAroundIt() {
+    let pushed = item("Throne", x: -4097, width: 24)
+    let own = MenuBarWindow(id: 7, frame: CGRect(x: -4104, y: 0, width: 38, height: 24), onScreen: false)
+    let divider = MenuBarWindow(id: 9, frame: CGRect(x: -4170, y: 0, width: 5016, height: 24), onScreen: false)
+    #expect(MenuBarLayout.window(of: pushed, in: [divider, own])?.id == 7)
+}

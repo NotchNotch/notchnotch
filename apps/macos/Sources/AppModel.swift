@@ -431,7 +431,8 @@ final class AppModel {
         let half = max(geometry.compactWidth, notchWidth) / 2
         let windows = MenuBarScanner.windows(on: screen)
         let hidden = MenuBarLayout.hidden(menuBarItems, windows: windows,
-                                          covered: (screen.frame.midX - half)...(screen.frame.midX + half))
+                                          covered: (screen.frame.midX - half)...(screen.frame.midX + half),
+                                          screen: screen.frame.minX...screen.frame.maxX)
         if hidden != hiddenMenuBarItems { hiddenMenuBarItems = hidden }
         if hidden.isEmpty { menuBarShowsAll = false }
         if menuBarExactIcons { menuBarImages.capture(hidden, windows: windows) }

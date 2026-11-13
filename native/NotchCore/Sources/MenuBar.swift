@@ -43,20 +43,25 @@ public enum MenuBarLayout {
     public static let headerCapacity = 5
 
     /// Hidden items, left to right. `covered` is the closed notch's band on the
-    /// menu bar (camera and wings), as x from its left to its right edge.
-    public static func hidden(_ items: [MenuBarItem], windows: [MenuBarWindow], covered: ClosedRange<CGFloat>) -> [MenuBarItem] {
+    /// menu bar (camera and wings), as x from its left to its right edge;
+    /// `screen` is the menu bar's own: NotchNotch's divider pushes items past its left end.
+    public static func hidden(_ items: [MenuBarItem], windows: [MenuBarWindow], covered: ClosedRange<CGFloat>,
+                              screen: ClosedRange<CGFloat> = -.greatestFiniteMagnitude...(.greatestFiniteMagnitude)) -> [MenuBarItem] {
         items
             .filter { $0.frame.width > 0 && $0.frame.height > 0 }
             .filter { item in
+                if item.frame.maxX <= screen.lowerBound || item.frame.minX >= screen.upperBound { return true }
                 if window(of: item, in: windows)?.onScreen == false { return true }
                 return item.frame.maxX > covered.lowerBound && item.frame.minX < covered.upperBound
             }
             .sorted { $0.frame.minX < $1.frame.minX }
     }
 
-    /// An item's window. Accessibility gives the icon, the window adds padding: match by the icon's center.
+    /// An item's window. Accessibility gives the icon, the window adds padding: match by the icon's
+    /// center, and the narrowest such window, never NotchNotch's 10 000 pt divider around it.
     public static func window(of item: MenuBarItem, in windows: [MenuBarWindow]) -> MenuBarWindow? {
-        windows.first { $0.frame.minX <= item.frame.midX && item.frame.midX <= $0.frame.maxX }
+        windows.filter { $0.frame.minX <= item.frame.midX && item.frame.midX <= $0.frame.maxX }
+            .min { $0.frame.width < $1.frame.width }
     }
 
     /// Whether a divider ending at `dividerMaxX` leaves nothing the notch

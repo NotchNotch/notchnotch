@@ -158,8 +158,10 @@ final class MenuBarScanner: @unchecked Sendable {
     /// The status item windows on `screen`'s menu bar, from the window list: fast, and no permission.
     static func windows(on screen: NSScreen) -> [MenuBarWindow] {
         guard let primary = NSScreen.screens.first else { return [] }
-        // Window list frames have their origin at the top left of the primary screen.
-        let top = CGRect(x: screen.frame.minX, y: primary.frame.maxY - screen.frame.maxY, width: screen.frame.width, height: 40)
+        // Window list frames have their origin at the top left of the primary screen. Items pushed
+        // off the left end by NotchNotch's divider count too: they're still there, and still draw.
+        let top = CGRect(x: screen.frame.minX - 20_000, y: primary.frame.maxY - screen.frame.maxY,
+                         width: screen.frame.width + 20_000, height: 40)
         let list = CGWindowListCopyWindowInfo([.optionAll], kCGNullWindowID) as? [[String: Any]] ?? []
         return list.compactMap { info in
             guard info[kCGWindowLayer as String] as? Int == Int(CGWindowLevelForKey(.statusWindow)),
