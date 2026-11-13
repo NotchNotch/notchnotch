@@ -39,9 +39,10 @@ final class ManagementWindowController: NSWindowController, NSWindowDelegate, NS
         window.delegate = self
     }
     required init?(coder: NSCoder) { return nil }
-    func reveal(extensionID: String? = nil) {
+    func reveal(extensionID: String? = nil, destination: ManagementDestination? = nil) {
         coordinator.model.reloadExtensions()
         if let extensionID { coordinator.selectExtension(extensionID) }
+        if let destination { coordinator.query = ""; coordinator.destination = destination }
         NSApp.activate(ignoringOtherApps: true)
         showWindow(nil)
         window?.makeKeyAndOrderFront(nil)

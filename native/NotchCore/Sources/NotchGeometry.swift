@@ -14,17 +14,22 @@ public struct NotchGeometry: Equatable, Sendable {
     public var expandedHeaderHeight: CGFloat?
     /// Each compact wing's width beside the camera; see `wingWidth(fitting:)`.
     public var wingWidth: CGFloat
+    /// Home's width while it shows (wider than an activity's page), else zero.
+    public var homeWidth: CGFloat = 0
 
     /// Wings hold an icon and a short reading. Both are as wide as the wider
     /// content so the notch stays centered on the camera, with room for the
     /// rounded outer corner and a gap beside the camera.
     public static let minimumWingWidth: CGFloat = 30
     public static let maximumWingWidth: CGFloat = 96
+    /// With more live activities shown beside the main one, both wings may
+    /// grow this far, so the silhouette stays symmetric around the camera.
+    public static let roomyWingWidth: CGFloat = 132
     public static let wingOuterInset: CGFloat = 10
     public static let wingInnerInset: CGFloat = 6
-    public static func wingWidth(fitting contentWidth: CGFloat) -> CGFloat {
+    public static func wingWidth(fitting contentWidth: CGFloat, roomy: Bool = false) -> CGFloat {
         let needed = ceil(max(0, contentWidth)) + wingOuterInset + wingInnerInset
-        return min(maximumWingWidth, max(minimumWingWidth, needed))
+        return min(roomy ? roomyWingWidth : maximumWingWidth, max(minimumWingWidth, needed))
     }
 
     public init(cameraWidth: CGFloat = 184, cameraHeight: CGFloat = 32, attached: Bool = true,
@@ -37,10 +42,13 @@ public struct NotchGeometry: Equatable, Sendable {
         self.hasActivity = hasActivity
         self.reservedCanvasHeight = reservedCanvasHeight
         self.expandedHeaderHeight = expandedHeaderHeight
-        self.wingWidth = min(Self.maximumWingWidth, max(Self.minimumWingWidth, wingWidth))
+        self.wingWidth = min(Self.roomyWingWidth, max(Self.minimumWingWidth, wingWidth))
     }
 
+    /// An open activity's page width.
     public var expandedWidth: CGFloat { max(384, cameraWidth + 148) }
+    /// The open notch: an activity's page, or Home when it is wider.
+    public var expandedBodyWidth: CGFloat { max(expandedWidth, homeWidth) }
     public var compactWidth: CGFloat { cameraWidth + (hasActivity ? 2 * wingWidth : 0) }
     public var hoveredWidth: CGFloat { max(cameraWidth + 72, compactWidth + 12) }
     public var hoveredHeight: CGFloat { cameraHeight + (hasActivity ? 4 : 10) }
@@ -49,7 +57,9 @@ public struct NotchGeometry: Equatable, Sendable {
     public var fittedContentHeight: CGFloat { ceil(max(0, contentHeight)) }
     public var expandedHeight: CGFloat { (expandedHeaderHeight ?? cameraHeight + 8) + fittedContentHeight + Self.expandedBottomPadding }
     public var canvasSize: CGSize {
-        .init(width: max(expandedWidth, peekWidth) + 104,
+        // Fixed for every state, so the window never resizes mid-animation.
+        let widestCompact = cameraWidth + 2 * Self.roomyWingWidth + 12
+        return .init(width: max(expandedWidth, HomeLayout.maximumWidth, peekWidth, widestCompact) + 104,
               height: ceil(max(cameraHeight + 378, expandedHeight + 28, reservedCanvasHeight)))
     }
     public func bodySize(expanded: Bool) -> CGSize {
@@ -61,9 +71,10 @@ public struct NotchGeometry: Equatable, Sendable {
         case .compact: .init(width: compactWidth, height: cameraHeight)
         case .hovered: .init(width: hoveredWidth, height: hoveredHeight)
         case .peek: .init(width: peekWidth, height: peekHeight)
-        case .expanded: .init(width: expandedWidth, height: expandedHeight)
+        case .expanded: .init(width: expandedBodyWidth, height: expandedHeight)
         }
     }
+
     public func shoulderRadius(expanded: Bool) -> CGFloat { shoulderRadius(presentation: expanded ? .expanded : .compact) }
     public func bottomRadius(expanded: Bool) -> CGFloat { bottomRadius(presentation: expanded ? .expanded : .compact) }
     public func shoulderRadius(presentation: NotchPresentation) -> CGFloat {

@@ -27,11 +27,15 @@ public struct PlatformState: Sendable {
     public private(set) var surfaces: [HostedSurface] = []
     public private(set) var selection: SurfaceKey?
     public private(set) var isExpanded = false
+    /// The expanded notch shows Home, the grid of every activity, instead of one surface.
+    public private(set) var showsHome = false
     public private(set) var activePeek: ActivePeek?
     private var compactSelection: SurfaceKey?
     private var revisions: [String: Int] = [:]
     private var consumedPeeks: [SurfaceKey: String] = [:]
     private var recentActivities: [SurfaceKey] = []
+    /// The user's order, pins, hidden tiles and sizes for Home.
+    public var homePreferences = HomePreferences()
 
     public init() {}
 
@@ -41,8 +45,10 @@ public struct PlatformState: Sendable {
     /// compares before storing so those cost no redraw.
     public func presentsSame(as other: PlatformState) -> Bool {
         surfaces == other.surfaces && selection == other.selection && isExpanded == other.isExpanded &&
+            showsHome == other.showsHome &&
             activePeek == other.activePeek && compactSelection == other.compactSelection &&
-            consumedPeeks == other.consumedPeeks && recentActivities == other.recentActivities
+            consumedPeeks == other.consumedPeeks && recentActivities == other.recentActivities &&
+            homePreferences == other.homePreferences
     }
 
     public var presentation: NotchPresentation {
@@ -57,8 +63,65 @@ public struct PlatformState: Sendable {
         let visible = surfaces.filter { $0.surface.compact != nil && $0.surface.phase != .paused }
         return peeking
             ?? visible.first { $0.key == compactSelection }
-            ?? visible.first { $0.surface.kind == .activity }
+            ?? live.first
             ?? visible.first
+    }
+
+    /// Activities that are running now (not paused) and can take the wings:
+    /// in the user's order, then the most recently started first.
+    public var live: [HostedSurface] {
+        let running = surfaces.filter { $0.surface.kind == .activity && $0.surface.compact != nil && $0.surface.phase != .paused }
+        func rank(_ item: HostedSurface) -> Int { recentActivities.firstIndex(of: item.key) ?? recentActivities.count }
+        return running.enumerated().sorted {
+            (homePreferences.rank($0.element.key), rank($0.element), $0.offset) <
+                (homePreferences.rank($1.element.key), rank($1.element), $1.offset)
+        }.map(\.element)
+    }
+
+    /// The live activities beside the one in the wings, shown as small circles.
+    public static let maximumMinimals = 3
+    public var minimals: [HostedSurface] {
+        Array(live.filter { $0.key != compact?.key }.prefix(Self.maximumMinimals))
+    }
+    /// Live activities with no room in the wings, counted in a `+N` pill.
+    public var liveOverflow: Int {
+        max(0, live.filter { $0.key != compact?.key }.count - Self.maximumMinimals)
+    }
+
+    /// Every activity Home can show, hidden ones too, in the user's order.
+    /// Prompts interrupt instead; they are never tiles.
+    public var homeActivities: [HostedSurface] {
+        surfaces.filter { $0.surface.kind == .activity && ($0.surface.compact != nil || $0.surface.tile != nil) }
+            .enumerated()
+            .sorted { (homePreferences.rank($0.element.key), $0.offset) < (homePreferences.rank($1.element.key), $1.offset) }
+            .map(\.element)
+    }
+
+    /// Home's tiles: pinned ones first, then live activities, then the rest,
+    /// each group in the user's order. Hidden ones are left out.
+    public var homeTiles: [HostedSurface] {
+        let live = live
+        func group(_ item: HostedSurface) -> Int {
+            if homePreferences.pinned.contains(item.key.id) { return 0 }
+            return live.contains { $0.key == item.key } ? 1 : 2
+        }
+        let ordered = live + homeActivities.filter { item in !live.contains { $0.key == item.key } }
+        return ordered.enumerated()
+            .filter { !homePreferences.hidden.contains($0.element.key.id) }
+            .sorted { (group($0.element), $0.offset) < (group($1.element), $1.offset) }
+            .map(\.element)
+    }
+
+    /// A tile's size: the user's choice, else what the activity asked for,
+    /// else wide while live and small otherwise.
+    public func tileSize(of item: HostedSurface) -> TileSize {
+        if let chosen = homePreferences.sizes[item.key.id], chosen != .unknown { return chosen }
+        switch item.surface.tile?.size {
+        case .small?: return .small
+        case .wide?: return .wide
+        case .unknown?: return .small
+        case nil: return live.contains { $0.key == item.key } ? .wide : .small
+        }
     }
     public var pendingCount: Int { surfaces.filter { $0.surface.kind == .prompt }.count }
 
@@ -113,15 +176,16 @@ public struct PlatformState: Sendable {
         }) {
             self.activePeek = nil
         }
-        if selected == nil { selection = compact?.key; isExpanded = false }
+        if selected == nil && !showsHome { selection = compact?.key; isExpanded = false }
         if !isExpanded, let newcomer = replacements.first(where: {
             !oldIDs.contains($0.surface.id) && $0.surface.initialView == .expanded
         }) {
             selection = newcomer.key
             isExpanded = true
+            showsHome = false
             activePeek = nil
         }
-        if selection == nil { selection = compact?.key }
+        if selection == nil && !showsHome { selection = compact?.key }
         // Consume events while a user is working in a panel; never replay them on close.
         if !isExpanded, allowPeek, let announcement = announcements.last {
             showPeek(for: announcement.key, now: now)
@@ -131,6 +195,7 @@ public struct PlatformState: Sendable {
     public mutating func showPeek(for key: SurfaceKey, now: Date = .now) {
         guard let item = surfaces.first(where: { $0.key == key }), let peek = item.surface.peek else { return }
         isExpanded = false
+        showsHome = false
         compactSelection = key
         selection = key
         consumedPeeks[key] = peek.id
@@ -148,6 +213,7 @@ public struct PlatformState: Sendable {
         guard let item = surfaces.first(where: { $0.key == key }) else { return }
         selection = key
         isExpanded = true
+        showsHome = false
         activePeek = nil
         if item.surface.compact != nil { compactSelection = key }
         if item.surface.kind == .activity, item.surface.compact != nil { remember(key) }
@@ -156,10 +222,19 @@ public struct PlatformState: Sendable {
     public mutating func toggle() {
         if isExpanded { close() }
         else if let key = hoverSurface?.key { open(key) }
+        else { openHome() }
+    }
+
+    public mutating func openHome() {
+        selection = nil
+        isExpanded = true
+        showsHome = true
+        activePeek = nil
     }
 
     public mutating func close() {
         isExpanded = false
+        showsHome = false
         activePeek = nil
         selection = compact?.key
     }
@@ -170,7 +245,7 @@ public struct PlatformState: Sendable {
         consumedPeeks = consumedPeeks.filter { $0.key.extensionID != id }
         recentActivities.removeAll { $0.extensionID == id }
         if activePeek?.key.extensionID == id { activePeek = nil }
-        if selected == nil { selection = compact?.key; isExpanded = false }
+        if selected == nil && !showsHome { selection = compact?.key; isExpanded = false }
     }
 
     private mutating func remember(_ key: SurfaceKey) {

@@ -11,7 +11,12 @@ import NotchCapabilities
 @MainActor @Observable
 final class AppModel {
     static let maximumLogEntries = 300
-    var platform = PlatformState()
+    var platform: PlatformState = {
+        var state = PlatformState()
+        if let data = UserDefaults.standard.data(forKey: "homePreferences"),
+           let saved = try? JSONDecoder().decode(HomePreferences.self, from: data) { state.homePreferences = saved }
+        return state
+    }()
     private(set) var installedExtensions: [InstalledExtension] = []
     /// Extensions that wait for required preferences, with the missing titles.
     private(set) var missingPreferences: [String: [String]] = [:]
@@ -203,6 +208,10 @@ final class AppModel {
     var displayedSurface: HostedSurface? {
         platform.isExpanded ? platform.selected : platform.hoverSurface
     }
+    /// Home shows when it was opened, or when the notch opens with nothing to resume.
+    var showsHome: Bool {
+        platform.isExpanded ? platform.showsHome : isExpanded && displayedSurface == nil
+    }
     var wingSurface: HostedSurface? {
         presentation == .hovered ? platform.hoverSurface : platform.compact
     }
@@ -214,12 +223,71 @@ final class AppModel {
         return platform.presentation
     }
     var isPeeking: Bool { presentation == .peek }
-    var geometry: NotchGeometry {
-        .init(cameraWidth: notchWidth, cameraHeight: topHeight, attached: hasNotch,
-              contentHeight: contentHeight, hasActivity: platform.compact != nil || platform.pendingCount > 0,
-              reservedCanvasHeight: reservedCanvasHeight, expandedHeaderHeight: 0,
-              wingWidth: NotchGeometry.wingWidth(fitting: wingContentWidth))
+    /// Other live activities join the wings only once the notch rests or is
+    /// hovered: an announcement has the notch to itself, and when it ends
+    /// they grow in and the wings widen.
+    var showsLiveExtras: Bool {
+        greeting == nil && !platform.minimals.isEmpty &&
+            (presentation == .compact || presentation == .hovered) &&
+            wingSurface?.key == platform.compact?.key
     }
+    var geometry: NotchGeometry {
+        var geometry = NotchGeometry(
+            cameraWidth: notchWidth, cameraHeight: topHeight, attached: hasNotch,
+            contentHeight: contentHeight, hasActivity: platform.compact != nil || platform.pendingCount > 0,
+            reservedCanvasHeight: reservedCanvasHeight, expandedHeaderHeight: 0,
+            wingWidth: NotchGeometry.wingWidth(fitting: wingContentWidth, roomy: showsLiveExtras))
+        geometry.homeWidth = showsHome ? homeArrangement.width : 0
+        return geometry
+    }
+    /// Natural content widths of Home's tiles, measured by the view.
+    private var tileContentWidths: [SurfaceKey: CGFloat] = [:]
+    func measureTile(_ key: SurfaceKey, width: CGFloat) {
+        guard abs(width - (tileContentWidths[key] ?? 0)) >= 0.5 else { return }
+        tileContentWidths[key] = width
+    }
+    /// Each Home tile's size: the extension's or the default, made wide when
+    /// its content can't fit one column at the fixed type size.
+    var homeTileSizes: [TileSize] {
+        platform.homeTiles.map { item in
+            let size = platform.tileSize(of: item)
+            guard size == .small, platform.homePreferences.sizes[item.key.id] == nil, let natural = tileContentWidths[item.key],
+                  natural > HomeLayout.cellWidth - 2 * HomeTile.inset else { return size }
+            return .wide
+        }
+    }
+    var homeArrangement: HomeArrangement { HomeLayout.arrange(homeTileSizes) }
+    /// The tile the arrow keys are on. Nil until a key is pressed, so the mouse never sees a focus ring.
+    private(set) var homeFocus: Int?
+    /// Home lists every activity as chips instead of the grid (the More tile).
+    var homeShowsAll = false
+    /// Arrow keys and Return in Home. False when Home isn't showing the grid, so the key goes on.
+    func handleHomeKey(_ key: HomeKey) -> Bool {
+        guard showsHome, !homeShowsAll else { return false }
+        let arrangement = homeArrangement
+        switch key {
+        case .move(let direction):
+            guard let next = arrangement.neighbor(of: homeFocus ?? -1, direction) else { return homeFocus != nil }
+            homeFocus = next
+        case .activate:
+            guard let focus = homeFocus, arrangement.placements.indices.contains(focus) else { return false }
+            if arrangement.hiddenCount > 0 && focus == arrangement.placements.count - 1 { homeShowsAll = true; homeFocus = nil }
+            else if platform.homeTiles.indices.contains(focus) { open(platform.homeTiles[focus].key) }
+        }
+        return true
+    }
+    var onOpenHomeSettings: (() -> Void)?
+    /// Changes the user's Home order, pins, hidden tiles or sizes, and keeps them.
+    func editHome(_ change: (inout HomePreferences) -> Void) {
+        var preferences = platform.homePreferences
+        change(&preferences)
+        guard preferences != platform.homePreferences else { return }
+        platform.homePreferences = preferences
+        if let data = try? JSONEncoder().encode(preferences) { UserDefaults.standard.set(data, forKey: "homePreferences") }
+        homeFocus = nil
+        onLayoutChange?()
+    }
+    private func resetHomeKeys() { homeFocus = nil; homeShowsAll = false }
     /// The wider compact wing's natural content width, measured by the view.
     private(set) var wingContentWidth: CGFloat = 0
     func measureWings(_ width: CGFloat) {
@@ -637,6 +705,7 @@ final class AppModel {
         idlePinned = false
         suppressHover = pointerInside
         platform.close()
+        resetHomeKeys()
         synchronizePeek()
         onLayoutChange?()
     }
@@ -649,6 +718,18 @@ final class AppModel {
         hover.reset()
         idlePinned = false
         platform.open(key)
+        resetHomeKeys()
+        selectContent()
+        synchronizePeek()
+        onLayoutChange?()
+    }
+    func openHome() {
+        hoverTask?.cancel()
+        hover.reset()
+        idlePinned = false
+        pageDirection = .previous
+        platform.openHome()
+        resetHomeKeys()
         selectContent()
         synchronizePeek()
         onLayoutChange?()
@@ -750,3 +831,6 @@ final class AppModel {
         connections[extensionID]?.send(action: action, value: value)
     }
 }
+
+/// A key Home answers.
+enum HomeKey { case move(HomeDirection), activate }

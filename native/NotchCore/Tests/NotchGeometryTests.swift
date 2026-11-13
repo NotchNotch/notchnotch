@@ -101,3 +101,20 @@ import Testing
     #expect(body.midX == geometry.canvasSize.width / 2)
     #expect(NotchGeometry(cameraWidth: 184, cameraHeight: 32, hasActivity: false, wingWidth: 80).compactWidth == 184)
 }
+
+@Test func homeWidensTheOpenNotchButNotTheCanvas() {
+    var geometry = NotchGeometry(cameraWidth: 180)
+    let canvas = geometry.canvasSize
+    geometry.homeWidth = HomeLayout.maximumWidth
+    #expect(geometry.bodySize(presentation: .expanded).width == HomeLayout.maximumWidth)
+    #expect(geometry.canvasSize == canvas)
+}
+
+@Test func wingsGrowFurtherOnlyWhenTheyHoldMoreLiveActivities() {
+    #expect(NotchGeometry.wingWidth(fitting: 200) == NotchGeometry.maximumWingWidth)
+    #expect(NotchGeometry.wingWidth(fitting: 200, roomy: true) == NotchGeometry.roomyWingWidth)
+    #expect(NotchGeometry.wingWidth(fitting: 40, roomy: true) == NotchGeometry.wingWidth(fitting: 40))
+    let roomy = NotchGeometry(cameraWidth: 180, wingWidth: NotchGeometry.roomyWingWidth)
+    #expect(roomy.compactWidth == 180 + 2 * NotchGeometry.roomyWingWidth)
+    #expect(roomy.canvasSize.width >= roomy.compactWidth)
+}

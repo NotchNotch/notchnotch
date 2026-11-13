@@ -1,4 +1,7 @@
 import SwiftUI
+import NotchCore
+import NotchProtocol
+import NotchExtensions
 import ServiceManagement
 
 struct ManagementGeneralPage: View {
@@ -83,7 +86,98 @@ struct ManagementNotchPage: View {
             } footer: {
                 Text("Keep the pointer over the notch to preview an activity. Clicking always opens it. Scroll sideways to switch between activities.")
             }
+            HomeSettingsSection(model: model)
         }.formStyle(.grouped)
+    }
+}
+
+/// Home's order, pins, sizes and hidden tiles. The tiles' right-click menu
+/// changes the same things, except bringing back a hidden one.
+private struct HomeSettingsSection: View {
+    let model: AppModel
+
+    var body: some View {
+        let activities = model.platform.homeActivities
+        let preferences = model.platform.homePreferences
+        Section {
+            if activities.isEmpty {
+                Text("Activities appear here while their extension is on.").foregroundStyle(.secondary)
+            }
+            ForEach(Array(activities.enumerated()), id: \.element.key) { index, item in
+                HomeSettingsRow(item: item, record: model.installedExtensions.first { $0.id == item.key.extensionID },
+                                preferences: preferences, edit: model.editHome)
+                    .draggable(item.key.id) { Label(item.surface.title, systemImage: "line.3.horizontal").padding(6) }
+                    .dropDestination(for: String.self) { ids, _ in
+                        guard let id = ids.first else { return false }
+                        move(id, to: index, in: activities)
+                        return true
+                    }
+                    .contextMenu {
+                        Button("Move Up") { move(item.key.id, to: index - 1, in: activities) }.disabled(index == 0)
+                        Button("Move Down") { move(item.key.id, to: index + 1, in: activities) }.disabled(index == activities.count - 1)
+                    }
+                    .accessibilityActions {
+                        if index > 0 { Button("Move Up") { move(item.key.id, to: index - 1, in: activities) } }
+                        if index < activities.count - 1 { Button("Move Down") { move(item.key.id, to: index + 1, in: activities) } }
+                    }
+            }
+        } header: {
+            Text("Home")
+        } footer: {
+            Text("Drag to change the order. The first live activity in this order takes the wings. Pinned activities come first in Home; hidden ones still show in the wings while they’re live. Right-click a tile in Home for the same choices.")
+        }
+        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: activities.map(\.key.id))
+    }
+
+    private func move(_ id: String, to index: Int, in activities: [HostedSurface]) {
+        var keys = activities.map(\.key)
+        guard let from = keys.firstIndex(where: { $0.id == id }), keys.indices.contains(index), from != index else { return }
+        keys.insert(keys.remove(at: from), at: index)
+        model.editHome { $0.reorder(keys) }
+    }
+}
+
+private struct HomeSettingsRow: View {
+    let item: HostedSurface
+    let record: InstalledExtension?
+    let preferences: HomePreferences
+    let edit: ((inout HomePreferences) -> Void) -> Void
+
+    var body: some View {
+        let key = item.key
+        let hidden = preferences.hidden.contains(key.id)
+        let pinned = preferences.pinned.contains(key.id)
+        HStack(spacing: 10) {
+            Image(systemName: "line.3.horizontal").foregroundStyle(.tertiary).accessibilityHidden(true)
+            if let record { ExtensionIdentityView(icon: record.icon, size: 20) }
+            VStack(alignment: .leading, spacing: 1) {
+                Text(item.surface.title).lineLimit(1)
+                if let name = record?.manifest.name, name != item.surface.title {
+                    Text(name).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                }
+            }
+            .opacity(hidden ? 0.5 : 1)
+            Spacer(minLength: 8)
+            Picker("Size", selection: Binding(get: { preferences.sizes[key.id] }, set: { size in edit { $0.setSize(size, key) } })) {
+                Text("Automatic").tag(TileSize?.none)
+                Text("Small").tag(TileSize?.some(.small))
+                Text("Wide").tag(TileSize?.some(.wide))
+            }
+            .labelsHidden().fixedSize().disabled(hidden)
+            Button { edit { $0.setPinned(!pinned, key) } } label: {
+                Image(systemName: pinned ? "pin.fill" : "pin").frame(width: 18)
+            }
+            .buttonStyle(.borderless).disabled(hidden)
+            .help(pinned ? "Unpin" : "Pin to the top of Home")
+            .accessibilityLabel(pinned ? "Unpin \(item.surface.title)" : "Pin \(item.surface.title)")
+            Button { edit { $0.setHidden(!hidden, key) } } label: {
+                Image(systemName: hidden ? "eye.slash" : "eye").frame(width: 20)
+            }
+            .buttonStyle(.borderless)
+            .help(hidden ? "Show in Home" : "Hide from Home")
+            .accessibilityLabel(hidden ? "Show \(item.surface.title) in Home" : "Hide \(item.surface.title) from Home")
+        }
+        .contentShape(Rectangle())
     }
 }
 

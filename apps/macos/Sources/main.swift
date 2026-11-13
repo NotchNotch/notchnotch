@@ -45,6 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             guard let self else { return }
             self.openManagement(extensionID: self.model.displayedSurface?.key.extensionID)
         }
+        model.onOpenHomeSettings = { [weak self] in self?.openManagement(destination: .notch) }
         model.onRevealActivity = { [weak self] key in
             self?.model.open(key)
             self?.panel?.makeKey()
@@ -58,12 +59,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         if let monitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged], handler: { [weak self] _ in
             MainActor.assumeIsolated { self?.refreshPointerRouting() }
         }) { eventMonitors.append(monitor) }
-        if let monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown, .mouseMoved, .leftMouseDragged, .scrollWheel], handler: { [weak self] event in
+        if let monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown, .rightMouseDown, .mouseMoved, .leftMouseDragged, .scrollWheel], handler: { [weak self] event in
             let handled = MainActor.assumeIsolated {
                 guard let self else { return false }
                 if event.type == .scrollWheel { return self.handlePaging(event) }
                 if event.type == .keyDown, event.keyCode == 53, event.window === self.panel { self.model.close(); return true }
-                if event.type == .leftMouseDown, event.window === self.panel,
+                if event.type == .keyDown, event.window === self.panel, let key = Self.homeKey(event.keyCode) {
+                    return self.model.handleHomeKey(key)
+                }
+                // A right click opens a menu; the notch must not close under it when the pointer moves onto it.
+                if [.leftMouseDown, .rightMouseDown].contains(event.type), event.window === self.panel,
                    self.model.hoverExpanded {
                     self.model.pinOpen()
                 }
@@ -134,6 +139,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             model.switchActivity(direction)
         }
         return result.handled
+    }
+
+    /// Arrows, Return and Enter, which move around Home and open a tile.
+    private static func homeKey(_ code: UInt16) -> HomeKey? {
+        switch code {
+        case 123: .move(.left)
+        case 124: .move(.right)
+        case 125: .move(.down)
+        case 126: .move(.up)
+        case 36, 76: .activate
+        default: nil
+        }
     }
 
     /// Template image of the NotchNotch logo (assets/logo.svg), 15 pt square.
@@ -247,10 +264,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
     @objc private func screenChanged() { layoutPanel() }
     @objc private func showManagement() { openManagement() }
-    private func openManagement(extensionID: String? = nil) {
+    private func openManagement(extensionID: String? = nil, destination: ManagementDestination? = nil) {
         model.close()
         if managementController == nil { managementController = ManagementWindowController(model: model, updater: updater) }
-        managementController?.reveal(extensionID: extensionID)
+        managementController?.reveal(extensionID: extensionID, destination: destination)
     }
     /// Double-clicking a `.notchext` (or dropping it on the app) opens its install review;
     /// a `notchnotch://` link from the website opens its Store page.

@@ -18,10 +18,32 @@ An activity is something ongoing: a timer, a song, a build, your next meeting.
 - `id` stays the same for the life of the activity. `title` is a short human-readable name.
 - `Activity.Compact` sits on either side of the camera. Keep it short; it is a single click target, so it can't contain buttons, fields, toggles or pickers.
 - `Activity.Expanded` opens on hover or click. It must fit without scrolling: **the notch never scrolls**.
-- `phase` is `active`, `paused` or `completed`. A paused activity stays in the activity switcher but gives up its place beside the camera.
+- `phase` is `active`, `paused` or `completed`. An active activity is **live**: it can sit beside the camera. A paused one gives up that place and waits in Home.
 - `initialView` is `compact` (the default) or `expanded`. It's a request; the app may wait while something else is open. An activity without compact content must ask for `expanded`.
 
-The notch shows one activity at a time. The others are a click away in the switcher.
+The wings show one live activity: the one opened last, else the first in the user's Home order, else the one that started most recently. Up to three more live activities join the wings as small circles at their outer edges, in your extension's color with its progress ring; more than that shows a `+N` count. They appear once an announcement has finished. Every activity is in **Home**.
+
+## Home
+
+Home is a grid of every activity, four columns wide. Live activities come first as wide tiles, then the rest. A click on a tile opens the activity; the grid button beside the gear returns to Home. Home never scrolls: it grows to three rows, then widens up to six columns.
+
+People can change Home: right-click a tile to make it small or wide, pin it to the top, or hide it, and reorder or bring back hidden activities under Settings & Extensions → Notch. A size the person chose replaces your tile's `size`. Hiding only affects Home; a live activity still shows in the wings.
+
+Without a tile of its own, an activity's tile shows its compact content and its title. Give it a better one with `Activity.Tile`:
+
+```tsx
+<Activity.Tile size="wide">
+  <Ring value={0.62}><Symbol name="timer" /></Ring>
+  <Text>18 min left</Text>
+</Activity.Tile>
+```
+
+- `size` is `small` (one column, the default) or `wide` (two). The person can change it.
+- A tile holds readings: `Value`, `Ring`, `Symbol`, `Text`, `Artwork`, `Progress`, in rows and columns. No buttons, fields, toggles or pickers: the whole tile opens the activity.
+- The app sizes the tile and uses one type size in every tile. Text is one line; a small tile whose content doesn't fit becomes wide, and what still doesn't fit ends with an ellipsis.
+- A tile with its own content doesn't get the title underneath; say what it is.
+
+Requires NotchNotch 0.13 or later. Older versions ignore `Activity.Tile`.
 
 ## Prompts
 
@@ -95,7 +117,7 @@ Requires NotchNotch 0.5 or later.
 
 ## When the notch is idle
 
-When nothing is active, hovering over the notch shows the most useful thing to resume: a pending prompt first, then the activity used most recently. An activity can offer itself as a fallback with `idlePreview`; it must have compact content. Music uses this to let people resume a paused song.
+When nothing is live, hovering over the notch shows the most useful thing to resume: a pending prompt first, then the activity used most recently. An activity can offer itself as a fallback with `idlePreview`; it must have compact content. Music uses this to let people resume a paused song. With nothing to resume, it shows Home.
 
 ## What extension code can do
 

@@ -6,6 +6,16 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- **Home**: every activity in one grid instead of pages to swipe through. Live activities come first as wide tiles, then the rest; a click opens one, and the grid button beside the gear returns to Home. Home never scrolls and never shrinks its type: it grows to three rows, then widens up to six columns, then shows a More tile. With nothing to resume, hovering over the notch shows Home. Once you click the notch, the arrow keys move between tiles and Return opens one.
+- Make Home yours: right-click a tile to make it small or wide, pin it to the top or hide it. **Settings & Extensions → Notch** lists every activity to drag into your order, which also decides which live activity takes the wings, and brings hidden ones back.
+- Extensions can give their activity a tile in Home with `Activity.Tile`, `small` or `wide`. Without one, Home builds it from the activity's compact content and title. Tiles have their own fixed type scale: a 30 pt ring and large readings, bigger than the wings and never shrunk to fit. The Focus Timer example has one.
+- Up to three more live activities join the wings as small circles, each in its extension's color with its progress, then a `+N` count; the wings widen evenly so the notch stays symmetric. They wait while an announcement shows and grow in once the notch settles. A click opens one.
+
+### Changed
+- The page dots under an open activity are gone; Home replaces them. Two-finger swipes still move between activities.
+- The collapse arrow at the top of the open notch is gone; Home and Settings sit there. Click outside, move away or press Escape to close.
+
 ## [0.12.0] - 2026-11-13
 
 ### Changed

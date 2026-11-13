@@ -76,6 +76,8 @@ struct NotchView: View {
         .animation(shellAnimation, value: model.presentation)
         .animation(reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.92), value: geometry.fittedContentHeight)
         .animation(reduceMotion ? nil : .spring(response: 0.36, dampingFraction: 0.9), value: geometry.compactWidth)
+        .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.72).delay(0.08),
+                   value: model.showsLiveExtras ? model.platform.minimals.map(\.key.id) : [])
     }
 
     private var compactBar: some View {
@@ -144,6 +146,9 @@ struct NotchView: View {
                 Image(systemName: "hand.wave.fill")
                     .font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.8))
             } else if let compact = model.wingSurface?.surface.compact {
+                if model.showsLiveExtras {
+                    ForEach(leftExtras) { liveExtra($0).padding(.trailing, 5) }
+                }
                 ForEach(compact.leading) { node in NativeNodeView(node: node, compact: true) { _, _ in } }
                     .environment(\.notchAccent, accent(of: model.wingSurface))
             } else if model.presentation == .hovered || model.platform.pendingCount > 0 {
@@ -162,10 +167,39 @@ struct NotchView: View {
                 Image(systemName: "chevron.down")
                     .font(.system(size: 10, weight: .semibold)).foregroundStyle(.white.opacity(0.45))
             }
+            if model.showsLiveExtras {
+                ForEach(rightExtras) { liveExtra($0).padding(.leading, 5) }
+                // The count always closes the right wing.
+                if model.platform.liveOverflow > 0 {
+                    OverflowPill(count: model.platform.liveOverflow).padding(.leading, 4)
+                        .transition(extraTransition)
+                        .highPriorityGesture(TapGesture().onEnded { onInteraction(); model.openHome() })
+                }
+            }
             if model.platform.pendingCount > 0, model.wingSurface?.surface.kind != .prompt {
                 pendingBadge
             }
         }
+    }
+
+    /// The first circle always sits right, after the main activity's reading
+    /// and before the `+N` count; the others go left, so no circle changes
+    /// sides as activities come and go.
+    private var rightExtras: [HostedSurface] { Array(model.platform.minimals.prefix(1)) }
+    private var leftExtras: [HostedSurface] {
+        Array(model.platform.minimals.dropFirst(rightExtras.count).reversed())
+    }
+
+    /// Another live activity in the wings, at the outer edges, so the silhouette stays symmetric and
+    /// the main activity keeps its place beside the camera. A click opens it.
+    private func liveExtra(_ item: HostedSurface) -> some View {
+        MinimalCircle(item: item, accent: accent(of: item))
+            .contentShape(Circle())
+            .transition(extraTransition)
+            .highPriorityGesture(TapGesture().onEnded { onInteraction(); model.open(item.key) })
+    }
+    private var extraTransition: AnyTransition {
+        reduceMotion ? .opacity : .scale(scale: 0.2).combined(with: .opacity)
     }
 
     /// A waiting question must be noticeable next to another activity's wings
@@ -192,7 +226,8 @@ struct NotchView: View {
                            removal: .offset(x: -distance).combined(with: .opacity))
     }
 
-    private var pagerHeight: CGFloat { model.platform.surfaces.isEmpty ? 0 : 24 }
+    /// Home replaced the page dots; two-finger swipes still move between activities.
+    private let pagerHeight: CGFloat = 0
 
     private var expandedContent: some View {
         let pageKey = model.displayedSurface?.key
@@ -220,16 +255,24 @@ struct NotchView: View {
             .frame(height: max(0, model.contentHeight - pagerHeight), alignment: .top)
             .animation(reduceMotion ? .easeOut(duration: 0.1) : .spring(response: 0.32, dampingFraction: 0.92),
                        value: pageKey)
-            activityPicker.frame(height: pagerHeight)
             Color.clear.frame(height: NotchGeometry.expandedBottomPadding)
         }
-        .frame(width: geometry.expandedWidth)
+        .frame(width: geometry.expandedBodyWidth)
         .fixedSize(horizontal: false, vertical: true)
         .overlay(alignment: .top) {
             // Shared chrome stays in the right camera wing while page content
             // transitions beneath it, including the headerless music player.
-            HStack(spacing: 0) {
+            // Content owns the top left; the app's own controls sit top right.
+            HStack(spacing: 2) {
                 Spacer()
+                if !model.showsHome {
+                    Button("Home", systemImage: "square.grid.2x2") { onInteraction(); model.openHome() }
+                        .labelStyle(.iconOnly).font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .frame(width: 24, height: 24).contentShape(Rectangle())
+                        .buttonStyle(.plain).help("Home")
+                        .transition(.opacity)
+                }
                 Button("Open Settings & Extensions", systemImage: "gearshape") { model.onOpenManagement?() }
                     .labelStyle(.iconOnly).font(.system(size: 12))
                     .foregroundStyle(.white.opacity(0.5))
@@ -241,10 +284,33 @@ struct NotchView: View {
             .frame(height: model.topHeight + 8)
         }
         .onChange(of: pageKey, initial: true) { _, _ in model.selectContent() }
+        // Clicking outside, moving away after a hover and Escape all close the panel.
+        .accessibilityAction(.escape) { model.close() }
     }
 
     @ViewBuilder private var expandedPage: some View {
-        if model.playerNode != nil, let selected = model.displayedSurface {
+        if model.showsHome {
+            VStack(spacing: 0) {
+                Color.clear.frame(height: model.topHeight + 8)
+                HomeView(tiles: model.platform.homeTiles, arrangement: model.homeArrangement, focus: model.homeFocus,
+                         showsAll: Binding(get: { model.homeShowsAll }, set: { model.homeShowsAll = $0 }), accent: accent(of:),
+                         onOpen: { key in onInteraction(); model.open(key) },
+                         onManage: { model.onOpenManagement?() },
+                         onEditHome: { model.onOpenHomeSettings?() },
+                         onMeasure: { key, width in model.measureTile(key, width: width) },
+                         preferences: model.platform.homePreferences,
+                         onEdit: { key, edit in
+                             model.editHome { preferences in
+                                 switch edit {
+                                 case .size(let size): preferences.setSize(size, key)
+                                 case .pin(let pinned): preferences.setPinned(pinned, key)
+                                 case .hide: preferences.setHidden(true, key)
+                                 }
+                             }
+                         })
+            }
+            .frame(width: geometry.expandedBodyWidth)
+        } else if model.playerNode != nil, let selected = model.displayedSurface {
             NativeNodeView(node: selected.surface.expanded, cameraHeight: model.topHeight) { action, value in
                 onInteraction()
                 model.send(extensionID: selected.key.extensionID, action: action, value: value)
@@ -321,25 +387,7 @@ struct NotchView: View {
 
     private var topControls: some View {
         HStack(spacing: 0) {
-            Menu {
-                ForEach(model.platform.surfaces) { item in
-                    Button {
-                        onInteraction()
-                        model.open(item.key)
-                    } label: {
-                        Label(item.surface.title, systemImage: item.surface.kind == .prompt ? "bubble.left" : "circle")
-                    }
-                }
-                Divider()
-                Button("Settings & Extensions…") { model.onOpenManagement?() }
-            } label: {
-                Image(systemName: "ellipsis").font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.45)).frame(width: 30, height: 24)
-                    .contentShape(Rectangle())
-            }
-            .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
-            .help("Switch activity")
-            .accessibilityLabel("Switch activity")
+            Color.clear.frame(width: 30, height: 24).accessibilityHidden(true)
 
             Spacer(minLength: model.notchWidth)
             if model.platform.pendingCount > 0 {
@@ -348,41 +396,10 @@ struct NotchView: View {
                         .foregroundStyle(.white.opacity(0.8)).frame(width: 24, height: 24)
                 }.buttonStyle(.plain).accessibilityLabel("Open pending question")
             }
-            Button { model.close() } label: {
-                Image(systemName: "chevron.up").font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.4)).frame(width: 24, height: 24)
-                    .contentShape(Rectangle())
-            }.buttonStyle(.plain).accessibilityLabel("Collapse panel")
-            Color.clear.frame(width: 24, height: 24).accessibilityHidden(true)
+            // Room for the Home and Settings buttons the panel draws over every page.
+            Color.clear.frame(width: 50, height: 24).accessibilityHidden(true)
         }
         .padding(.horizontal, 24)
-    }
-
-    @ViewBuilder private var activityPicker: some View {
-        if !model.platform.surfaces.isEmpty {
-            HStack(spacing: 0) {
-                ForEach(model.platform.surfaces) { item in
-                    let isSelected = model.displayedSurface?.key == item.key
-                    Button { onInteraction(); model.open(item.key) } label: {
-                        Capsule()
-                            .fill(.white.opacity(isSelected ? 0.9 : 0.28))
-                            .frame(width: isSelected ? 16 : 4, height: 4)
-                            .frame(width: 28, height: 24)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .help(item.surface.title)
-                    .accessibilityLabel(item.surface.title)
-                    .accessibilityAddTraits(isSelected ? .isSelected : [])
-                }
-            }
-            .environment(\.layoutDirection, .leftToRight)
-            .animation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.85),
-                       value: model.displayedSurface?.key)
-            .accessibilityElement(children: .contain)
-            .accessibilityLabel("Activities")
-            .help("Swipe left or right with two fingers to switch activities")
-        }
     }
 }
 
