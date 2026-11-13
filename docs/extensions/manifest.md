@@ -30,7 +30,7 @@
 | `version` | 1–64 characters, such as `1.0.0` |
 | `apiVersion` | `1` |
 | `entry` | `"bundle.js"` |
-| `permissions` | `[]`, or what your [connections](connections.md) need (`local-network`, `process`) and the [capabilities](capabilities.md) you use (`calendar`, `now-playing`) |
+| `permissions` | `[]`, or what your [connections](connections.md) need (`local-network`, `process`) the [capabilities](capabilities.md) you use (`calendar`, `now-playing`, `battery`, `system`), and `file-read` to [read dropped files](drops.md#reading-files) |
 
 ## Identity
 

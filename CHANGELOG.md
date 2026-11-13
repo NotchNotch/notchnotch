@@ -6,6 +6,13 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- **Drop on the notch**: drag files, folders, links or text near the notch and it opens to the places that take them. The one under the pointer grows in its extension's color and shows how many you're dragging; let go to hand them over. More than four show three and **More**, which opens the rest when you rest on it.
+- **Shelf**, which comes with NotchNotch: keep files, links and text for a moment, then send them on. It opens right after a drop. Files show with their real thumbnails, as in Finder, and select like Finder; the buttons at the bottom remove, copy, open with, preview or share the selection, or every file. Drag files back out to any app, one, a selection or all of them from Shelf's tile in Home. Past 18 files, they gather into stacks by kind. Settings to keep a copy of dropped files and to remove files once dragged out.
+- Extensions can take drops with [`DropZone`](docs/extensions/drops.md): the types it accepts, whether it takes several items, and an activity to open after the drop. Files arrive as handles, never paths, that last across restarts. The [`files` API](docs/extensions/drops.md#the-files-api) shares, opens, reveals, previews, copies, moves and keeps copies of them, and `clipboard.copy` copies text.
+- [`FileItem` and `FileGrid`](docs/extensions/components.md#files) show dropped files with their real thumbnails. `FileGrid` fits up to 18 files and stacks the rest by kind, selects like Finder, drags out and has a menu per file. `ListItem` can drag out text or a link with `drag`.
+- Permission `file-read`: with it, an extension can [read the files dropped on it](docs/extensions/drops.md#reading-files) and save results where you choose. The install review lists it.
+
 ## [0.13.0] - 2026-11-13
 
 ### Added

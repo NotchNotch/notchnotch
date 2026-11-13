@@ -45,6 +45,10 @@ Without a tile of its own, an activity's tile shows its compact content and its 
 
 Requires NotchNotch 0.13 or later. Older versions ignore `Activity.Tile`.
 
+## Drop zones
+
+A `DropZone` is a place in the notch to drop files, links or text while dragging them. It sits beside your activities; when someone lets go on it, you get what they dropped. See [Drops](drops.md).
+
 ## Prompts
 
 A prompt asks the person a question and waits for an answer.
@@ -123,7 +127,7 @@ When nothing is live, hovering over the notch shows the most useful thing to res
 
 Extensions run in JavaScriptCore, not in a browser or Node.js, in a process that macOS sandboxes: it can't read files, use the network or start programs on its own. Everything below goes through the app.
 
-- Available: React and hooks, promises, `setTimeout`, `setInterval`, `console`, [storage and secrets](storage.md), [`fetch`](network.md) to hosts you declare, [`open`](#opening-links) for links, and [connections](connections.md) to local apps and tools.
+- Available: React and hooks, promises, `setTimeout`, `setInterval`, `console`, [storage and secrets](storage.md), [`fetch`](network.md) to hosts you declare, [`open`](#opening-links) for links, [files people drop](drops.md) on you, and [connections](connections.md) to local apps and tools.
 - Not available: the DOM, CSS, the browser's global `fetch`, Node built-ins and native modules.
 
 ## Limits

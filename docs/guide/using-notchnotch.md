@@ -22,7 +22,25 @@ NotchNotch lives in the menu bar and around the camera. When nothing is going on
 - **Questions** from an extension open on their own and wait for your answer. Closing the notch doesn't answer them; a badge reminds you.
 - Press **Escape** or click elsewhere to close it.
 
-When several activities are running, the notch shows one of them. Switch to another from the menu in the top-left corner of the open notch.
+When several activities are running, the notch shows one of them and the others as small circles beside it. **Home**, the grid button at the top of the open notch, shows every activity; click one to open it.
+
+**Drag** files, links or text near the notch and it opens to the places that take them, such as Shelf. Let go on one to hand them over.
+
+## Shelf
+
+A place to keep files, links and text for a moment, then send them on. It comes with NotchNotch.
+
+1. Drag anything to the notch and let go on **Shelf**. Shelf opens with what you dropped.
+2. Click files to select them: **⌘** adds one, **⇧** adds a range, and clicking a selected file deselects it.
+3. Use the buttons at the bottom on the selection, or on every file when nothing is selected: **Remove** or **Clear**, **Copy**, **Open With**, **Quick Look** and **Share** (AirDrop, Messages, Mail and more).
+4. Drag files back out to Finder, Mail or any app. Dragging a selected file takes the whole selection; in Home, dragging Shelf's stack takes every file.
+
+Right-click a file for more. Links and text show as rows you can open, copy or drag out.
+
+Shelf remembers where each file is, even after you move or rename it. In Shelf's **Setup**:
+
+- **Keep a copy of dropped files** keeps Shelf's own copy, so a file stays even if you delete the original. Removing it from Shelf deletes the copy.
+- **Remove files after dragging them out** empties Shelf as you go.
 
 ## Music
 

@@ -53,7 +53,25 @@ Fields, toggles and pickers are controlled: keep their value in React state.
 | `Spacer` | pushes the following content to the end of a row |
 | `Divider` | a separator line |
 | `Section` | `title`, `footer`, `spacing`, children |
-| `ListItem` | `title`, `subtitle`, SF Symbol `icon`, `tone`, optional `onPress`, trailing children |
+| `ListItem` | `title`, `subtitle`, SF Symbol `icon`, `tone`, optional `onPress`, trailing children, `drag`: text or a link (up to 64 KiB) that the row drags out to any app (0.14) |
+
+## Files
+
+Show the files people [drop](drops.md) on your extension. NotchNotch draws each with its real thumbnail as Finder shows it (a photo, a PDF's first page), else its icon, so a folder is the macOS folder.
+
+| Component | Props |
+| --- | --- |
+| `FileItem` | `file`, a handle. Shows its thumbnail, name and size, and drags out to Finder or any app |
+| `FileGrid` | `files`, up to 256 handles; `selected` and `onSelect(ids)` to select; `onRemove(files)`; `onDragOut(files)` |
+
+`FileGrid` lays files out so they always fit: up to six columns and three rows, and past 18 files, stacks by kind (Folders, Images, PDFs, Documents…) that open in place. It never scrolls.
+
+- **Selecting** works when you pass `selected` and `onSelect`: a click selects one file, ⌘-click adds one, ⇧-click adds a range, and any click on a selected file deselects it. A double-click opens.
+- **Dragging** a file takes it out to Finder, Mail or any app; dragging a selected file takes the whole selection, and dragging a stack takes all of it. `onDragOut` hears which files landed somewhere.
+- **Right-click** a file for Quick Look, Open, Open With, Show in Finder, Copy and Share, plus Remove with `onRemove`. On a selected file, they act on the selection.
+- **In a tile**, the files show as one fanned stack: dragging it takes every file, and a click opens the activity.
+
+Both work in expanded content and tiles, not in the wings or settings. They need NotchNotch 0.14 or later; older versions leave them out.
 
 ## Color
 
