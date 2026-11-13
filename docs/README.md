@@ -26,6 +26,6 @@
 - [Releasing](internals/releasing.md): builds, signing and updates
 - [Store catalog](internals/store-catalog.md): the signed list of reviewed extensions
 - [Performance budget](internals/performance.md): idle limits and how to measure them
-- Decisions: [native extension platform](internals/decisions/0001-native-extension-platform.md), [system capabilities](internals/decisions/0002-system-capabilities.md), [drop](internals/decisions/0003-drop.md)
+- Decisions: [native extension platform](internals/decisions/0001-native-extension-platform.md), [system capabilities](internals/decisions/0002-system-capabilities.md), [drop](internals/decisions/0003-drop.md), [menu bar](internals/decisions/0004-menu-bar.md)
 
 Also: [Changelog](../CHANGELOG.md) · [Privacy](../PRIVACY.md) · [Security](../SECURITY.md)

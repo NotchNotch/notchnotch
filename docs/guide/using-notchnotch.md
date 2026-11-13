@@ -26,6 +26,15 @@ When several activities are running, the notch shows one of them and the others 
 
 **Drag** files, links or text near the notch and it opens to the places that take them, such as Shelf. Let go on one to hand them over.
 
+## Menu bar
+
+On a Mac with a notch, menu bar icons that don't fit beside the camera disappear, and a live activity's wings cover a few more. Turn on **Settings & Extensions… › Notch › Show hidden menu bar icons** and NotchNotch moves the icons under the notch off the menu bar and shows them on the left of the open notch. Click one to open its menu, as in the menu bar. With more than five, **+N** shows them all.
+
+NotchNotch needs **Accessibility** for this, to find the icons and open their menus; Settings asks for it.
+
+- **Choose which icons hide:** hold **⌘** with the pointer in the menu bar. The hidden icons come back with a thin divider; drag an icon across it, left to hide it, right to keep it in the menu bar. Let go of ⌘ and they hide again. **Rearrange Menu Bar…** in Settings, and at the bottom of **+N**, shows them for a few seconds too.
+- **Show exact icons** shows each icon's own image instead of its app's icon. It needs **Screen Recording**: NotchNotch takes one picture of each hidden icon when the notch opens, never of anything else, and keeps it only in memory.
+
 ## Shelf
 
 A place to keep files, links and text for a moment, then send them on. It comes with NotchNotch.
@@ -67,7 +76,7 @@ It uses the accounts already in the Calendar app. NotchNotch only reads your cal
 Open **Settings & Extensions…** from the menu bar, or press **⌘,** while NotchNotch is active.
 
 - **General:** open NotchNotch at login.
-- **Notch:** choose the display, and whether the notch opens when you hover over it.
+- **Notch:** choose the display, whether the notch opens when you hover over it, and hidden [menu bar](#menu-bar) icons.
 - **About:** version and software updates.
 
 ## Extensions
@@ -106,6 +115,8 @@ NotchNotch has no account, no analytics and no tracking. Your music, events and 
 **macOS says NotchNotch can't be opened.** Use **Open Anyway** as described in [Install](#install).
 
 **Music or Calendar stopped working after an update.** macOS may ask for access again. Reconnect from the extension's **Setup**, and check **System Settings › Privacy & Security › Automation** or **Calendars**.
+
+**Hidden menu bar icons stopped showing after an update.** macOS may need Accessibility again. Turn NotchNotch off and on in **System Settings › Privacy & Security › Accessibility**, and in **Screen & System Audio Recording** if you use exact icons.
 
 **An extension stopped.** Its page shows what went wrong. Choose **Restart** there, or **Restart extensions** in the menu bar.
 
