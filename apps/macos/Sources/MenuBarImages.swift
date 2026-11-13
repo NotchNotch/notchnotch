@@ -10,6 +10,7 @@ import os
     /// By item id; an item keeps its last image until a new one comes.
     private(set) var images: [String: NSImage] = [:]
     @ObservationIgnored private var task: Task<Void, Never>?
+    @ObservationIgnored private var started = Date.distantPast
 
     static var isGranted: Bool { CGPreflightScreenCaptureAccess() }
 
@@ -29,28 +30,46 @@ import os
 
     /// Captures `items` from their windows, which needn't be on the screen: those pushed off the menu bar still draw.
     func capture(_ items: [MenuBarItem], windows: [MenuBarWindow]) {
-        guard task == nil, Self.isGranted else { return }
+        guard Self.isGranted else { Self.log.notice("Exact icons: no Screen Recording"); return }
+        // ScreenCaptureKit can stall; a capture that never ends mustn't stop every later one.
+        if task != nil, Date().timeIntervalSince(started) < 8 { return }
+        task?.cancel()
         let wanted = items.compactMap { item in MenuBarLayout.window(of: item, in: windows).map { (item.id, $0.id) } }
-        guard !wanted.isEmpty else { return }
+        guard !wanted.isEmpty else {
+            Self.log.notice("Exact icons: no window for \(items.count) items among \(windows.count)")
+            return
+        }
         let scale = NSScreen.screens.first?.backingScaleFactor ?? 2
+        started = Date()
         task = Task { [weak self] in
-            defer { self?.task = nil }
+            defer { if !Task.isCancelled { self?.task = nil } }
             let content: SCShareableContent
             do { content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false) }
-            catch { Self.log.error("Can't list windows: \(error.localizedDescription, privacy: .public)"); return }
+            catch { Self.log.error("Exact icons: can't list windows: \(error.localizedDescription, privacy: .public)"); return }
+            var done = 0
             for (id, number) in wanted {
                 guard !Task.isCancelled else { return }
-                guard let window = content.windows.first(where: { $0.windowID == number }) else { Self.log.debug("No window \(number) for \(id, privacy: .public)"); continue }
+                guard let window = content.windows.first(where: { $0.windowID == number }) else {
+                    Self.log.notice("Exact icons: window \(number) not shareable for \(id, privacy: .public)"); continue
+                }
                 let configuration = SCStreamConfiguration()
                 configuration.width = Int(window.frame.width * scale)
                 configuration.height = Int(window.frame.height * scale)
                 configuration.showsCursor = false
-                guard let captured = try? await SCScreenshotManager.captureImage(
-                    contentFilter: SCContentFilter(desktopIndependentWindow: window), configuration: configuration),
-                    let image = Self.icon(from: captured, scale: scale) else { Self.log.debug("Nothing captured for \(id, privacy: .public)"); continue }
-                Self.log.debug("Captured \(id, privacy: .public): \(Int(image.size.width))×\(Int(image.size.height)), template \(image.isTemplate)")
+                let captured: CGImage
+                do {
+                    captured = try await SCScreenshotManager.captureImage(
+                        contentFilter: SCContentFilter(desktopIndependentWindow: window), configuration: configuration)
+                } catch {
+                    Self.log.notice("Exact icons: \(id, privacy: .public) failed: \(error.localizedDescription, privacy: .public)"); continue
+                }
+                guard let image = Self.icon(from: captured, scale: scale) else {
+                    Self.log.notice("Exact icons: \(id, privacy: .public) came back empty, at \(Int(window.frame.minX))"); continue
+                }
                 self?.images[id] = image
+                done += 1
             }
+            Self.log.notice("Exact icons: \(done) of \(wanted.count) captured")
         }
     }
 
