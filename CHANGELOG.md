@@ -6,6 +6,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-13
+
 ### Added
 - **Hidden menu bar icons in the notch**: on a Mac with a notch, the icons under the camera and a live activity's wings move off the menu bar and show on the left of the open notch; click one to open its menu. More than five show four and **+N**, which shows every one. Turn it on in **Settings & Extensions → Notch**; it needs Accessibility.
 - Choose which icons hide by holding **⌘** with the pointer in the menu bar and dragging them across the divider, or with **Rearrange Menu Bar…** in Settings and under **+N**. NotchNotch's divider takes no space in the menu bar.
@@ -220,7 +222,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/NotchNotch/notchnotch/compare/v0.14.1...HEAD
+[Unreleased]: https://github.com/NotchNotch/notchnotch/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/NotchNotch/notchnotch/compare/v0.14.1...v0.15.0
 [0.14.1]: https://github.com/NotchNotch/notchnotch/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/NotchNotch/notchnotch/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/NotchNotch/notchnotch/compare/v0.12.0...v0.13.0
