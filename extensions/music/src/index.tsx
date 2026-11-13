@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Activity, Artwork, Button, capability, JSONRPCClient, MusicPlayer,
+  Activity, Artwork, Button, capability, Column, JSONRPCClient, MusicPlayer,
   Row, Settings, Symbol, Text, Waveform,
 } from "@notchnotch/sdk";
 import type { JSONValue, MediaRequest, NowPlayingState } from "@notchnotch/protocol";
@@ -117,6 +117,13 @@ function Music() {
       phase={state.isPlaying ? "active" : "paused"}>
       <Activity.Compact leading={<Artwork source={state.artwork} />}
         trailing={state.isPlaying ? <Waveform playing source={state.artwork} /> : <Symbol name="pause.fill" tone="secondary" />} />
+      <Activity.Tile size="wide">
+        <Artwork source={state.artwork} />
+        <Column spacing="tight">
+          <Text>{state.title.slice(0, 256)}</Text>
+          <Text tone="secondary" size="caption">{(state.artist || state.playerName || state.player).slice(0, 256)}</Text>
+        </Column>
+      </Activity.Tile>
       <Activity.Peek id={state.eventID}
         text={(state.artist ? `${state.artist} • ${state.title}` : state.title).slice(0, 256)} />
       <Activity.Expanded>

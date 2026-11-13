@@ -64,7 +64,17 @@ public enum NotchTheme {
     public static let valueChange = Animation.snappy(duration: 0.35)
 
     // MARK: Typography
-    public static func font(_ size: TextSize?, compact: Bool = false) -> Font {
+    public static func font(_ size: TextSize?, compact: Bool = false, tile: Bool = false) -> Font {
+        // Home tiles: one fixed scale between the wings and the open notch,
+        // so a tile reads at a glance and never shrinks to fit.
+        if tile {
+            switch size {
+            case .caption: return .system(size: 11, weight: .semibold)
+            case .body, nil: return .system(size: 13, weight: .regular)
+            case .headline: return .system(size: 14, weight: .semibold)
+            case .title, .timer: return .system(size: 22, weight: .semibold, design: .rounded)
+            }
+        }
         // Wing readings: rounded like the system's own live activities, and
         // sized to sit centered in the 32 pt bar beside the camera.
         if compact {
@@ -79,7 +89,8 @@ public enum NotchTheme {
         }
     }
     /// A Value's unit: about half its number, so the reading leads.
-    public static func unitFont(_ size: TextSize?, compact: Bool = false) -> Font {
+    public static func unitFont(_ size: TextSize?, compact: Bool = false, tile: Bool = false) -> Font {
+        if tile { return .system(size: 11, weight: .semibold) }
         if compact { return .system(size: 10, weight: .semibold) }
         switch size {
         case .timer: return .system(size: 15, weight: .semibold)
@@ -88,7 +99,8 @@ public enum NotchTheme {
         }
     }
     /// A Ring's diameter along the text scale; compact wings hold a small one.
-    public static func ringDiameter(_ size: TextSize?, compact: Bool = false) -> CGFloat {
+    public static func ringDiameter(_ size: TextSize?, compact: Bool = false, tile: Bool = false) -> CGFloat {
+        if tile { return 30 }
         if compact { return 13 }
         switch size {
         case .caption: return 16
@@ -98,15 +110,17 @@ public enum NotchTheme {
         case .timer: return 64
         }
     }
-    public static func tracking(_ size: TextSize?, compact: Bool = false) -> CGFloat {
-        switch size {
+    public static func tracking(_ size: TextSize?, compact: Bool = false, tile: Bool = false) -> CGFloat {
+        if tile { return size == .title || size == .timer ? -0.3 : 0 }
+        return switch size {
         case .caption: compact ? 0 : 0.4
         case .timer: -0.8
         case .title: -0.2
         default: 0
         }
     }
-    public static func symbolSize(_ size: TextSize?, compact: Bool = false) -> CGFloat {
+    public static func symbolSize(_ size: TextSize?, compact: Bool = false, tile: Bool = false) -> CGFloat {
+        if tile { return 14 }
         if compact { return 13 }
         switch size {
         case .caption: return 11
@@ -135,6 +149,8 @@ public enum NotchTheme {
 extension EnvironmentValues {
     /// The shown extension's accent shade, set by the host from its manifest.
     @Entry public var notchAccent: NotchTheme.Accent? = nil
+    /// Drawing inside a Home tile: one line per text, mid-sized artwork.
+    @Entry public var notchTile = false
 }
 
 extension LayoutAlignment {

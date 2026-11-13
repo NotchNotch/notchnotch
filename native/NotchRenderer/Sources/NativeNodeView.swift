@@ -15,6 +15,7 @@ public struct NativeNodeView: View {
     /// Read so the tree redraws when Increase Contrast changes; the inks follow it.
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.notchAccent) private var accent
+    @Environment(\.notchTile) private var tile
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public var body: some View {
@@ -40,25 +41,25 @@ public struct NativeNodeView: View {
         case .column:
             let align = node.props.align ?? .start
             VStack(alignment: align.horizontal, spacing: NotchTheme.spacing(node.props.spacing, compact: compact)) { children }
-                .frame(maxWidth: compact ? nil : .infinity, alignment: align.frame)
+                .frame(maxWidth: compact && !tile ? nil : .infinity, alignment: align.frame)
         case .row:
             HStack(alignment: (node.props.align ?? .center).vertical,
                    spacing: NotchTheme.spacing(node.props.spacing, compact: compact, fallback: compact ? .regular : .loose)) { children }
         case .text:
             let text = node.props.text ?? ""
             Text(text)
-                .font(NotchTheme.font(node.props.size, compact: compact))
+                .font(NotchTheme.font(node.props.size, compact: compact, tile: tile))
                 .monospacedDigit()
                 .contentTransition(NotchTheme.rollsDigits(text) && !reduceMotion ? .numericText() : .identity)
                 .animation(valueChange, value: text)
-                .tracking(NotchTheme.tracking(node.props.size, compact: compact))
-                .lineLimit(compact ? 1 : nil)
+                .tracking(NotchTheme.tracking(node.props.size, compact: compact, tile: tile))
+                .lineLimit(compact || tile ? 1 : nil)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityLabel(node.props.text ?? "")
         case .symbol:
             // Decorative unless the extension says what it means.
             Image(systemName: node.props.name ?? "circle")
-                .font(.system(size: NotchTheme.symbolSize(node.props.size, compact: compact), weight: .medium))
+                .font(.system(size: NotchTheme.symbolSize(node.props.size, compact: compact, tile: tile), weight: .medium))
                 .accessibilityLabel(node.props.label ?? "")
                 .accessibilityHidden(node.props.label?.isEmpty ?? true)
         case .progress:
@@ -74,7 +75,7 @@ public struct NativeNodeView: View {
                         .opacity((node.props.value ?? 0) > 0 ? 1 : 0)
                 }
                 .animation(valueChange, value: node.props.value)
-            }.frame(height: NotchTheme.progressHeight)
+            }.frame(height: tile ? 5 : NotchTheme.progressHeight)
                 .accessibilityElement()
                 .accessibilityLabel(node.props.label ?? "Progress")
                 .accessibilityValue("\(Int((node.props.value ?? 0) * 100)) percent")
@@ -125,7 +126,7 @@ public struct NativeNodeView: View {
         case .ring:
             NotchRing(node: node, compact: compact, cameraHeight: cameraHeight, onEvent: onEvent)
         case .artwork:
-            AlbumArtwork(source: node.props.source, size: compact ? 18 : 60)
+            AlbumArtwork(source: node.props.source, size: tile ? 40 : compact ? 18 : 60)
         case .waveform:
             PlaybackWaveform(playing: node.props.value == 1, source: node.props.source)
         case .player:

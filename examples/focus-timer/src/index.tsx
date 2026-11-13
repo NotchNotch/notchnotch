@@ -6,8 +6,8 @@ import {
 import { start } from "@notchnotch/runtime";
 
 // Example extension: shows an Activity with a progress ring and a live
-// reading, a Settings page built from sections, and a Prompt that asks
-// before starting a break.
+// reading, its own tile in Home, a Settings page built from sections, and a
+// Prompt that asks before starting a break.
 
 type Phase = "idle" | "focus" | "break";
 const durations = [
@@ -75,6 +75,15 @@ function FocusTimer() {
       <Activity.Compact
         leading={<Ring value={progress} tone={tone} label={`${label} session`} />}
         trailing={<Text size="caption" tone={tone}>{clock(remaining)}</Text>} />
+      <Activity.Tile size="wide">
+        <Ring value={progress} tone={tone} label={`${label} session`}>
+          <Symbol name={phase === "break" ? "cup.and.saucer.fill" : "timer"} tone={tone} />
+        </Ring>
+        <Column spacing="none">
+          <Text size="caption" tone="secondary">{paused ? "PAUSED" : label.toUpperCase()}</Text>
+          <Value unit="left" tone={paused ? "secondary" : tone}>{clock(remaining)}</Value>
+        </Column>
+      </Activity.Tile>
       <Activity.Expanded>
         <Row spacing="loose">
           <Ring value={progress} size="title" tone={tone} label={`${label} session`}>

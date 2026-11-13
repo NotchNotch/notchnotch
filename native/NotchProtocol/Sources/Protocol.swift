@@ -95,6 +95,13 @@ extension Snapshot {
             for node in (surface.compact?.leading ?? []) + (surface.compact?.trailing ?? []) {
                 try visit(node, depth: 0, compact: true)
             }
+            if let tile = surface.tile {
+                guard surface.kind == .activity, tile.content.count <= 8 else {
+                    throw ProtocolError.invalid("A tile belongs to an activity and holds at most 8 items")
+                }
+                // The whole tile opens the activity, so it holds readings only, like the wings.
+                for node in tile.content { try visit(node, depth: 0, compact: true) }
+            }
         }
         if let settings { try visit(settings, depth: 0, settings: true) }
     }

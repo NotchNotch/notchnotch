@@ -184,6 +184,9 @@ test("Music connects once through the generic SDK, receives state, and sends pla
     assert.equal(surface.idlePreview, true);
     assert.equal(surface.compact.leading[0].type, "artwork");
     assert.equal(surface.compact.trailing[0].type, "waveform");
+    assert.equal(surface.tile.size, "wide");
+    assert.equal(surface.tile.content[0].type, "artwork");
+    assert.ok(surface.tile.content.flatMap(nodes).some((node) => node.props.text === state.title));
     assert.equal(surface.peek.id, state.eventID);
     assert.equal(surface.peek.text, "Katerina • Thisavros Mou");
     const player = nodes(surface.expanded).find((node) => node.type === "player");
@@ -207,10 +210,12 @@ test("Music connects once through the generic SDK, receives state, and sends pla
     incoming(open.sessionID, { method: "music/state", params: status({ ...state, isPlaying: false }) });
     const paused = await runner.wait((message) => message.revision > tick.revision && message.surfaces[0]?.phase === "paused");
     assert.equal(paused.surfaces[0].compact.trailing[0].props.name, "pause.fill");
-    const artwork = "data:image/jpeg;base64," + "a".repeat(24000);
+    // The largest thumbnail Now Playing sends (36 KB as base64) appears in the wings, the tile and the player.
+    const artwork = "data:image/jpeg;base64," + "a".repeat(48000);
     incoming(open.sessionID, { method: "music/state", params: status({ ...state, artwork, eventID: "playback-2" }) });
     const art = await runner.wait((message) => message.surfaces[0]?.peek?.id === "playback-2");
     assert.equal(art.surfaces[0].compact.leading[0].props.source, artwork);
+    assert.equal(art.surfaces[0].tile.content[0].props.source, artwork);
     incoming(open.sessionID, { method: "music/state", params: { ...status(state), commandError: "Player unavailable" } });
     await runner.wait((message) => message.revision > art.revision &&
       nodes(message.surfaces[0].expanded).some((node) => node.props.text === "Player unavailable"));

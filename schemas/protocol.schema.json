@@ -142,6 +142,35 @@
           "additionalProperties": false,
           "description": "A short announcement. A new id announces a new event; ordinary snapshots keep the same id."
         },
+        "tile": {
+          "x-name": "TileContent",
+          "type": "object",
+          "required": [
+            "size",
+            "content"
+          ],
+          "properties": {
+            "size": {
+              "x-name": "TileSize",
+              "x-swift-unknown": "unknown",
+              "enum": [
+                "small",
+                "wide"
+              ],
+              "default": "small",
+              "description": "small fills one cell of Home's four-column grid, wide fills two. The user can change it."
+            },
+            "content": {
+              "type": "array",
+              "maxItems": 8,
+              "items": {
+                "$ref": "#/$defs/node"
+              }
+            }
+          },
+          "additionalProperties": false,
+          "description": "The activity's tile in Home. Readings only: no buttons or fields, the whole tile opens the activity. Without one, Home builds the tile from compact and title."
+        },
         "idlePreview": {
           "type": "boolean"
         }
@@ -220,6 +249,20 @@
             "required": [
               "compact"
             ],
+            "properties": {
+              "kind": {
+                "const": "activity"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "tile"
+            ]
+          },
+          "then": {
             "properties": {
               "kind": {
                 "const": "activity"

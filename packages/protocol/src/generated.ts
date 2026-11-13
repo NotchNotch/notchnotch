@@ -21,6 +21,7 @@ export interface Surface {
   compact?: CompactContent;
   expanded: UINode;
   peek?: PeekContent;
+  tile?: TileContent;
   idlePreview?: boolean;
 }
 
@@ -42,6 +43,15 @@ export interface PeekContent {
   text: string;
   duration: number;
 }
+
+/** The activity's tile in Home. Readings only: no buttons or fields, the whole tile opens the activity. Without one, Home builds the tile from compact and title. */
+export interface TileContent {
+  size: TileSize;
+  content: UINode[];
+}
+
+/** small fills one cell of Home's four-column grid, wide fills two. The user can change it. */
+export type TileSize = "small" | "wide";
 
 export interface UINode {
   id: string;

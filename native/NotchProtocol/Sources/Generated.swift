@@ -29,9 +29,10 @@ public struct Surface: Codable, Equatable, Identifiable, Sendable {
     public var compact: CompactContent?
     public var expanded: UINode
     public var peek: PeekContent?
+    public var tile: TileContent?
     public var idlePreview: Bool?
 
-    public init(id: String, kind: SurfaceKind, title: String, initialView: Presentation = .compact, phase: SurfacePhase = .active, compact: CompactContent? = nil, expanded: UINode, peek: PeekContent? = nil, idlePreview: Bool? = nil) {
+    public init(id: String, kind: SurfaceKind, title: String, initialView: Presentation = .compact, phase: SurfacePhase = .active, compact: CompactContent? = nil, expanded: UINode, peek: PeekContent? = nil, tile: TileContent? = nil, idlePreview: Bool? = nil) {
         self.id = id
         self.kind = kind
         self.title = title
@@ -40,6 +41,7 @@ public struct Surface: Codable, Equatable, Identifiable, Sendable {
         self.compact = compact
         self.expanded = expanded
         self.peek = peek
+        self.tile = tile
         self.idlePreview = idlePreview
     }
 }
@@ -82,6 +84,30 @@ public struct PeekContent: Codable, Equatable, Sendable {
         self.id = id
         self.text = text
         self.duration = duration
+    }
+}
+
+/// The activity's tile in Home. Readings only: no buttons or fields, the whole tile opens the activity. Without one, Home builds the tile from compact and title.
+public struct TileContent: Codable, Equatable, Sendable {
+    public var size: TileSize
+    public var content: [UINode]
+
+    public init(size: TileSize = .small, content: [UINode]) {
+        self.size = size
+        self.content = content
+    }
+}
+
+/// small fills one cell of Home's four-column grid, wide fills two. The user can change it.
+public enum TileSize: String, Codable, Equatable, Sendable {
+    case small
+    case wide
+    /// A value from a newer sender that this app doesn't know.
+    case unknown
+
+    public init(from decoder: Decoder) throws {
+        let value = try decoder.singleValueContainer().decode(String.self)
+        self = Self(rawValue: value) ?? .unknown
     }
 }
 

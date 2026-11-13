@@ -7,6 +7,7 @@ struct NotchValue: View {
     let node: UINode
     let compact: Bool
     @Environment(\.notchAccent) private var accent
+    @Environment(\.notchTile) private var tile
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -14,15 +15,15 @@ struct NotchValue: View {
         let size = node.props.size ?? .timer
         HStack(alignment: .firstTextBaseline, spacing: compact ? 2 : 4) {
             Text(text)
-                .font(NotchTheme.font(size, compact: compact))
-                .tracking(NotchTheme.tracking(size, compact: compact))
+                .font(NotchTheme.font(size, compact: compact, tile: tile))
+                .tracking(NotchTheme.tracking(size, compact: compact, tile: tile))
                 .monospacedDigit()
                 .foregroundStyle(NotchTheme.color(node.props.tone ?? .accent, accent: accent?.color))
                 .contentTransition(NotchTheme.rollsDigits(text) && !reduceMotion ? .numericText() : .identity)
                 .animation(reduceMotion ? nil : NotchTheme.valueChange, value: text)
             if let unit = node.props.unit, !unit.isEmpty {
                 Text(unit)
-                    .font(NotchTheme.unitFont(size, compact: compact))
+                    .font(NotchTheme.unitFont(size, compact: compact, tile: tile))
                     .foregroundStyle(NotchTheme.Ink.secondary)
             }
         }
@@ -42,10 +43,11 @@ struct NotchRing: View {
     let cameraHeight: CGFloat
     let onEvent: (String, String?) -> Void
     @Environment(\.notchAccent) private var accent
+    @Environment(\.notchTile) private var tile
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        let diameter = NotchTheme.ringDiameter(node.props.size, compact: compact)
+        let diameter = NotchTheme.ringDiameter(node.props.size, compact: compact, tile: tile)
         let line = max(2.5, (diameter * 0.15).rounded())
         let value = node.props.value ?? 0
         let colors = NotchTheme.progressGradient(node.props.tone, accent: accent)

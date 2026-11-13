@@ -24,14 +24,27 @@ function Peek({ id, text, duration = 4 }: { id: string; text: string; duration?:
   return createElement("peek", { id, text, duration });
 }
 
-/** The entire compact surface is one host-owned click target. */
+/**
+ * The activity's tile in Home: readings such as a `Ring`, a `Value` or a line
+ * of `Text`, no buttons. The whole tile opens the activity. `small` fills one
+ * of Home's four columns, `wide` two; the user can change it. Without a Tile,
+ * Home builds one from Compact and the title.
+ */
+function Tile({ size = "small", children }: Children & { size?: "small" | "wide" }) {
+  return createElement("tile", { size }, children);
+}
+
+/**
+ * The entire compact surface is one host-owned click target. An `active`
+ * activity is live: it can take the wings. A `paused` one waits in Home.
+ */
 export const Activity = Object.assign(
   function Activity({ initialView = "compact", phase = "active", ...props }: SurfaceProps & {
     phase?: "active" | "paused" | "completed";
     /** Eligible as a hover fallback even before this activity has been used. */
     idlePreview?: boolean;
   }) { return createElement("activity", { ...props, initialView, phase }); },
-  { Compact, Expanded, Peek },
+  { Compact, Expanded, Peek, Tile },
 );
 
 /** Unmount a prompt after recording its answer; collapsing it does not answer it. */

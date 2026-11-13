@@ -121,12 +121,17 @@ export function createRenderer(extensionID: string, send: (snapshot: Snapshot) =
     if (node.children.filter((child) => child.type === "expanded").length !== 1 ||
         node.children.filter((child) => child.type === "compact").length > 1 ||
         node.children.filter((child) => child.type === "peek").length > 1 ||
-        node.children.some((child) => !["expanded", "compact", "peek"].includes(child.type))) {
-      throw new Error("A surface requires exactly one Expanded, at most one Compact, and at most one Peek child");
+        node.children.filter((child) => child.type === "tile").length > 1 ||
+        node.children.some((child) => !["expanded", "compact", "peek", "tile"].includes(child.type))) {
+      throw new Error("A surface requires exactly one Expanded, and at most one Compact, Peek and Tile child");
     }
     const compact = node.children.find((child) => child.type === "compact");
     const expanded = node.children.find((child) => child.type === "expanded");
     const peek = node.children.find((child) => child.type === "peek");
+    const tile = node.children.find((child) => child.type === "tile");
+    if (tile && (node.type !== "activity" || !["small", "wide"].includes(tile.props.size as string) || tile.children.length > 8)) {
+      throw new Error("Tile belongs to an Activity, is small or wide, and holds at most 8 items");
+    }
     if (peek && (node.type !== "activity" || !compact ||
         typeof peek.props.id !== "string" || !peek.props.id.length || peek.props.id.length > 128 ||
         typeof peek.props.text !== "string" || !peek.props.text.length || peek.props.text.length > 256 ||
@@ -148,6 +153,7 @@ export function createRenderer(extensionID: string, send: (snapshot: Snapshot) =
         trailing: (compact.children.find((child) => child.type === "trailing")?.children ?? []).map((child) => serialize(child, registry)),
       } } : {}),
       ...(peek ? { peek: { id: peek.props.id as string, text: peek.props.text as string, duration: peek.props.duration as number } } : {}),
+      ...(tile ? { tile: { size: tile.props.size as "small" | "wide", content: tile.children.map((child) => serialize(child, registry)) } } : {}),
       expanded: { id: expanded.id, type: "column", props: {}, children: expanded.children.map((child) => serialize(child, registry)) },
     };
   }
