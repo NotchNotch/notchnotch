@@ -39,7 +39,13 @@ final class AppModel {
     private var installedIncludedIDs = UserDefaults.standard.stringArray(forKey: "installedIncludedIDs").map(Set.init) {
         didSet { UserDefaults.standard.set(installedIncludedIDs?.sorted(), forKey: "installedIncludedIDs") }
     }
-    static let defaultIncludedIDs: Set<String> = ["dev.notchnotch.music"]
+    static let defaultIncludedIDs: Set<String> = ["dev.notchnotch.music", "dev.notchnotch.shelf"]
+    /// Included extensions that arrived after people already had the app. Each is
+    /// installed once for everyone, new Mac or update; uninstalling it then sticks.
+    static let introducedIDs: Set<String> = ["dev.notchnotch.shelf"]
+    private var introducedIncludedIDs = Set(UserDefaults.standard.stringArray(forKey: "introducedIncludedIDs") ?? []) {
+        didSet { UserDefaults.standard.set(introducedIncludedIDs.sorted(), forKey: "introducedIncludedIDs") }
+    }
     /// Extensions that used to be included and now come from the Store, by Store
     /// handle. Whoever had one gets the Store version without a review: same
     /// publisher, and it asks for no more than the person already allowed.
@@ -476,6 +482,12 @@ final class AppModel {
         if installedIncludedIDs == nil {
             let used = (included.map(\.id) + Self.movedToStore.keys).filter(hasBeenUsed)
             installedIncludedIDs = Self.defaultIncludedIDs.union(used)
+        }
+        var installedIDs = installedIncludedIDs ?? [], offered = introducedIncludedIDs
+        IncludedExtensions.introduce(Self.introducedIDs, available: Set(included.map(\.id)), installed: &installedIDs, offered: &offered)
+        if offered != introducedIncludedIDs {
+            introducedIncludedIDs = offered
+            installedIncludedIDs = installedIDs
         }
         let installed = scan.extensions.filter { $0.origin != .bundled || installedIncludedIDs?.contains($0.id) == true }
         if includedExtensions != included { includedExtensions = included }
