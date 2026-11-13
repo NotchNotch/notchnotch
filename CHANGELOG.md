@@ -6,6 +6,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-11-13
+
 ### Changed
 - **Open With** shows the apps in the notch, at Home's tile size, instead of a long menu over it: up to seven apps, the default first and a shade brighter, and **Other…** for any app.
 
@@ -213,7 +215,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/NotchNotch/notchnotch/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/NotchNotch/notchnotch/compare/v0.14.1...HEAD
+[0.14.1]: https://github.com/NotchNotch/notchnotch/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/NotchNotch/notchnotch/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/NotchNotch/notchnotch/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/NotchNotch/notchnotch/compare/v0.11.0...v0.12.0
