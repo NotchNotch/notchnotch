@@ -50,6 +50,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             self.openManagement(extensionID: self.model.displayedSurface?.key.extensionID)
         }
         model.onOpenHomeSettings = { [weak self] in self?.openManagement(destination: .notch) }
+        model.notchScreen = { [weak self] in self?.targetScreen() }
+        model.updateMenuBar()
+        // Accessibility may have changed in System Settings while NotchNotch was in the background.
+        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.model.updateMenuBar() }
+        }
         model.onRevealActivity = { [weak self] key in
             self?.model.open(key)
             self?.panel?.makeKey()

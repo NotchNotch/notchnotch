@@ -211,13 +211,13 @@ final class AppModel {
     private var restartPolicy = RestartPolicy()
     private var restartTasks: [String: Task<Void, Never>] = [:]
 
-    var isExpanded: Bool { platform.isExpanded || idlePinned || hoverExpanded || dropSession != nil || appChoice != nil }
+    var isExpanded: Bool { platform.isExpanded || idlePinned || hoverExpanded || dropSession != nil || appChoice != nil || menuBarShowsAll }
     var displayedSurface: HostedSurface? {
         platform.isExpanded ? platform.selected : platform.hoverSurface
     }
     /// Home shows when it was opened, or when the notch opens with nothing to resume.
     var showsHome: Bool {
-        guard dropSession == nil, appChoice == nil else { return false }
+        guard dropSession == nil, appChoice == nil, !menuBarShowsAll else { return false }
         return platform.isExpanded ? platform.showsHome : isExpanded && displayedSurface == nil
     }
     var wingSurface: HostedSurface? {
@@ -246,7 +246,7 @@ final class AppModel {
             reservedCanvasHeight: reservedCanvasHeight, expandedHeaderHeight: 0,
             wingWidth: NotchGeometry.wingWidth(fitting: wingContentWidth, roomy: showsLiveExtras))
         geometry.homeWidth = showsHome ? homeArrangement.width
-            : dropSession != nil || appChoice != nil ? HomeLayout.width(columns: HomeLayout.minimumColumns)
+            : dropSession != nil || appChoice != nil || menuBarShowsAll ? HomeLayout.width(columns: HomeLayout.minimumColumns)
             : displayedSurface.map { Self.fileGridWidth(in: $0.surface.expanded) } ?? 0
         return geometry
     }
@@ -344,6 +344,126 @@ final class AppModel {
             let key = SurfaceKey(extensionID: id, surfaceID: opens)
             if platform.surfaces.contains(where: { $0.key == key && $0.surface.kind == .activity }) { open(key) }
         }
+    }
+
+    // MARK: Menu bar
+
+    /// Brings back the menu bar items hidden under the camera and the wings. Needs Accessibility.
+    var menuBarEnabled = UserDefaults.standard.bool(forKey: "menuBarEnabled") {
+        didSet {
+            UserDefaults.standard.set(menuBarEnabled, forKey: "menuBarEnabled")
+            if menuBarEnabled, !MenuBarScanner.isTrusted { requestMenuBarAccess() } else { updateMenuBar() }
+        }
+    }
+    private(set) var menuBarTrusted = MenuBarScanner.isTrusted
+    /// Each hidden item's own image instead of its app's icon; needs Screen Recording.
+    var menuBarExactIcons = UserDefaults.standard.bool(forKey: "menuBarExactIcons") {
+        didSet {
+            UserDefaults.standard.set(menuBarExactIcons, forKey: "menuBarExactIcons")
+            if menuBarExactIcons, !MenuBarImages.isGranted { MenuBarImages.request() }
+            updateMenuBar()
+        }
+    }
+    private(set) var menuBarCaptureGranted = MenuBarImages.isGranted
+    let menuBarImages = MenuBarImages()
+    @ObservationIgnored private var menuBarScanner: MenuBarScanner?
+    @ObservationIgnored private var menuBarSeparator: MenuBarSeparator?
+    @ObservationIgnored private var menuBarTrustTask: Task<Void, Never>?
+    private var menuBarItems: [MenuBarItem] = []
+    /// Hidden items, left to right, as of the last time the notch opened or items changed.
+    private(set) var hiddenMenuBarItems: [MenuBarItem] = []
+    /// Every hidden item as tiles, from the header's `+N`.
+    private(set) var menuBarShowsAll = false
+    /// The screen the notch is on; set by the app delegate.
+    @ObservationIgnored var notchScreen: (() -> NSScreen?)?
+
+    /// Starts or stops reading the menu bar to match the setting and the grant.
+    func updateMenuBar() {
+        menuBarTrusted = MenuBarScanner.isTrusted
+        menuBarCaptureGranted = MenuBarImages.isGranted
+        if !menuBarExactIcons || !menuBarCaptureGranted { menuBarImages.clear() }
+        if menuBarEnabled, menuBarTrusted {
+            if menuBarScanner == nil {
+                let scanner = MenuBarScanner { [weak self] items in
+                    self?.menuBarItems = items
+                    self?.recomputeHiddenMenuBarItems()
+                }
+                menuBarScanner = scanner
+                scanner.start()
+            }
+            if menuBarSeparator == nil {
+                menuBarSeparator = MenuBarSeparator { [weak self] in self?.coveredMenuBar() }
+            }
+        } else {
+            menuBarScanner?.stop()
+            menuBarScanner = nil
+            menuBarSeparator?.remove()
+            menuBarSeparator = nil
+            menuBarItems = []
+            hiddenMenuBarItems = []
+            menuBarShowsAll = false
+        }
+    }
+
+    /// Asks macOS for Accessibility and starts once it's granted, while the person is in System Settings.
+    func requestMenuBarAccess() {
+        MenuBarScanner.requestTrust()
+        menuBarTrustTask?.cancel()
+        menuBarTrustTask = Task { [weak self] in
+            for _ in 0..<300 {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+                if MenuBarScanner.isTrusted { self?.updateMenuBar(); return }
+            }
+        }
+    }
+
+    /// When the notch opens: where the items are now, and which of them are hidden.
+    func refreshMenuBar() {
+        guard let menuBarScanner else { return }
+        recomputeHiddenMenuBarItems()
+        menuBarScanner.refresh()
+    }
+
+    private func recomputeHiddenMenuBarItems() {
+        guard let screen = notchScreen?() else { return }
+        // The closed notch's band on the menu bar: the camera, and the wings when something is live.
+        let half = max(geometry.compactWidth, notchWidth) / 2
+        let windows = MenuBarScanner.windows(on: screen)
+        let hidden = MenuBarLayout.hidden(menuBarItems, windows: windows,
+                                          covered: (screen.frame.midX - half)...(screen.frame.midX + half))
+        if hidden != hiddenMenuBarItems { hiddenMenuBarItems = hidden }
+        if hidden.isEmpty { menuBarShowsAll = false }
+        if menuBarExactIcons { menuBarImages.capture(hidden, windows: windows) }
+    }
+
+    /// The band a live activity's wings cover on the notch's menu bar: what the divider hides at first.
+    private func coveredMenuBar() -> (screen: NSScreen, band: ClosedRange<CGFloat>)? {
+        guard let screen = notchScreen?() else { return nil }
+        let half = notchWidth / 2 + NotchGeometry.maximumWingWidth
+        return (screen, (screen.frame.midX - half)...(screen.frame.midX + half))
+    }
+
+    /// Opens the item's menu, as a click on it would. The notch closes first: the menu opens beneath it.
+    /// An item pushed off the menu bar would open its menu off the screen: the hidden items come back first.
+    func pressMenuBarItem(_ item: MenuBarItem) {
+        close()
+        menuBarSeparator?.show()
+        let scanner = menuBarScanner
+        Task {
+            try? await Task.sleep(for: .milliseconds(180))
+            scanner?.press(item.id)
+        }
+    }
+    /// Shows the hidden items and the divider in the menu bar for a while, to ⌘-drag them across it.
+    func rearrangeMenuBar() {
+        close()
+        menuBarSeparator?.rearrange()
+    }
+    func showAllMenuBarItems() {
+        menuBarShowsAll = true
+        selectContent()
+        onLayoutChange?()
     }
 
     // MARK: Open With
@@ -851,6 +971,7 @@ final class AppModel {
     }
     func close() {
         appChoice = nil
+        menuBarShowsAll = false
         hoverTask?.cancel()
         hover.reset()
         idlePinned = false

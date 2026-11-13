@@ -266,6 +266,12 @@ struct NotchView: View {
             // transitions beneath it, including the headerless music player.
             // Content owns the top left; the app's own controls sit top right.
             HStack(spacing: 2) {
+                // The menu bar items hidden under the camera and the wings; the music player draws here itself.
+                if model.menuBarEnabled, !model.hiddenMenuBarItems.isEmpty, model.playerNode == nil || model.showsHome || model.menuBarShowsAll {
+                    MenuBarStrip(items: model.hiddenMenuBarItems, images: model.menuBarImages.images, onPress: { model.pressMenuBarItem($0) },
+                                 onShowAll: { onInteraction(); model.showAllMenuBarItems() })
+                        .transition(.opacity)
+                }
                 Spacer()
                 if !model.showsHome {
                     Button("Home", systemImage: "square.grid.2x2") { onInteraction(); model.openHome() }
@@ -286,12 +292,21 @@ struct NotchView: View {
             .frame(height: model.topHeight + 8)
         }
         .onChange(of: pageKey, initial: true) { _, _ in model.selectContent() }
+        .onAppear { model.refreshMenuBar() }
         // Clicking outside, moving away after a hover and Escape all close the panel.
         .accessibilityAction(.escape) { model.close() }
     }
 
     @ViewBuilder private var expandedPage: some View {
-        if let choice = model.appChoice {
+        if model.menuBarShowsAll {
+            VStack(spacing: 0) {
+                Color.clear.frame(height: model.topHeight + 8)
+                MenuBarPage(items: model.hiddenMenuBarItems, images: model.menuBarImages.images, width: geometry.expandedBodyWidth - 2 * HomeLayout.padding,
+                            onPress: { model.pressMenuBarItem($0) }, onRearrange: { model.rearrangeMenuBar() })
+                .padding(.bottom, HomeLayout.padding)
+            }
+            .frame(width: geometry.expandedBodyWidth)
+        } else if let choice = model.appChoice {
             VStack(spacing: 0) {
                 Color.clear.frame(height: model.topHeight + 8)
                 OpenWithView(choice: choice, width: geometry.expandedBodyWidth - 2 * HomeLayout.padding) { app in

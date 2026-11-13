@@ -86,8 +86,45 @@ struct ManagementNotchPage: View {
             } footer: {
                 Text("Keep the pointer over the notch to preview an activity. Clicking always opens it. Scroll sideways to switch between activities.")
             }
+            Section {
+                Toggle("Show hidden menu bar icons", isOn: $model.menuBarEnabled).toggleStyle(.switch)
+                if model.menuBarEnabled, !model.menuBarTrusted {
+                    HStack {
+                        Label("Needs Accessibility", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        Spacer()
+                        Button("Open System Settings…") { model.requestMenuBarAccess() }
+                    }
+                } else if model.menuBarEnabled {
+                    LabeledContent("Hidden now", value: model.hiddenMenuBarItems.isEmpty ? "None"
+                                   : model.hiddenMenuBarItems.map(\.name).joined(separator: ", "))
+                    Toggle(isOn: $model.menuBarExactIcons) {
+                        Text("Show exact icons")
+                        Text("Each icon's own image instead of its app's. Captured once when the notch opens, never recorded.")
+                    }.toggleStyle(.switch)
+                    if model.menuBarExactIcons, !model.menuBarCaptureGranted {
+                        HStack {
+                            Label("Needs Screen Recording", systemImage: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                            Spacer()
+                            Button("Open System Settings…") { MenuBarImages.request() }
+                        }
+                    }
+                    LabeledContent {
+                        Button("Rearrange Menu Bar…") { model.rearrangeMenuBar() }
+                    } label: {
+                        Text("Choose which icons hide")
+                        Text("Or hold ⌘ with the pointer in the menu bar, then drag an icon across the divider.")
+                    }
+                }
+            } header: {
+                Text("Menu bar")
+            } footer: {
+                Text("Icons under the notch move off the menu bar and appear on the left of the open notch; clicking one opens its menu. Icons left of the divider hide; ⌘-drag one across it to choose. NotchNotch reads the menu bar with Accessibility and keeps what it finds on this Mac.")
+            }
             HomeSettingsSection(model: model)
         }.formStyle(.grouped)
+        .onAppear { model.updateMenuBar() }
     }
 }
 
