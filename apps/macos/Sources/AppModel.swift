@@ -211,13 +211,13 @@ final class AppModel {
     private var restartPolicy = RestartPolicy()
     private var restartTasks: [String: Task<Void, Never>] = [:]
 
-    var isExpanded: Bool { platform.isExpanded || idlePinned || hoverExpanded || dropSession != nil }
+    var isExpanded: Bool { platform.isExpanded || idlePinned || hoverExpanded || dropSession != nil || appChoice != nil }
     var displayedSurface: HostedSurface? {
         platform.isExpanded ? platform.selected : platform.hoverSurface
     }
     /// Home shows when it was opened, or when the notch opens with nothing to resume.
     var showsHome: Bool {
-        guard dropSession == nil else { return false }
+        guard dropSession == nil, appChoice == nil else { return false }
         return platform.isExpanded ? platform.showsHome : isExpanded && displayedSurface == nil
     }
     var wingSurface: HostedSurface? {
@@ -246,7 +246,7 @@ final class AppModel {
             reservedCanvasHeight: reservedCanvasHeight, expandedHeaderHeight: 0,
             wingWidth: NotchGeometry.wingWidth(fitting: wingContentWidth, roomy: showsLiveExtras))
         geometry.homeWidth = showsHome ? homeArrangement.width
-            : dropSession != nil ? HomeLayout.width(columns: HomeLayout.minimumColumns)
+            : dropSession != nil || appChoice != nil ? HomeLayout.width(columns: HomeLayout.minimumColumns)
             : displayedSurface.map { Self.fileGridWidth(in: $0.surface.expanded) } ?? 0
         return geometry
     }
@@ -270,7 +270,11 @@ final class AppModel {
     /// A file from the notch is being dragged out; until the mouse is up, drags aren't drops.
     @ObservationIgnored var draggingOut = false
     let droppedFiles = DroppedFileStore(directory: AppModel.supportDirectory.appendingPathComponent("Dropped Files"))
-    @ObservationIgnored lazy var files = FilesService(store: droppedFiles)
+    @ObservationIgnored lazy var files: FilesService = {
+        let service = FilesService(store: droppedFiles)
+        service.presentOpenWith = { [weak self] urls in self?.chooseApp(for: urls) }
+        return service
+    }()
     /// How an extension's tree finds its dropped files: where they are, for
     /// dragging them out, and their thumbnails.
     func notchFiles(for extensionID: String?) -> NotchFiles? {
@@ -302,6 +306,9 @@ final class AppModel {
     func endDrop() {
         guard dropSession != nil else { return }
         dropSession = nil
+        // Hover sat out the drag; the pointer is still over the notch, so it mustn't open it now.
+        hoverTask?.cancel()
+        hover.reset()
         suppressHover = pointerInside
         selectContent()
         onLayoutChange?()
@@ -337,6 +344,42 @@ final class AppModel {
             let key = SurfaceKey(extensionID: id, surfaceID: opens)
             if platform.surfaces.contains(where: { $0.key == key && $0.surface.kind == .activity }) { open(key) }
         }
+    }
+
+    // MARK: Open With
+
+    /// Files waiting for the person to pick the app that opens them, shown in the notch.
+    struct AppChoice: Equatable {
+        var urls: [URL]
+        /// The apps that open every file, the default first.
+        var apps: [URL]
+        var preferred: URL?
+    }
+    private(set) var appChoice: AppChoice?
+
+    /// Opens the notch on the apps that open these files, in place of a menu.
+    func chooseApp(for urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        endGreeting()
+        hoverTask?.cancel()
+        hover.reset()
+        let found = FileMenus.apps(toOpen: urls)
+        appChoice = AppChoice(urls: urls, apps: found.apps, preferred: found.preferred)
+        selectContent()
+        onLayoutChange?()
+    }
+    /// Opens the files with `app`, or with nil asks for any app in an open panel.
+    func openChosen(with app: URL?) {
+        guard let choice = appChoice else { return }
+        dismissAppChoice()
+        if let app { FileMenus.open(choice.urls, with: app) } else { FileMenus.chooseOtherApp(for: choice.urls) }
+    }
+    func dismissAppChoice() {
+        guard appChoice != nil else { return }
+        appChoice = nil
+        suppressHover = pointerInside
+        selectContent()
+        onLayoutChange?()
     }
 
     /// Natural content widths of Home's tiles, measured by the view.
@@ -807,6 +850,7 @@ final class AppModel {
         else { pinOpen() }
     }
     func close() {
+        appChoice = nil
         hoverTask?.cancel()
         hover.reset()
         idlePinned = false
@@ -869,7 +913,7 @@ final class AppModel {
         pointerInside = inside
         hoverTask?.cancel()
         if !inside { suppressHover = false }
-        guard !platform.isExpanded, !idlePinned, !isPeeking, !suppressHover else { return }
+        guard !platform.isExpanded, !idlePinned, !isPeeking, !suppressHover, dropSession == nil, appChoice == nil else { return }
         hover.pointerChanged(inside: inside)
         onLayoutChange?()
         guard expandOnHover, let deadline = hover.deadline else { return }

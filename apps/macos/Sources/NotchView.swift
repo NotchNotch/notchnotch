@@ -291,7 +291,16 @@ struct NotchView: View {
     }
 
     @ViewBuilder private var expandedPage: some View {
-        if let session = model.dropSession {
+        if let choice = model.appChoice {
+            VStack(spacing: 0) {
+                Color.clear.frame(height: model.topHeight + 8)
+                OpenWithView(choice: choice, width: geometry.expandedBodyWidth - 2 * HomeLayout.padding) { app in
+                    model.openChosen(with: app)
+                }
+                .padding(.bottom, HomeLayout.padding)
+            }
+            .frame(width: geometry.expandedBodyWidth)
+        } else if let session = model.dropSession {
             VStack(spacing: 0) {
                 Color.clear.frame(height: model.topHeight + 8)
                 DropView(targets: model.dropTargets, items: session.items, showsAll: session.showsAll,

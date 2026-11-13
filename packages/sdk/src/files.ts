@@ -47,7 +47,7 @@ export const files = {
   async share(refs: FileRef | FileRef[]): Promise<void> {
     await command("", "files", { files: { action: "share", ids: ids(refs) } }, 120_000);
   },
-  /** A menu beside the pointer of the apps that open the files; the person picks one. */
+  /** The apps that open the files, shown in the notch; the person picks one, or any app with Other…. */
   async openWith(refs: FileRef | FileRef[]): Promise<void> {
     await command("", "files", { files: { action: "openWith", ids: ids(refs) } }, 120_000);
   },

@@ -82,7 +82,7 @@ The app does these with your handles. Each takes a handle, its `id`, or a list o
 | `files.share(files)` | macOS's Share menu beside the pointer: AirDrop, Messages, Mail, Notes and more |
 | `files.airDrop(files)` | The AirDrop sheet |
 | `files.open(files, app?)` | Opens them with their default app, or the app with this bundle identifier |
-| `files.openWith(files)` | A menu beside the pointer of the apps that open them; the person picks one |
+| `files.openWith(files)` | The apps that open them, in the notch; the person picks one, or any app with Other… (a menu beside the pointer before 0.14.1) |
 | `files.reveal(files)` | Selects them in Finder |
 | `files.preview(files)` | Quick Look |
 | `files.copyToClipboard(files)` | Puts them on the clipboard, as Finder's Copy does |

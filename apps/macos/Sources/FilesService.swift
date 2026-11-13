@@ -14,6 +14,8 @@ final class FilesService {
     let store: DroppedFileStore
     private let thumbnails = NSCache<NSString, NSImage>()
     private let quickLook = QuickLookPresenter()
+    /// Shows the apps that open these files in the notch; without it, a menu at the pointer.
+    var presentOpenWith: (@MainActor ([URL]) -> Void)?
     /// Kept while its menu is open.
     private var sharePicker: NSSharingServicePicker?
 
@@ -59,7 +61,8 @@ final class FilesService {
             sharePicker = picker
             picker.show(relativeTo: anchor.rect, of: anchor.view, preferredEdge: .minY)
         case .openWith:
-            FileMenus.popUpAtPointer(FileMenus.openWith(try urls()))
+            let items = try urls()
+            if let presentOpenWith { presentOpenWith(items) } else { FileMenus.popUpAtPointer(FileMenus.openWith(items)) }
         case .clipboard:
             if let text = request.text {
                 NSPasteboard.general.clearContents()
@@ -77,7 +80,7 @@ final class FilesService {
             return .string("data:image/png;base64," + png.base64EncodedString())
         case .copy, .move:
             let items = try urls()
-            guard let folder = chooseFolder(prompt: request.action == .copy ? "Copy Here" : "Move Here") else { return .bool(false) }
+            guard let folder = await chooseFolder(prompt: request.action == .copy ? "Copy Here" : "Move Here") else { return .bool(false) }
             for (id, url) in zip(ids, items) {
                 let target = folder.appendingPathComponent(url.lastPathComponent)
                 if request.action == .copy { try FileManager.default.copyItem(at: url, to: target) }
@@ -106,8 +109,7 @@ final class FilesService {
             guard let name = request.name, let data = request.data.flatMap({ Data(base64Encoded: $0) }) else { return .null }
             let panel = NSSavePanel()
             panel.nameFieldStringValue = name
-            NSApp.activate()
-            guard panel.runModal() == .OK, let url = panel.url else { return .null }
+            guard let url = await FileMenus.choose(panel) else { return .null }
             try data.write(to: url, options: .atomic)
             let file = try store.add(url, for: extensionID)
             return try JSONDecoder().decode(JSONValue.self, from: JSONEncoder().encode(file))
@@ -127,14 +129,13 @@ final class FilesService {
         return image
     }
 
-    private func chooseFolder(prompt: String) -> URL? {
+    private func chooseFolder(prompt: String) async -> URL? {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.canCreateDirectories = true
         panel.prompt = prompt
-        NSApp.activate()
-        return panel.runModal() == .OK ? panel.url : nil
+        return await FileMenus.choose(panel)
     }
 }
 

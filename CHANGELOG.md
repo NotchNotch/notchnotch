@@ -6,6 +6,13 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- **Open With** shows the apps in the notch, at Home's tile size, instead of a long menu over it: up to seven apps, the default first and a shade brighter, and **Other…** for any app.
+
+### Fixed
+- After a drop on a zone that doesn't open an activity, such as AirDrop or Quick Look, the notch closes instead of showing a live activity until the pointer moves away.
+- While a panel to pick an app, a folder or where to save is open, the notch finishes closing and keeps its normal size, instead of freezing small until the panel closes.
+
 ## [0.14.0] - 2026-11-13
 
 ### Added

@@ -19,22 +19,32 @@ public enum FileMenus {
         menu.popUp(positioning: nil, at: anchor.rect.origin, in: anchor.view)
     }
 
-    /// The apps that open every one of the files, the default app first, then Other….
-    public static func openWith(_ urls: [URL]) -> NSMenu {
-        let menu = NSMenu(title: "Open With")
-        guard let first = urls.first else { return menu }
+    /// The apps that open every one of the files: the default app first, the rest by name.
+    public static func apps(toOpen urls: [URL]) -> (apps: [URL], preferred: URL?) {
+        guard let first = urls.first else { return ([], nil) }
         let common = urls.dropFirst().reduce(Set(NSWorkspace.shared.urlsForApplications(toOpen: first))) {
             $0.intersection(NSWorkspace.shared.urlsForApplications(toOpen: $1))
         }
-        let preferred = NSWorkspace.shared.urlForApplication(toOpen: first)
+        let preferred = NSWorkspace.shared.urlForApplication(toOpen: first).flatMap { common.contains($0) ? $0 : nil }
         let apps = common.sorted { app, other in
             if app == preferred { return true }
             if other == preferred { return false }
-            return FileManager.default.displayName(atPath: app.path).localizedStandardCompare(FileManager.default.displayName(atPath: other.path)) == .orderedAscending
+            return name(of: app).localizedStandardCompare(name(of: other)) == .orderedAscending
         }
+        return (apps, preferred)
+    }
+
+    /// An app's name as Finder shows it, without ".app".
+    public static func name(of app: URL) -> String {
+        FileManager.default.displayName(atPath: app.path).replacingOccurrences(of: ".app", with: "")
+    }
+
+    /// A menu of the apps that open every one of the files, the default app first, then Other….
+    public static func openWith(_ urls: [URL]) -> NSMenu {
+        let menu = NSMenu(title: "Open With")
+        let (apps, preferred) = apps(toOpen: urls)
         for app in apps.prefix(24) {
-            let name = FileManager.default.displayName(atPath: app.path).replacingOccurrences(of: ".app", with: "")
-            let item = ClosureMenuItem(app == preferred ? "\(name) (default)" : name) { open(urls, with: app) }
+            let item = ClosureMenuItem(app == preferred ? "\(name(of: app)) (default)" : name(of: app)) { open(urls, with: app) }
             let icon = NSWorkspace.shared.icon(forFile: app.path)
             icon.size = NSSize(width: 16, height: 16)
             item.image = icon
@@ -42,15 +52,26 @@ public enum FileMenus {
             if app == preferred, apps.count > 1 { menu.addItem(.separator()) }
         }
         if !apps.isEmpty { menu.addItem(.separator()) }
-        menu.addItem(ClosureMenuItem("Other…") {
-            let panel = NSOpenPanel()
-            panel.directoryURL = URL(fileURLWithPath: "/Applications")
-            panel.allowedContentTypes = [.application]
-            panel.prompt = "Open"
-            NSApp.activate()
-            if panel.runModal() == .OK, let app = panel.url { open(urls, with: app) }
-        })
+        menu.addItem(ClosureMenuItem("Other…") { chooseOtherApp(for: urls) })
         return menu
+    }
+
+    /// Asks for any app in an open panel and opens the files with it.
+    public static func chooseOtherApp(for urls: [URL]) {
+        let panel = NSOpenPanel()
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.allowedContentTypes = [.application]
+        panel.prompt = "Open"
+        Task { if let app = await choose(panel) { open(urls, with: app) } }
+    }
+
+    /// Shows an open or save panel without blocking the main thread, so the
+    /// notch keeps animating behind it. The chosen URL, or nil when cancelled.
+    public static func choose(_ panel: NSSavePanel) async -> URL? {
+        NSApp.activate()
+        return await withCheckedContinuation { continuation in
+            panel.begin { response in continuation.resume(returning: response == .OK ? panel.url : nil) }
+        }
     }
 
     /// macOS's own Share menu for the files: AirDrop, Messages, Mail, Notes and the rest.
@@ -64,7 +85,7 @@ public enum FileMenus {
         NSPasteboard.general.writeObjects(urls as [NSURL])
     }
 
-    private static func open(_ urls: [URL], with app: URL) {
+    public static func open(_ urls: [URL], with app: URL) {
         NSWorkspace.shared.open(urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration(), completionHandler: nil)
     }
 }
