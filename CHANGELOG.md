@@ -6,6 +6,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-13
+
 ### Added
 - **Home**: every activity in one grid instead of pages to swipe through. Live activities come first as wide tiles, then the rest; a click opens one, and the grid button beside the gear returns to Home. Home never scrolls and never shrinks its type: it grows to three rows, then widens up to six columns, then shows a More tile. With nothing to resume, hovering over the notch shows Home. Once you click the notch, the arrow keys move between tiles and Return opens one.
 - Make Home yours: right-click a tile to make it small or wide, pin it to the top or hide it. **Settings & Extensions → Notch** lists every activity to drag into your order, which also decides which live activity takes the wings, and brings hidden ones back.
@@ -195,7 +197,8 @@ All notable changes to NotchNotch are listed here. The format follows
 
 First developer preview: native notch host, React extension runtime, Music and Calendar extensions, local extension install.
 
-[Unreleased]: https://github.com/NotchNotch/notchnotch/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/NotchNotch/notchnotch/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/NotchNotch/notchnotch/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/NotchNotch/notchnotch/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/NotchNotch/notchnotch/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/NotchNotch/notchnotch/compare/v0.9.0...v0.10.0
