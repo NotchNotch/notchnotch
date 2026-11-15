@@ -3,14 +3,14 @@
   <channel>
     <title>NotchNotch</title>
     <item>
-      <title>NotchNotch 0.14.1</title>
-      <pubDate>Fri, 13 Nov 2026 16:00:44 GMT</pubDate>
-      <sparkle:version>19</sparkle:version>
-      <sparkle:shortVersionString>0.14.1</sparkle:shortVersionString>
+      <title>NotchNotch 0.15.0</title>
+      <pubDate>Sun, 15 Nov 2026 11:54:55 GMT</pubDate>
+      <sparkle:version>24</sparkle:version>
+      <sparkle:shortVersionString>0.15.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <link>https://github.com/NotchNotch/notchnotch/releases/tag/v0.14.1</link>
-      <description><![CDATA[<h3>Changed</h3><ul><li><b>Open With</b> shows the apps in the notch, at Home's tile size, instead of a long menu over it: up to seven apps, the default first and a shade brighter, and <b>Other…</b> for any app.</li></ul><h3>Fixed</h3><ul><li>After a drop on a zone that doesn't open an activity, such as AirDrop or Quick Look, the notch closes instead of showing a live activity until the pointer moves away.</li><li>While a panel to pick an app, a folder or where to save is open, the notch finishes closing and keeps its normal size, instead of freezing small until the panel closes.</li></ul>]]></description>
-      <enclosure url="https://github.com/NotchNotch/notchnotch/releases/download/v0.14.1/NotchNotch-0.14.1.zip" length="7189699" type="application/octet-stream" sparkle:edSignature="Zkl5GuVuhTs8w+SzMpm9EoQn3xo80uXXRs+ZPuGg67F3NOJDHZARK3SkD8mbB65013jWKKyKwpWWK9JbZlPXBg=="/>
+      <link>https://github.com/NotchNotch/notchnotch/releases/tag/v0.15.0</link>
+      <description><![CDATA[<h3>Added</h3><ul><li><b>Hidden menu bar icons in the notch</b>: on a Mac with a notch, the icons under the camera and a live activity's wings move off the menu bar and show on the left of the open notch; click one to open its menu. More than five show four and <b>+N</b>, which shows every one. Turn it on in <b>Settings &amp; Extensions → Notch</b>; it needs Accessibility.</li><li>Choose which icons hide by holding <b>⌘</b> with the pointer in the menu bar and dragging them across the divider, or with <b>Rearrange Menu Bar…</b> in Settings and under <b>+N</b>. NotchNotch's divider takes no space in the menu bar.</li><li><b>Show exact icons</b>: with Screen Recording, each hidden icon's own image instead of its app's icon, captured once while it's in view.</li></ul>]]></description>
+      <enclosure url="https://github.com/NotchNotch/notchnotch/releases/download/v0.15.0/NotchNotch-0.15.0.zip" length="7443749" type="application/octet-stream" sparkle:edSignature="Kpy/rpxTR6t0g4DQnvs4bPT0O1BSsABgVFqrCCIz7jqYn4lQqN0RDgQJMKonZP4/p1X1Gpmhe9iyQRBKtGG+AQ=="/>
     </item>
   </channel>
 </rss>
