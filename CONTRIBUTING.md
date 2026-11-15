@@ -14,7 +14,7 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` builds the app and the bundled extensions, starts `dist/NotchNotch.app`, and reloads an extension when you edit it. `pnpm dev:examples` also loads the [example extensions](examples/). Quit any installed copy of NotchNotch first: both use the same extension library.
+`pnpm dev` builds the app and the bundled extensions, starts `dist/NotchNotch.app`, and reloads an extension when you edit it. `pnpm dev:examples` also loads the [example extensions](examples/). Quit any installed copy of NotchNotch first: both use the same extension library. The development build is **NotchNotch Dev** (`dev.notchnotch.app.debug`), a separate app to macOS: it has its own settings and asks for its own permissions, such as Accessibility for the menu bar, so granting them never touches the installed copy's.
 
 ## Test
 

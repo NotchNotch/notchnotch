@@ -95,7 +95,7 @@ import os
         }
     }
 
-    private static let log = Logger(subsystem: "dev.notchnotch.app", category: "menu-bar")
+    private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "dev.notchnotch.app", category: "menu-bar")
 
     /// Trimmed to what's drawn, and a template when it's grey: the menu bar's
     /// ink may be dark, the notch is black.

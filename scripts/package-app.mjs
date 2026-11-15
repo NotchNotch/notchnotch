@@ -70,12 +70,15 @@ export async function packageApp() {
   const store = `<key>NotchCatalogURL</key><string>https://raw.githubusercontent.com/NotchNotch/notchnotch-extensions/catalog/index.json</string>
 <key>NotchCatalogPublicKeys</key><array><string>${catalogKey}</string></array>
 `;
+  // Development builds are a different app to macOS, so granting them Accessibility or Screen
+  // Recording never takes a permission from the installed release, and their settings stay apart.
+  const bundle = release ? { id: "dev.notchnotch.app", name: "NotchNotch" } : { id: "dev.notchnotch.app.debug", name: "NotchNotch Dev" };
   await writeFile(path.join(contents, "Info.plist"), `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>dev.notchnotch.app</string>
-<key>CFBundleName</key><string>NotchNotch</string>
-<key>CFBundleDisplayName</key><string>NotchNotch</string>
+<key>CFBundleIdentifier</key><string>${bundle.id}</string>
+<key>CFBundleName</key><string>${bundle.name}</string>
+<key>CFBundleDisplayName</key><string>${bundle.name}</string>
 <key>CFBundleExecutable</key><string>NotchNotch</string>
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundlePackageType</key><string>APPL</string>
