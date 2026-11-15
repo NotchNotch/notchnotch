@@ -33,7 +33,7 @@ In the open notch, the header has empty space left of the camera; Home and Setti
 
 ### Icons
 
-- With Screen Recording: the item's own image, captured once and kept in memory, never a continuous recording. ScreenCaptureKit fails for a window off the screen ("Failed to start stream"), so an item is captured while the hidden items are shown anyway: holding ⌘, Rearrange, a press. Turning exact icons on, and each launch, shows them for about a second once to capture them. Items macOS hides under the camera even then keep their app's icon.
+- With Screen Recording: the item's own image, captured once and kept in memory, never a continuous recording. ScreenCaptureKit fails for a window past the menu bar's end, where the divider pushes it ("Failed to start stream"), but captures one under the camera, which macOS marks off-screen yet still draws. So an item is captured while the hidden items are shown anyway: holding ⌘, Rearrange, a press; turning exact icons on, and each launch, shows them for about a second once, after the first scan has found them. Captures queue, so a narrow call can't stand in for a wider one. `CGWindowListCreateImage`, gone from the SDK, returned nothing for those windows either.
 - Without it: the app's icon; Control Center's items get the SF Symbol macOS uses for them, and a helper with no app (a script's tray icon) its initial. Asking for Screen Recording to show an icon is a lot, so it's **Show exact icons**, off by default.
 - A captured image is trimmed to what's drawn. A grey one is a template drawn in the menu bar's ink, which may be dark: the notch redraws it white. A wide one, such as the clock's date, would shrink to nothing and keeps the symbol.
 

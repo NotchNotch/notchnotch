@@ -461,11 +461,15 @@ final class AppModel {
         guard menuBarExactIcons, menuBarCaptureGranted, menuBarScanner != nil, !menuBarPeeked else { return }
         menuBarPeeked = true
         Task { [weak self] in
-            // The divider is placed a moment after it's made.
-            try? await Task.sleep(for: .seconds(2))
-            guard let self, !self.hiddenMenuBarItems.isEmpty,
-                  !self.menuBarImages.hasImages(for: self.hiddenMenuBarItems) else { return }
-            self.menuBarSeparator?.peek()
+            // The divider is placed, and every app's items found, a few seconds after launch.
+            for _ in 0..<30 {
+                try? await Task.sleep(for: .seconds(1))
+                guard let self, self.menuBarExactIcons else { return }
+                self.recomputeHiddenMenuBarItems()
+                guard !self.hiddenMenuBarItems.isEmpty else { continue }
+                if !self.menuBarImages.hasImages(for: self.hiddenMenuBarItems) { self.menuBarSeparator?.peek() }
+                return
+            }
         }
     }
 

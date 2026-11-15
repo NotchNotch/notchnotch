@@ -96,7 +96,7 @@ import NotchCore
     func show() { show(.press, grace: .milliseconds(600)) }
 
     /// Shows the hidden items for a moment, to capture their images.
-    func peek() { show(.press, grace: .milliseconds(500)) }
+    func peek() { show(.press, grace: .milliseconds(1500)) }
 
     /// Shows the hidden items and the divider for a while, to drag them across with ⌘.
     func rearrange() { show(.rearrange, grace: .seconds(6)) }
