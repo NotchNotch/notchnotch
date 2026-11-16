@@ -13,4 +13,6 @@ notchnotch screenshot [folder]                   # Store screenshots of the runn
 notchnotch publish [folder] [--dry-run]          # open or update a Store pull request (needs gh auth login)
 ```
 
+Every command, its options and what it checks: [CLI](https://github.com/NotchNotch/notchnotch/blob/main/docs/extensions/cli.md).
+
 `@notchnotch/cli/native` exports `helperApp()` to package a native helper as an app bundle with its own privacy usage descriptions, and `codesign()`. See [Native helpers](https://github.com/NotchNotch/notchnotch/blob/main/docs/extensions/native-helpers.md).

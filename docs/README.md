@@ -19,6 +19,7 @@
 11. [Manifest](extensions/manifest.md): every field of `notchnotch.json`
 12. [Publishing](extensions/publishing.md): icon, About page, store guidelines and `.notchext` files
 13. [API stability](extensions/stability.md): what API v1 promises, and deprecations
+14. [CLI](extensions/cli.md): every `notchnotch` command
 
 ## Contributing to NotchNotch
 
