@@ -12,6 +12,13 @@ private enum ArtworkCache {
     }()
     static var pending: [String: Task<NSImage?, Never>] = [:]
 
+    /// An image already loaded, so a view can draw it on its first frame:
+    /// no placeholder flash on reopen, and offscreen renders, which never run
+    /// `.task`, still get the cover.
+    static func cached(_ source: String?) -> NSImage? {
+        source.flatMap { images.object(forKey: $0 as NSString) }
+    }
+
     static func load(_ source: String?) async -> NSImage? {
         guard let source, NowPlayingState.isWellFormedArtworkSource(source) else { return nil }
         if let image = images.object(forKey: source as NSString) { return image }
@@ -54,6 +61,11 @@ struct AlbumArtwork: View {
     let source: String?
     var size: CGFloat = 18
     @State private var image: NSImage?
+    init(source: String?, size: CGFloat = 18) {
+        self.source = source
+        self.size = size
+        _image = State(initialValue: ArtworkCache.cached(source))
+    }
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: size * 0.22).fill(.white.opacity(0.09))
@@ -80,7 +92,12 @@ struct PlaybackWaveform: View {
     let playing: Bool
     var source: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var tint: Color = .white.opacity(0.65)
+    @State private var tint: Color
+    init(playing: Bool, source: String? = nil) {
+        self.playing = playing
+        self.source = source
+        _tint = State(initialValue: ArtworkCache.cached(source).map(ArtworkCache.tint) ?? .white.opacity(0.65))
+    }
     var body: some View {
         TimelineView(.animation(minimumInterval: 0.18, paused: !playing || reduceMotion)) { timeline in
             let time = timeline.date.timeIntervalSinceReferenceDate
@@ -108,8 +125,15 @@ struct MusicPlayerView: View {
     let onCommand: (MediaRequest) -> Void
     @State private var seeking: Double?
     @State private var feedback = PlaybackFeedback()
-    @State private var tint: Color = .white.opacity(0.65)
+    @State private var tint: Color
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    init(state: NowPlayingState, cameraHeight: CGFloat, onCommand: @escaping (MediaRequest) -> Void) {
+        self.state = state
+        self.cameraHeight = cameraHeight
+        self.onCommand = onCommand
+        _tint = State(initialValue: ArtworkCache.cached(state.artwork).map(ArtworkCache.tint) ?? .white.opacity(0.65))
+    }
 
     var body: some View {
         let displayed = feedback.displayed(state)

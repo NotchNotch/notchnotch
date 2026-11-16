@@ -17,6 +17,9 @@ All notable changes to NotchNotch are listed here. The format follows
 ### Removed
 - `command` is no longer exported from `@notchnotch/sdk`. It was the SDK's internal channel to the app; use `localHTTP`, `fetch`, `files` and the other APIs built on it.
 
+### Fixed
+- Album art shows at once when the notch reopens, instead of a music note for a moment, and `notchnotch screenshot` draws it.
+
 ## [0.15.0] - 2026-11-13
 
 ### Added
