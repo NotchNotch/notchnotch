@@ -9,12 +9,12 @@ struct ManagementSidebar: View {
             List(selection: $coordinator.destination) {
                 if coordinator.query.isEmpty {
                     Section {
-                        row("General", symbol: "gearshape", color: .gray, .general)
-                        row("Notch", symbol: "rectangle.topthird.inset.filled", color: .indigo, .notch)
-                        row("About", symbol: "info", color: .blue, .about)
+                        AppCard().tag(ManagementDestination.about)
                     }
                     Section {
-                        Label { Text("Store") } icon: { ManagementSidebarIcon(symbol: "bag.fill", color: .pink) }
+                        row("General", symbol: "gearshape.fill", color: .gray, .general)
+                        row("Notch", symbol: "rectangle.topthird.inset.filled", color: .indigo, .notch)
+                        Label { Text("Store") } icon: { SettingsIconTile(symbol: "bag.fill", color: .pink) }
                             .badge(coordinator.model.storeUpdates.count)
                             .tag(ManagementDestination.store)
                     }
@@ -25,7 +25,7 @@ struct ManagementSidebar: View {
                             Label {
                                 Text(record.manifest.name).lineLimit(1)
                             } icon: {
-                                ExtensionIdentityView(icon: record.icon, size: 20)
+                                ExtensionIdentityView(icon: record.icon, size: 22, tile: true)
                                     .saturation(coordinator.model.isEnabled(record.id) ? 1 : 0)
                             }
                             Spacer(minLength: 0)
@@ -45,7 +45,7 @@ struct ManagementSidebar: View {
                         Label {
                             Text("Couldn’t Load (\(coordinator.model.libraryIssues.count))")
                         } icon: {
-                            ManagementSidebarIcon(symbol: "exclamationmark.triangle.fill", color: .orange)
+                            SettingsIconTile(symbol: "exclamationmark.triangle.fill", color: .orange)
                         }.tag(ManagementDestination.libraryIssues)
                     }
                 }
@@ -65,7 +65,27 @@ struct ManagementSidebar: View {
     }
 
     private func row(_ title: String, symbol: String, color: Color, _ destination: ManagementDestination) -> some View {
-        Label { Text(title) } icon: { ManagementSidebarIcon(symbol: symbol, color: color) }.tag(destination)
+        Label { Text(title) } icon: { SettingsIconTile(symbol: symbol, color: color) }.tag(destination)
+    }
+}
+
+/// NotchNotch itself at the top of the sidebar, as System Settings shows your
+/// account: opens About, with the version and updates.
+private struct AppCard: View {
+    private var version: String {
+        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String).map { "Version \($0)" } ?? "Development build"
+    }
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 36, height: 36).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("NotchNotch").font(.headline)
+                Text(version).font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("About NotchNotch and updates")
     }
 }
 

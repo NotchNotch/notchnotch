@@ -6,6 +6,9 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- **Settings & Extensions** is redesigned: the app's own card opens the sidebar, every icon sits on the same rounded tile, and extension icons fill theirs. The toolbar shows only the page's name, and search waits to be clicked. An extension's Restart, Show in Finder and Uninstall are in its **…** menu.
+
 ## [0.15.0] - 2026-11-13
 
 ### Added

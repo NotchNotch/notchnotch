@@ -9,8 +9,7 @@ final class ManagementWindowController: NSWindowController, NSWindowDelegate, NS
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 620),
                               styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
         super.init(window: window)
-        window.title = "NotchNotch"
-        window.subtitle = "General"
+        window.title = "General"
         window.contentMinSize = NSSize(width: 690, height: 500)
         window.isReleasedWhenClosed = false
         window.tabbingMode = .disallowed
@@ -46,6 +45,8 @@ final class ManagementWindowController: NSWindowController, NSWindowDelegate, NS
         NSApp.activate(ignoringOtherApps: true)
         showWindow(nil)
         window?.makeKeyAndOrderFront(nil)
+        // Search waits to be clicked: a ring around it on every open reads as a prompt to type.
+        window?.makeFirstResponder(nil)
     }
     func windowWillClose(_ notification: Notification) { coordinator.windowClosed() }
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {

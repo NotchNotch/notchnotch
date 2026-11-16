@@ -29,7 +29,7 @@ struct ManagementView: View {
         }
         .onChange(of: coordinator.model.installedExtensions.map(\.id)) { _, _ in coordinator.reconcileSelection() }
         .onChange(of: coordinator.model.libraryIssues.count) { _, _ in coordinator.reconcileSelection() }
-        .onChange(of: pageTitle, initial: true) { _, title in coordinator.window?.subtitle = title }
+        .onChange(of: pageTitle, initial: true) { _, title in coordinator.window?.title = title }
     }
     private var pageTitle: String {
         switch coordinator.destination {

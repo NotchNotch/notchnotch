@@ -83,10 +83,20 @@ struct ManagementExtensionPage: View {
                 }.font(.caption)
             }
             Spacer(minLength: 12)
-            if model.canUninstall(record) {
-                Button("Uninstall…", role: .destructive) { coordinator.requestRemoval(record) }
-                    .disabled(coordinator.busy)
+            Menu {
+                Button("Restart", systemImage: "arrow.clockwise") { model.restartExtension(record.id) }
+                    .disabled(!model.isEnabled(record.id))
+                Button("Show in Finder", systemImage: "folder") { NSWorkspace.shared.activateFileViewerSelecting([record.directory]) }
+                if model.canUninstall(record) {
+                    Divider()
+                    Button("Uninstall…", systemImage: "trash", role: .destructive) { coordinator.requestRemoval(record) }
+                }
+            } label: {
+                Image(systemName: "ellipsis")
             }
+            .menuStyle(.button).menuIndicator(.hidden).buttonStyle(.borderless).fixedSize()
+            .help("More")
+            .disabled(coordinator.busy)
             Toggle("Enabled", isOn: $model[enabledFor: record.id])
                 .toggleStyle(.switch).labelsHidden().controlSize(.large)
                 .help(model.isEnabled(record.id) ? "Turn off \(record.manifest.name)" : "Turn on \(record.manifest.name)")
