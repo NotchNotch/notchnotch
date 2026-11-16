@@ -7,7 +7,7 @@
 
 # NotchNotch
 
-The notch on your Mac, put to work. NotchNotch shows what's happening now around the camera: the song that's playing, your next meeting, a running timer, or anything an extension adds.
+Your Mac's notch, open to extensions. Write one in React and TypeScript, and NotchNotch draws it natively around the camera, as if it came with the Mac: a timer, a build, the next meeting, whatever you need. Or install one from the [Store](https://notchnotch.github.io/store/).
 
 <p align="center">
   <img src="assets/screenshot.png" width="800" alt="The open notch showing the System Monitor extension: rings for CPU, memory and disk, with network speeds below">
@@ -19,18 +19,10 @@ The notch on your Mac, put to work. NotchNotch shows what's happening now around
 
 ## Features
 
-- **Music:** what's playing in Spotify or Apple Music, with playback controls.
-- **Calendar:** your next event with a countdown and a button to join the meeting.
-- **Extensions:** add your own, written in React and TypeScript and drawn natively by the app. Install one by double-clicking a `.notchext` file.
+- **Extensions:** describe the notch with React components; NotchNotch draws them with the system's own controls, and each extension runs in its own process. Live activities beside the camera, announcements, an open view, questions and settings, all in the same shapes.
+- **The Store:** extensions reviewed in the open and checked against a signed catalog before they install. Share your own as a `.notchext` file people double-click.
+- **Built in:** Music for Spotify and Apple Music, Calendar with a button to join the meeting, Shelf for files you drop on the notch, and the menu bar icons the camera hides.
 - **Private:** no account, no analytics. Everything stays on your Mac.
-
-## Install
-
-1. Download the latest `NotchNotch-<version>.dmg` from [Releases](https://github.com/NotchNotch/notchnotch/releases).
-2. Open it and drag **NotchNotch** to **Applications**.
-3. Open NotchNotch. This preview isn't notarized by Apple yet, so the first time, open **System Settings › Privacy & Security** and choose **Open Anyway** next to *"NotchNotch" was blocked*.
-
-NotchNotch updates itself after that. See [Using NotchNotch](docs/guide/using-notchnotch.md) to connect Music and Calendar.
 
 ## Build an extension
 
@@ -39,6 +31,14 @@ npm create notchnotch-extension@latest my-extension
 ```
 
 Start with [Getting started](docs/extensions/getting-started.md), then browse the [documentation](docs/README.md), also on [the website](https://notchnotch.github.io/docs/).
+
+## Install
+
+1. Download the latest `NotchNotch-<version>.dmg` from [Releases](https://github.com/NotchNotch/notchnotch/releases).
+2. Open it and drag **NotchNotch** to **Applications**.
+3. Open NotchNotch. This preview isn't notarized by Apple yet, so the first time, open **System Settings › Privacy & Security** and choose **Open Anyway** next to *"NotchNotch" was blocked*.
+
+NotchNotch updates itself after that. See [Using NotchNotch](docs/guide/using-notchnotch.md) to connect Music and Calendar.
 
 ## Contributing
 
