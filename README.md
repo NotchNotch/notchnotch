@@ -9,6 +9,10 @@
 
 The notch on your Mac, put to work. NotchNotch shows what's happening now around the camera: the song that's playing, your next meeting, a running timer, or anything an extension adds.
 
+<p align="center">
+  <img src="assets/screenshot.png" width="800" alt="The open notch showing the System Monitor extension: rings for CPU, memory and disk, with network speeds below">
+</p>
+
 **Developer preview** for macOS 14 or later. Free and open source.
 
 **[notchnotch.github.io](https://notchnotch.github.io)**: download, documentation and the [Store](https://notchnotch.github.io/store/).
