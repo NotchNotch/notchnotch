@@ -87,7 +87,7 @@ Status has `present` (false on a Mac without a battery), `level` from 0 to 1, `c
 ```tsx
 const rpc = new JSONRPCClient(capability("battery"));
 const battery = await rpc.request("battery/getState");
-<Ring value={battery.level} label="Battery"><Symbol name="bolt.fill" /></Ring>
+<Ring value={battery.level} label="Battery"><Icon name="bolt.fill" /></Ring>
 ```
 
 ## `system`

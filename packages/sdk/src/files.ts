@@ -1,5 +1,5 @@
 import type { FileHandle } from "@notchnotch/protocol";
-import { command } from "./connections";
+import { command } from "./bridge";
 export type { FileHandle, FileKind } from "@notchnotch/protocol";
 
 /** One thing dropped on a `DropZone`: a file, a link or text. */

@@ -18,6 +18,7 @@
 10. [Native helpers](extensions/native-helpers.md): reach apps through native code
 11. [Manifest](extensions/manifest.md): every field of `notchnotch.json`
 12. [Publishing](extensions/publishing.md): icon, About page, store guidelines and `.notchext` files
+13. [API stability](extensions/stability.md): what API v1 promises, and deprecations
 
 ## Contributing to NotchNotch
 

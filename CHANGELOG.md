@@ -8,6 +8,14 @@ All notable changes to NotchNotch are listed here. The format follows
 
 ### Changed
 - **Settings & Extensions** is redesigned: the app's own card opens the sidebar, every icon sits on the same rounded tile, and extension icons fill theirs. The toolbar shows only the page's name, and search waits to be clicked. An extension's Restart, Show in Finder and Uninstall are in its **…** menu.
+- **Extension API v1 is frozen**: what it covers and how it changes without breaking extensions is in [API stability](docs/extensions/stability.md).
+- An `Activity` is `paused` unless it says otherwise: it waits in Home and announces itself, and only `phase="active"` holds the place beside the camera.
+
+### Deprecated
+- `Symbol` is now `Icon`, so it no longer hides JavaScript's own `Symbol`. `Symbol` keeps working through API v1.
+
+### Removed
+- `command` is no longer exported from `@notchnotch/sdk`. It was the SDK's internal channel to the app; use `localHTTP`, `fetch`, `files` and the other APIs built on it.
 
 ## [0.15.0] - 2026-11-13
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
-  Actions, Activity, Badge, Button, Column, ListItem, Picker, Prompt, Ring, Row, Section, Settings,
-  Spacer, Symbol, Text, Toggle, Value, useStoredState,
+  Actions, Activity, Badge, Button, Column, Icon, ListItem, Picker, Prompt, Ring, Row, Section, Settings,
+  Spacer, Text, Toggle, Value, useStoredState,
 } from "@notchnotch/sdk";
 import { start } from "@notchnotch/runtime";
 
@@ -77,7 +77,7 @@ function FocusTimer() {
         trailing={<Text size="caption" tone={tone}>{clock(remaining)}</Text>} />
       <Activity.Tile size="wide">
         <Ring value={progress} tone={tone} label={`${label} session`}>
-          <Symbol name={phase === "break" ? "cup.and.saucer.fill" : "timer"} tone={tone} />
+          <Icon name={phase === "break" ? "cup.and.saucer.fill" : "timer"} tone={tone} />
         </Ring>
         <Column spacing="none">
           <Text size="caption" tone="secondary">{paused ? "PAUSED" : label.toUpperCase()}</Text>
@@ -87,7 +87,7 @@ function FocusTimer() {
       <Activity.Expanded>
         <Row spacing="loose">
           <Ring value={progress} size="title" tone={tone} label={`${label} session`}>
-            <Symbol name={phase === "break" ? "cup.and.saucer.fill" : "timer"} tone={tone} />
+            <Icon name={phase === "break" ? "cup.and.saucer.fill" : "timer"} tone={tone} />
           </Ring>
           <Column spacing="none">
             <Text size="caption" tone="secondary">{label.toUpperCase()}</Text>
@@ -105,7 +105,7 @@ function FocusTimer() {
     </Activity> : null}
 
     {asking ? <Prompt id="break" title="Focus session complete">
-      <Prompt.Compact leading={<Symbol name="checkmark.circle.fill" tone="success" />} trailing={<Text size="caption">Break?</Text>} />
+      <Prompt.Compact leading={<Icon name="checkmark.circle.fill" tone="success" />} trailing={<Text size="caption">Break?</Text>} />
       <Prompt.Expanded>
         <Text tone="secondary">{`Nice work — that was session ${completed} today. Take a five-minute break?`}</Text>
         <Actions>

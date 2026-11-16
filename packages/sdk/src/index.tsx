@@ -37,11 +37,13 @@ function Tile({ size = "small", children }: Children & { size?: "small" | "wide"
 }
 
 /**
- * The entire compact surface is one host-owned click target. An `active`
- * activity is live: it can take the wings. A `paused` one waits in Home.
+ * The entire compact surface is one host-owned click target. A `paused`
+ * activity, the default, waits in Home and speaks up with a `Peek`. An
+ * `active` one is live: it holds the place beside the camera, so keep that for
+ * something running right now, such as music or a timer.
  */
 export const Activity = Object.assign(
-  function Activity({ initialView = "compact", phase = "active", ...props }: SurfaceProps & {
+  function Activity({ initialView = "compact", phase = "paused", ...props }: SurfaceProps & {
     phase?: "active" | "paused" | "completed";
     /** Eligible as a hover fallback even before this activity has been used. */
     idlePreview?: boolean;
@@ -83,9 +85,11 @@ export function Text({ children, tone = "primary", size = "body" }: Children & {
  * Symbols are decorative and VoiceOver skips them; give one a `label` when it
  * carries meaning no text beside it does, such as a status.
  */
-export function Symbol({ name, tone = "primary", size = "body", label }: { name: string; tone?: Tone; size?: TextSize; label?: string }) {
+export function Icon({ name, tone = "primary", size = "body", label }: { name: string; tone?: Tone; size?: TextSize; label?: string }) {
   return createElement("symbol", { name, tone, size, label });
 }
+/** @deprecated Renamed `Icon`, so it no longer hides JavaScript's `Symbol`. Works through API v1. */
+export const Symbol = Icon;
 /** Short status label, e.g. a count or "Live". */
 export function Badge({ children, tone = "secondary" }: Children & { tone?: Tone }) {
   return createElement("badge", { tone }, children);
@@ -104,7 +108,7 @@ export function Value({ children, unit, tone = "accent", size = "timer" }: Child
 }
 /**
  * Circular progress, filled with the extension's accent. Children, such as a
- * Symbol or a short Text, sit inside it. `size` follows the text scale.
+ * Icon or a short Text, sit inside it. `size` follows the text scale.
  * `label` says what is progressing; VoiceOver reads it with the percentage.
  */
 export function Ring({ value, tone = "accent", size = "headline", label, children }: Children & {

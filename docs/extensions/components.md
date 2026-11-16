@@ -7,15 +7,15 @@ Import components from `@notchnotch/sdk`. NotchNotch draws them natively and con
 | Component | Props |
 | --- | --- |
 | `Text` | text or number children, `tone`, `size` |
-| `Symbol` | SF Symbol `name`, `tone`, `size` (follows the text sizes), `label` when it carries meaning |
+| `Icon` | SF Symbol `name`, `tone`, `size` (follows the text sizes), `label` when it carries meaning |
 | `Badge` | short text children, `tone` |
 | `Progress` | `value` from 0 to 1, `tone`, `label` |
 | `Value` | a number as children, `unit` (up to 32 characters), `tone` (default `accent`), `size` (default `timer`). Draws the number large with the unit small beside it |
-| `Ring` | `value` from 0 to 1, `tone`, `size` (default `headline`), `label`. Children, such as a `Symbol`, sit inside. Fits in `Activity.Compact` too |
+| `Ring` | `value` from 0 to 1, `tone`, `size` (default `headline`), `label`. Children, such as a `Icon`, sit inside. Fits in `Activity.Compact` too |
 
 ```tsx
 <Row spacing="loose">
-  <Ring value={done} size="title" label="Focus session"><Symbol name="timer" tone="accent" /></Ring>
+  <Ring value={done} size="title" label="Focus session"><Icon name="timer" tone="accent" /></Ring>
   <Value unit="left">{clock(remaining)}</Value>
 </Row>
 ```
@@ -94,13 +94,13 @@ NotchNotch draws every component natively, so VoiceOver, Increase Contrast and R
 
 ```tsx
 <Button icon="arrow.clockwise" label="Refresh" onPress={refresh} />
-<Symbol name="xmark.octagon.fill" tone="danger" label="Major outage" />
+<Icon name="xmark.octagon.fill" tone="danger" label="Major outage" />
 <Progress value={done} label="Focus session" />
 <TextField value={city} onChange={setCity} placeholder="London" label="City" />
 ```
 
 - **Icon-only buttons need a `label`.** TypeScript requires it. VoiceOver reads it and the pointer shows it as a tooltip.
-- **Symbols are skipped by VoiceOver** unless you give them a `label`. Add one when the symbol says something its neighbors don't, such as a status shown only by color and icon.
+- **Icons are skipped by VoiceOver** unless you give them a `label`. Add one when the icon says something its neighbors don't, such as a status shown only by color and icon.
 - **Don't rely on color alone.** Pair a `danger` or `success` tone with words, a symbol with a `label`, or a `Badge`.
 - Announcements (`Activity.Peek`) and new prompts are read aloud by VoiceOver, so write their text as a full sentence.
 

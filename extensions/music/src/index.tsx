@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Activity, Artwork, Button, capability, Column, JSONRPCClient, MusicPlayer,
-  Row, Settings, Symbol, Text, Waveform,
+  Activity, Artwork, Button, capability, Column, Icon, JSONRPCClient, MusicPlayer,
+  Row, Settings, Text, Waveform,
 } from "@notchnotch/sdk";
 import type { JSONValue, MediaRequest, NowPlayingState } from "@notchnotch/protocol";
 import { start } from "@notchnotch/runtime";
@@ -116,7 +116,7 @@ function Music() {
     {state ? <Activity idlePreview id="now-playing" title={state.title.slice(0, 128)}
       phase={state.isPlaying ? "active" : "paused"}>
       <Activity.Compact leading={<Artwork source={state.artwork} />}
-        trailing={state.isPlaying ? <Waveform playing source={state.artwork} /> : <Symbol name="pause.fill" tone="secondary" />} />
+        trailing={state.isPlaying ? <Waveform playing source={state.artwork} /> : <Icon name="pause.fill" tone="secondary" />} />
       <Activity.Tile size="wide">
         <Artwork source={state.artwork} />
         <Column spacing="tight">

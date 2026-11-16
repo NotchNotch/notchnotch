@@ -37,7 +37,7 @@ Suppose a local build server on port 4277 answers `GET /status` and sends `build
 
 ```tsx
 import { useEffect, useState } from "react";
-import { Activity, Actions, Button, ConnectionStream, Progress, Prompt, Settings, Symbol, Text, localHTTP } from "@notchnotch/sdk";
+import { Activity, Actions, Button, ConnectionStream, Icon, Progress, Prompt, Settings, Text, localHTTP } from "@notchnotch/sdk";
 import { start } from "@notchnotch/runtime";
 
 const api = localHTTP("api");
@@ -78,7 +78,7 @@ function BuildStatus() {
       {error ? <Text tone="warning">{error}</Text> : null}
     </Settings>
     {build?.state === "running" ? <Activity id={`build-${build.id}`} title={build.name}>
-      <Activity.Compact leading={<Symbol name="hammer" />} trailing={<Text size="caption">{Math.round(build.progress * 100)}%</Text>} />
+      <Activity.Compact leading={<Icon name="hammer" />} trailing={<Text size="caption">{Math.round(build.progress * 100)}%</Text>} />
       <Activity.Expanded>
         <Text size="headline">{build.name}</Text>
         <Progress value={build.progress} />

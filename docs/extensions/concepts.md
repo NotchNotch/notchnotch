@@ -8,7 +8,7 @@ An activity is something ongoing: a timer, a song, a build, your next meeting.
 
 ```tsx
 <Activity id="session" title="Focus" phase="active">
-  <Activity.Compact leading={<Symbol name="timer" />} trailing={<Text size="caption">24:12</Text>} />
+  <Activity.Compact leading={<Icon name="timer" />} trailing={<Text size="caption">24:12</Text>} />
   <Activity.Expanded>
     <Text size="timer">24:12</Text>
   </Activity.Expanded>
@@ -18,7 +18,7 @@ An activity is something ongoing: a timer, a song, a build, your next meeting.
 - `id` stays the same for the life of the activity. `title` is a short human-readable name.
 - `Activity.Compact` sits on either side of the camera. Keep it short; it is a single click target, so it can't contain buttons, fields, toggles or pickers.
 - `Activity.Expanded` opens on hover or click. It must fit without scrolling: **the notch never scrolls**.
-- `phase` is `active`, `paused` or `completed`. An active activity is **live**: it can sit beside the camera. A paused one gives up that place and waits in Home.
+- `phase` is `paused` (the default), `active` or `completed`. A paused activity waits in Home and speaks up with an [announcement](#announcements). An active one is **live**: it can sit beside the camera. Keep that for something running right now that people watch, such as music or a timer; a forecast, a price or the next meeting announces itself and waits.
 - `initialView` is `compact` (the default) or `expanded`. It's a request; the app may wait while something else is open. An activity without compact content must ask for `expanded`.
 
 The wings show one live activity: the one opened last, else the first in the user's Home order, else the one that started most recently. Up to three more live activities join the wings as small circles at their outer edges, in your extension's color with its progress ring; more than that shows a `+N` count. They appear once an announcement has finished. Every activity is in **Home**.
@@ -33,13 +33,13 @@ Without a tile of its own, an activity's tile shows its compact content and its 
 
 ```tsx
 <Activity.Tile size="wide">
-  <Ring value={0.62}><Symbol name="timer" /></Ring>
+  <Ring value={0.62}><Icon name="timer" /></Ring>
   <Text>18 min left</Text>
 </Activity.Tile>
 ```
 
 - `size` is `small` (one column, the default) or `wide` (two). The person can change it.
-- A tile holds readings: `Value`, `Ring`, `Symbol`, `Text`, `Artwork`, `Progress`, in rows and columns. No buttons, fields, toggles or pickers: the whole tile opens the activity.
+- A tile holds readings: `Value`, `Ring`, `Icon`, `Text`, `Artwork`, `Progress`, in rows and columns. No buttons, fields, toggles or pickers: the whole tile opens the activity.
 - The app sizes the tile and uses one type size in every tile. Text is one line; a small tile whose content doesn't fit becomes wide, and what still doesn't fit ends with an ellipsis.
 - A tile with its own content doesn't get the title underneath; say what it is.
 

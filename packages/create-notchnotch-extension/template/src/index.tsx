@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Activity, Button, Section, Settings, Symbol, Text, Toggle, useStoredState } from "@notchnotch/sdk";
+import { Activity, Button, Icon, Section, Settings, Text, Toggle, useStoredState } from "@notchnotch/sdk";
 import { start } from "@notchnotch/runtime";
 
-// A minimal extension: a live activity in the notch and a settings page in
+// A minimal extension: an activity in the notch and a settings page in
 // Settings & Extensions. Edit, run `npm run build`, then reinstall the folder.
 function Extension() {
   const [count, setCount] = useStoredState("count", 0);
@@ -22,7 +22,7 @@ function Extension() {
       </Section>
     </Settings>
     <Activity id="main" title="{{displayName}}">
-      <Activity.Compact leading={<Symbol name="sparkles" />} trailing={<Text>{count}</Text>} />
+      <Activity.Compact leading={<Icon name="sparkles" />} trailing={<Text>{count}</Text>} />
       <Activity.Expanded>
         <Text size="title">{time}</Text>
         <Text tone="secondary">{`Pressed ${count} times`}</Text>

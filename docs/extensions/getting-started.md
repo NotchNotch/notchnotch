@@ -40,7 +40,7 @@ To install it for good instead, run `npm run build`, open **Settings & Extension
 
 ```tsx
 import { useState } from "react";
-import { Activity, Button, Symbol, Text } from "@notchnotch/sdk";
+import { Activity, Button, Icon, Text } from "@notchnotch/sdk";
 import { start } from "@notchnotch/runtime";
 
 function Counter() {
@@ -48,7 +48,7 @@ function Counter() {
   return (
     <Activity id="counter" title="Counter">
       <Activity.Compact
-        leading={<Symbol name="plus.circle" />}
+        leading={<Icon name="plus.circle" />}
         trailing={<Text>{count}</Text>}
       />
       <Activity.Expanded>

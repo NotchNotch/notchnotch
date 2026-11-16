@@ -1,5 +1,5 @@
 import {
-  Activity, Button, Column, DropTypes, DropZone, FileGrid, ListItem, Row, Spacer, Symbol, Text, clipboard,
+  Activity, Button, Column, DropTypes, DropZone, FileGrid, Icon, ListItem, Row, Spacer, Text, clipboard,
   files as fileActions, getPreferenceValues, open, useStoredState, type DropItem, type FileHandle,
 } from "@notchnotch/sdk";
 import { useState } from "react";
@@ -44,7 +44,7 @@ function Shelf() {
       opens="shelf" onDrop={keep} />
     {/* A glance: the app opens it after a drop, so it never needs the wings. */}
     <Activity id="shelf" title="Shelf" phase="paused">
-      <Activity.Compact leading={<Symbol name="tray.full.fill" />} trailing={<Text size="caption">{`${count}`}</Text>} />
+      <Activity.Compact leading={<Icon name="tray.full.fill" />} trailing={<Text size="caption">{`${count}`}</Text>} />
       {/* The stack drags every file out of Home at once; a click opens the Shelf. */}
       <Activity.Tile size={files.length ? "wide" : "small"}>
         {files.length ? <FileGrid files={files} onDragOut={draggedOut} /> : null}

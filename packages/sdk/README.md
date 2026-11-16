@@ -7,12 +7,12 @@ npm create notchnotch-extension@latest my-extension
 ```
 
 ```tsx
-import { Activity, Symbol, Text } from "@notchnotch/sdk";
+import { Activity, Icon, Text } from "@notchnotch/sdk";
 import { start } from "@notchnotch/runtime";
 
 start(
   <Activity id="hello" title="Hello">
-    <Activity.Compact leading={<Symbol name="hand.wave" />} trailing={<Text>Hi</Text>} />
+    <Activity.Compact leading={<Icon name="hand.wave" />} trailing={<Text>Hi</Text>} />
     <Activity.Expanded><Text size="title">Hello from the notch</Text></Activity.Expanded>
   </Activity>,
 );

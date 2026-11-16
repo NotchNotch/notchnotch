@@ -1,48 +1,6 @@
-import type { ConnectionCommand, ConnectionEvent, ConnectionHTTPRequest, ConnectionResponse, JSONValue } from "@notchnotch/protocol";
+import type { ConnectionEvent, ConnectionHTTPRequest, JSONValue } from "@notchnotch/protocol";
+import { command, listeners, nextSerial } from "./bridge";
 export type { JSONValue } from "@notchnotch/protocol";
-
-declare global {
-  var __notchnotchSend: (json: string) => void;
-  var __notchnotchExtensionID: string;
-  var __notchnotchConnectionDispatch: ((message: ConnectionResponse | ConnectionEvent) => void) | undefined;
-}
-
-let serial = 0;
-const pending = new Map<string, { resolve: (value: JSONValue) => void; reject: (error: Error) => void; timer: number }>();
-const listeners = new Set<(event: ConnectionEvent) => void>();
-
-globalThis.__notchnotchConnectionDispatch = (message) => {
-  if (message.type === "connectionEvent") {
-    for (const listener of listeners) listener(message);
-    return;
-  }
-  const request = pending.get(message.requestID);
-  if (!request) return;
-  clearTimeout(request.timer);
-  pending.delete(message.requestID);
-  if (message.error) request.reject(new Error(message.error));
-  else request.resolve(message.result ?? null);
-};
-
-export function command(connectionID: string, operation: ConnectionCommand["operation"],
-                 fields: Pick<ConnectionCommand, "request" | "fetch" | "secret" | "url" | "message" | "sessionID" | "interactive" | "files"> = {}, timeoutMs = 35_000): Promise<JSONValue> {
-  if (pending.size >= 32) return Promise.reject(new Error("Too many pending connection operations"));
-  const requestID = `connection-${++serial}`;
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      pending.delete(requestID);
-      reject(new Error(`Connection operation timed out: ${connectionID || operation}`));
-    }, timeoutMs);
-    pending.set(requestID, { resolve, reject, timer });
-    try {
-      globalThis.__notchnotchSend(JSON.stringify({ protocolVersion: 1, type: "connectionCommand",
-        extensionID: globalThis.__notchnotchExtensionID, requestID, connectionID, operation, ...fields } satisfies ConnectionCommand));
-    } catch (error) {
-      clearTimeout(timer); pending.delete(requestID);
-      reject(error instanceof Error ? error : new Error(String(error)));
-    }
-  });
-}
 
 export interface LocalHTTPResponse {
   status: number;
@@ -151,7 +109,7 @@ export class ConnectionStream {
   open(options: OpenOptions = {}): Promise<void> {
     if (this.opening) return this.opening;
     if (this.sessionID) return Promise.resolve();
-    const sessionID = `stream-${++serial}`;
+    const sessionID = `stream-${nextSerial()}`;
     const generation = ++this.generation;
     this.sessionID = sessionID;
     const fields = options.interactive === false ? { sessionID, interactive: false } : { sessionID };
