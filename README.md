@@ -10,7 +10,7 @@
 Your Mac's notch, open to extensions. Write one in React and TypeScript, and NotchNotch draws it natively around the camera, as if it came with the Mac: a timer, a build, the next meeting, whatever you need. Or install one from the [Store](https://notchnotch.github.io/store/).
 
 <p align="center">
-  <img src="assets/screenshot.png" width="800" alt="The open notch showing the System Monitor extension: rings for CPU, memory and disk, with network speeds below">
+  <img src="assets/screenshot.png" width="800" alt="The open notch playing music: album art, the song and artist, a progress bar and playback controls">
 </p>
 
 **Developer preview** for macOS 14 or later. Free and open source.
