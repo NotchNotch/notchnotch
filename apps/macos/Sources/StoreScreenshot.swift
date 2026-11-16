@@ -74,13 +74,15 @@ private struct StoreScreenshotView: View {
     private var notch: some View {
         let width = geometry.expandedWidth
         return VStack(spacing: 0) {
-            HStack {
-                Image(systemName: "ellipsis").font(.system(size: 14, weight: .semibold))
+            // The open notch's own controls, as NotchView draws them over an activity.
+            HStack(spacing: 2) {
                 Spacer()
-                Image(systemName: "gearshape").font(.system(size: 12))
+                ForEach(["square.grid.2x2", "gearshape"], id: \.self) { name in
+                    Image(systemName: name).font(.system(size: 12)).frame(width: 24, height: 24)
+                }
             }
             .foregroundStyle(.white.opacity(0.5))
-            .padding(.horizontal, 28)
+            .padding(.horizontal, 24)
             .frame(height: geometry.cameraHeight + 8)
             VStack(spacing: 14) {
                 if item.surface.kind == .prompt { promptHeader }
